@@ -4,20 +4,24 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 
 export default function VerificationSuccess() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const message = searchParams.get('message') || 'Email verified successfully!';
   const redirect = searchParams.get('redirect') || '/playground';
 
   useEffect(() => {
-    toast.success(message);
+    toast({
+      title: "Success",
+      description: message,
+    });
     
     // Redirect after delay
     const timer = setTimeout(() => {
-      router.push(redirect);
+      router.replace(redirect);
     }, 2000);
 
     return () => clearTimeout(timer);

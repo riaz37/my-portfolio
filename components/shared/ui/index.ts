@@ -19,7 +19,6 @@ export * from './scroll-area';
 export * from './mouse-scroll';
 export * from './page-transition';
 export * from './section-header';
-export * from './ThemeSwitcher';
 export * from './FileUpload';
 export * from './LazyImage';
 export * from './MagicButton';

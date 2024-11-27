@@ -5,70 +5,50 @@ import { VerificationToken } from '@/models/auth/VerificationToken';
 
 export async function GET(request: Request) {
   try {
-    console.log('Starting email verification process...');
     const { searchParams } = new URL(request.url);
     const token = searchParams.get('token');
 
     if (!token) {
-      console.log('No token provided');
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=Verification token is required', request.url)
+      return NextResponse.json(
+        { error: 'No token provided' },
+        { status: 400 }
       );
     }
 
-    console.log('Connecting to database...');
     await connectToDatabase();
 
-    // Find the verification token
-    console.log('Finding verification token...');
-    const verificationToken = await VerificationToken.findOne({
-      token,
-      type: 'email-verification',
-      expires: { $gt: new Date() }
-    });
+    const verificationToken = await VerificationToken.findOne({ token });
 
     if (!verificationToken) {
-      console.log('Invalid or expired token');
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=Invalid or expired verification token', request.url)
+      return NextResponse.json(
+        { error: 'Invalid or expired token' },
+        { status: 400 }
       );
     }
 
-    // Find and update the user
-    console.log('Finding and updating user...');
-    const user = await User.findByIdAndUpdate(
-      verificationToken.userId,
-      {
-        emailVerified: new Date(),
-        isVerified: true,
-        verifiedAt: new Date()
-      },
+    const user = await User.findOneAndUpdate(
+      { email: verificationToken.email },
+      { emailVerified: true },
       { new: true }
     );
 
     if (!user) {
-      console.log('User not found');
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=User not found', request.url)
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
       );
     }
 
-    // Delete the used token
-    console.log('Deleting used token...');
-    await VerificationToken.deleteOne({ _id: verificationToken._id });
+    await VerificationToken.deleteOne({ token });
 
-    console.log('Email verification successful');
-    return NextResponse.redirect(
-      new URL('/auth/verify-success?redirect=/playground', request.url)
+    return NextResponse.json(
+      { message: 'Email verified successfully' },
+      { status: 200 }
     );
-  } catch (error: any) {
-    console.error('Error in email verification:', {
-      error: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    return NextResponse.redirect(
-      new URL('/auth/verify-error?error=An error occurred during verification', request.url)
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to verify email' },
+      { status: 500 }
     );
   }
 }

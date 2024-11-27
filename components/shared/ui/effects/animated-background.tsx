@@ -8,23 +8,24 @@ export const AnimatedBackground = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   const gradientY = useTransform(scrollY, [0, 1000], ["0%", "50%"]);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setDimensions({
-      width: window.innerWidth,
-      height: window.innerHeight,
-    });
-
-    const handleResize = () => {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      });
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    setMounted(true);
+    if (typeof window !== 'undefined') {
+      const updateDimensions = () => {
+        setDimensions({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        });
+      };
+      updateDimensions();
+      window.addEventListener('resize', updateDimensions);
+      return () => window.removeEventListener('resize', updateDimensions);
+    }
   }, []);
+
+  if (!mounted) return null;
 
   return (
     <div ref={containerRef} className="fixed inset-0 -z-50 overflow-hidden bg-background">

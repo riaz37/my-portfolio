@@ -8,10 +8,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/shared/ui/core/button';
 import { ArrowRight, Mail, Rocket, Terminal as TerminalIcon, ArrowDown, LayoutGrid } from 'lucide-react';
 import Link from 'next/link';
-import { BackgroundBeams } from '@/components/shared/ui/effects/background-beams';
 import { MouseScroll } from '@/components/shared/ui/mouse-scroll';
-import  Terminal  from '@/components/features/Terminal';
-
+import Terminal from '@/components/features/Terminal';
 
 const roles = [
   'Full Stack Developer',
@@ -32,22 +30,6 @@ const fadeInUpVariant = {
   })
 };
 
-const glowVariant = {
-  initial: {
-    opacity: 0.5,
-    scale: 1,
-  },
-  animate: {
-    opacity: [0.5, 1, 0.5],
-    scale: [1, 1.2, 1],
-    transition: {
-      duration: 3,
-      repeat: Infinity,
-      ease: "easeInOut",
-    },
-  },
-};
-
 export default function Hero() {
   const [currentRole, setCurrentRole] = useState(roles[0]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -65,81 +47,190 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-[calc(100vh-4rem)] flex flex-col justify-center items-center">
-      <BackgroundBeams />
-      
-      {/* Decorative Elements */}
-      <motion.div
-        variants={glowVariant}
-        initial="initial"
-        animate="animate"
-        className="absolute top-1/4 -left-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"
-      />
-      <motion.div
-        variants={glowVariant}
-        initial="initial"
-        animate="animate"
-        className="absolute bottom-1/4 -right-20 w-72 h-72 bg-primary/20 rounded-full blur-3xl"
-      />
-      
-      <div className="text-center space-y-8 relative z-10 px-4">
+    <div className="container mx-auto px-4 relative flex flex-col justify-center items-center">
+      <div className="relative z-10 flex flex-col items-center justify-center gap-12 max-w-4xl mx-auto w-full">
         <motion.div
           variants={fadeInUpVariant}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           custom={0}
-          className="space-y-4"
+          className="space-y-8 text-center"
         >
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center">
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: "spring", duration: 1, bounce: 0.4 }}
               className="relative"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-primary/50 rounded-full blur-xl opacity-50" />
-              <Image
-                priority
-                src="/profile.svg"
-                alt="Riaz's Profile"
-                width={280}
-                height={280}
-                className="rounded-full bg-muted p-3 md:p-6 object-cover"
+              {/* Orbital Glow Effect */}
+              <motion.div
+                animate={{
+                  rotate: [0, 360],
+                  scale: [1, 1.2, 1],
+                }}
+                transition={{
+                  rotate: {
+                    duration: 10,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  scale: {
+                    duration: 3,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }
+                }}
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `
+                    radial-gradient(circle at 50% 0%, ${`rgba(var(--primary-rgb), 0.3)`} 0%, transparent 50%),
+                    radial-gradient(circle at 85.4% 14.6%, ${`rgba(var(--primary-rgb), 0.25)`} 0%, transparent 50%),
+                    radial-gradient(circle at 100% 50%, ${`rgba(var(--secondary-rgb), 0.2)`} 0%, transparent 50%),
+                    radial-gradient(circle at 85.4% 85.4%, ${`rgba(var(--primary-rgb), 0.25)`} 0%, transparent 50%),
+                    radial-gradient(circle at 50% 100%, ${`rgba(var(--secondary-rgb), 0.3)`} 0%, transparent 50%),
+                    radial-gradient(circle at 14.6% 85.4%, ${`rgba(var(--primary-rgb), 0.25)`} 0%, transparent 50%),
+                    radial-gradient(circle at 0% 50%, ${`rgba(var(--secondary-rgb), 0.2)`} 0%, transparent 50%),
+                    radial-gradient(circle at 14.6% 14.6%, ${`rgba(var(--primary-rgb), 0.25)`} 0%, transparent 50%)
+                  `
+                }}
               />
+
+              {/* Pulsing Glow */}
+              <motion.div
+                animate={{
+                  opacity: [0.3, 0.6, 0.3],
+                  scale: [1.2, 1.3, 1.2],
+                }}
+                transition={{
+                  duration: 3,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/30 via-secondary/30 to-primary/30 blur-2xl"
+              />
+
+              {/* Rotating Sparkle Effect */}
+              <motion.div
+                animate={{
+                  rotate: [0, -360],
+                  scale: [1, 1.1, 1],
+                }}
+                transition={{
+                  rotate: {
+                    duration: 15,
+                    repeat: Infinity,
+                    ease: "linear",
+                  },
+                  scale: {
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                  }
+                }}
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `
+                    radial-gradient(2px 2px at 40% 40%, ${`rgba(var(--primary-rgb), 0.4)`} 50%, transparent),
+                    radial-gradient(2px 2px at 60% 20%, ${`rgba(var(--secondary-rgb), 0.3)`} 50%, transparent),
+                    radial-gradient(2px 2px at 20% 60%, ${`rgba(var(--primary-rgb), 0.4)`} 50%, transparent),
+                    radial-gradient(2px 2px at 80% 80%, ${`rgba(var(--secondary-rgb), 0.3)`} 50%, transparent)
+                  `
+                }}
+              />
+
+              {/* Main Image Container */}
+              <motion.div 
+                className="relative rounded-full bg-gradient-to-b from-primary/20 to-secondary/20 p-[2px] backdrop-blur-[2px]"
+                whileHover={{
+                  scale: 1.05,
+                  rotate: [0, -5, 5, 0],
+                  transition: {
+                    scale: { duration: 0.2 },
+                    rotate: { duration: 0.5, repeat: Infinity }
+                  }
+                }}
+              >
+                <motion.div 
+                  className="rounded-full p-2 backdrop-blur-sm bg-background/80"
+                  whileHover={{
+                    boxShadow: [
+                      "0 0 10px rgba(var(--primary-rgb), 0.3)",
+                      "0 0 20px rgba(var(--primary-rgb), 0.5)",
+                      "0 0 10px rgba(var(--primary-rgb), 0.3)",
+                    ],
+                    transition: {
+                      duration: 1,
+                      repeat: Infinity,
+                    }
+                  }}
+                >
+                  <Image
+                    priority
+                    src="/profile.svg"
+                    alt="Riaz's Profile"
+                    width={240}
+                    height={240}
+                    className="rounded-full bg-muted p-3 md:p-6 object-cover relative"
+                  />
+                </motion.div>
+              </motion.div>
             </motion.div>
           </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="space-y-2"
-          >
-            <h2 className="text-sm sm:text-base text-muted-foreground font-medium tracking-wider uppercase">
+          <div className="space-y-4">
+            <motion.h2
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-sm sm:text-base text-muted-foreground font-medium tracking-wider uppercase"
+            >
               Welcome to my world
-            </h2>
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight">
+            </motion.h2>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight"
+            >
               Hi, I'm{" "}
-              <span className="inline-block animate-gradient-x bg-gradient-to-r from-violet-500 via-primary to-violet-500 bg-[length:200%_auto] bg-clip-text text-transparent">
-                Riaz
+              <span className="inline-block relative">
+                <motion.span
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ 
+                    opacity: 1, 
+                    y: 0,
+                    scale: [1, 1.1, 1],
+                    rotate: [0, 5, -5, 0]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    times: [0, 0.2, 0.5, 0.8, 1],
+                    repeat: Infinity,
+                    repeatDelay: 3
+                  }}
+                  className="inline-block bg-gradient-to-r from-violet-500 via-primary to-violet-500 bg-[length:200%_auto] bg-clip-text text-transparent animate-gradient-x"
+                >
+                  Riaz
+                </motion.span>
               </span>
-            </h1>
-          </motion.div>
+            </motion.h1>
 
-          <div className="h-[40px] sm:h-[48px] flex justify-center items-center">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={currentRole}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.5 }}
-                className="text-xl sm:text-2xl text-muted-foreground"
-              >
-                {currentRole}
-              </motion.p>
-            </AnimatePresence>
+            <div className="h-[40px] sm:h-[48px] flex justify-center items-center">
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={currentRole}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-xl sm:text-2xl text-muted-foreground"
+                >
+                  {currentRole}
+                </motion.p>
+              </AnimatePresence>
+            </div>
           </div>
         </motion.div>
 
@@ -149,7 +240,7 @@ export default function Hero() {
           whileInView="visible"
           viewport={{ once: true }}
           custom={0.2}
-          className="max-w-2xl mx-auto text-lg sm:text-xl text-muted-foreground leading-relaxed"
+          className="text-lg sm:text-xl text-muted-foreground leading-relaxed text-center max-w-2xl"
         >
           Turning coffee into code and passion into knowledge. Let's build something amazing together.
         </motion.p>
@@ -159,8 +250,8 @@ export default function Hero() {
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
-          custom={0.6}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8"
+          custom={0.4}
+          className="flex flex-col sm:flex-row items-center gap-4"
         >
           <Link href="/portfolio">
             <Button
@@ -168,7 +259,6 @@ export default function Hero() {
               variant="outline"
               className="group relative overflow-hidden hover:border-primary/50 transition-all duration-300 min-w-[160px]"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 via-primary/20 to-violet-500/20 blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <motion.div
                 initial={{ scale: 1 }}
                 animate={{ scale: [1, 1.1, 1] }}
@@ -179,118 +269,67 @@ export default function Hero() {
                 }}
                 className="relative flex items-center gap-2"
               >
-                <LayoutGrid className="h-4 w-4 group-hover:text-black transition-colors duration-300" />
-                <span className="group-hover:text-black transition-colors duration-300">View Portfolio</span>
-                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 group-hover:text-black transition-all duration-300" />
+                <LayoutGrid className="h-4 w-4 group-hover:text-primary transition-colors duration-300" />
+                <span className="group-hover:text-primary transition-colors duration-300">View Portfolio</span>
+                <ArrowRight className="h-4 w-4 group-hover:translate-x-1 group-hover:text-primary transition-all duration-300" />
               </motion.div>
             </Button>
           </Link>
+
           <Link href="/playground">
-            <Button
-              size="lg"
-              className="relative group overflow-hidden min-w-[160px] bg-transparent border-0"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-[#FF0080] via-[#7928CA] to-[#FF0080] blur-sm opacity-75 group-hover:opacity-100 transition-opacity duration-300" />
-              <div className="absolute inset-0 bg-gradient-to-r from-[#FF0080] via-[#7928CA] to-[#FF0080] animate-gradient-x group-hover:animate-gradient-x-fast" />
-              <div className="relative bg-background/10 backdrop-blur-sm px-4 py-2 rounded-md border border-white/10 shadow-2xl">
-                <motion.div
-                  initial={{ scale: 1 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="flex items-center justify-center gap-2 text-white font-medium"
-                >
-                  <motion.div
-                    animate={{ 
-                      rotate: [0, 360],
-                      scale: [1, 1.2, 1]
-                    }}
-                    transition={{
-                      rotate: {
-                        duration: 4,
-                        repeat: Infinity,
-                        ease: "linear"
-                      },
-                      scale: {
-                        duration: 2,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }
-                    }}
-                  >
-                    <Rocket className="h-4 w-4" />
-                  </motion.div>
-                  Try Playground
-                  <motion.div
-                    animate={{ 
-                      x: [0, 6, 0],
-                      opacity: [1, 0.5, 1]
-                    }}
-                    transition={{
-                      duration: 1.5,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </motion.div>
-                </motion.div>
+            <button className="group relative min-w-[180px] px-6 py-3">
+              {/* Main button background with double border effect */}
+              <div className="absolute inset-0 bg-primary/20 rounded-lg" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/50 to-accent/50 blur-xl group-hover:blur-2xl transition-all duration-500 rounded-lg" />
+              <div className="absolute inset-0 bg-black rounded-lg" />
+              
+              {/* Animated border */}
+              <div className="absolute inset-[1px] bg-gradient-to-r from-primary via-accent to-primary rounded-lg">
+                <div className="absolute inset-[1px] bg-black rounded-lg" />
               </div>
-            </Button>
+              
+              {/* Moving background patterns */}
+              <div className="absolute inset-[1px] rounded-lg overflow-hidden">
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(68,68,68,.2)_50%,transparent_75%,transparent_100%)] bg-[length:250%_250%] animate-[shimmer_3s_linear_infinite]" />
+                <div className="absolute inset-0 opacity-50">
+                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-primary to-transparent absolute top-[20%] -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent to-transparent absolute top-[40%] translate-x-full group-hover:-translate-x-full transition-transform duration-1000" />
+                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-primary to-transparent absolute top-[60%] -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-accent to-transparent absolute top-[80%] translate-x-full group-hover:-translate-x-full transition-transform duration-1000" />
+                </div>
+              </div>
+              
+              {/* Content */}
+              <div className="relative flex items-center justify-center gap-3 text-white">
+                <TerminalIcon className="h-5 w-5 transform transition-all duration-500 group-hover:scale-110 group-hover:text-primary" />
+                <span className="font-medium tracking-wider transform transition-all duration-500">
+                  Try Playground
+                </span>
+                <Rocket className="h-5 w-5 transform transition-all duration-500 group-hover:-rotate-45 group-hover:translate-x-1 group-hover:text-accent" />
+              </div>
+              
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 h-[2px] w-[10px] bg-primary" />
+              <div className="absolute top-0 left-0 h-[10px] w-[2px] bg-primary" />
+              <div className="absolute top-0 right-0 h-[2px] w-[10px] bg-accent" />
+              <div className="absolute top-0 right-0 h-[10px] w-[2px] bg-accent" />
+              <div className="absolute bottom-0 left-0 h-[2px] w-[10px] bg-primary" />
+              <div className="absolute bottom-0 left-0 h-[10px] w-[2px] bg-primary" />
+              <div className="absolute bottom-0 right-0 h-[2px] w-[10px] bg-accent" />
+              <div className="absolute bottom-0 right-0 h-[10px] w-[2px] bg-accent" />
+            </button>
           </Link>
         </motion.div>
-
-        {/* Terminal Feature Indicator */}
-        <motion.div
-          variants={fadeInUpVariant}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          custom={0.8}
-          className="mt-12 text-center"
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/20 border border-secondary/30 backdrop-blur-sm"
-          >
-            <TerminalIcon className="h-4 w-4 text-primary" />
-            <span className="text-sm text-muted-foreground">
-              Press <kbd className="px-2 py-0.5 text-xs font-mono bg-secondary/30 rounded-md mx-1">Ctrl</kbd>
-              +
-              <kbd className="px-2 py-0.5 text-xs font-mono bg-secondary/30 rounded-md mx-1">/</kbd>
-              to open terminal
-            </span>
-            <motion.div
-              animate={{
-                y: [0, -4, 0]
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              <ArrowDown className="h-4 w-4 text-primary" />
-            </motion.div>
-          </motion.div>
-        </motion.div>
-
-        <div className="relative">
-          {/* Terminal */}
-          <Terminal />
-        </div>
-
       </div>
 
-      {/* Mouse Scroll Indicator */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.2 }}
+        transition={{ delay: 1 }}
         className="absolute bottom-8"
       >
         <MouseScroll />
       </motion.div>
-    </section>
+    </div>
   );
 }

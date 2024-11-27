@@ -1,63 +1,74 @@
 'use client'
 
-import { AnimatePresence } from 'framer-motion';
 import Hero from "@/components/layout/sections/Hero";
 import InteractiveLearning from '@/components/layout/sections/InteractiveLearning';
 import { Button } from "@/components/shared/ui/core/button";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { SectionTitle } from "@/components/shared/ui/section";
 
 export default function Home() {
   return (
-    <AnimatePresence mode="wait">
-      <div className="relative flex flex-col gap-20">
-        {/* Hero Section */}
-        <section id="home" className="min-h-screen flex items-center justify-center">
-          <Hero />
-        </section>
+    <div className="relative flex flex-col">
+      {/* Hero Section */}
+      <section 
+        id="home" 
+        className="min-h-[calc(100vh-4rem)] flex items-center justify-center w-full relative"
+      >
+        <Hero />
+      </section>
 
+      {/* Main Content */}
+      <div className="flex flex-col w-full">
         {/* Interactive Learning Section */}
         <motion.section
           id="learning"
-          className="container relative px-4"
+          className="w-full py-24 relative"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <InteractiveLearning />
+          <div className="container mx-auto px-4">
+            <div className="max-w-5xl mx-auto">
+              <InteractiveLearning />
+            </div>
+          </div>
         </motion.section>
 
         {/* Learning CTA */}
         <motion.section 
-          className="w-full py-20"
+          className="w-full py-24 relative"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-bold mb-4">Ready to Start Your Learning Journey?</h2>
-            <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join our community of learners and get personalized guidance, interactive challenges, 
-              and hands-on experience to accelerate your growth in tech.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button asChild size="lg" variant="default">
-                <Link href="/playground">
-                  Start Learning
-                  <ArrowRight className="ml-2" />
-                </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline">
-                <Link href="/playground/learning-paths">
-                  View Learning Paths
-                  <ArrowRight className="ml-2" />
-                </Link>
-              </Button>
+          <div className="container mx-auto px-4">
+            <div className="max-w-3xl mx-auto">
+              <SectionTitle
+                badge="Start Learning"
+                highlight="Learning Journey"
+                subtitle="Join our community of learners and get personalized guidance, interactive challenges, and hands-on experience to accelerate your growth in tech."
+              >
+                Ready to Start Your Learning Journey?
+              </SectionTitle>
+
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2 }}
+                className="mt-8 flex justify-center"
+              >
+                <Button size="lg" className="group">
+                  Get Started 
+                  <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </motion.div>
             </div>
           </div>
         </motion.section>
       </div>
-    </AnimatePresence>
+    </div>
   );
 }

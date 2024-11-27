@@ -21,7 +21,7 @@ import {
 } from 'react-icons/si';
 import { BiCodeAlt } from 'react-icons/bi';
 import { BsLightningChargeFill } from 'react-icons/bs';
-import { SectionTitle } from '@/components/shared/ui/layout/SectionTitle';
+import { SectionTitle } from '@/components/shared/ui/section';
 
 const skillLevelMap = {
   90: { text: 'Expert', color: '#FF6B6B' },
@@ -154,10 +154,12 @@ export function Skills() {
     <section id="skills" className="py-20">
       <div className="container">
         <SectionTitle 
-          badge="Tech Stack"
-          title="Skills & Expertise"
-          description="A comprehensive overview of my technical skills and proficiency levels across different technologies."
-        />
+          highlight="Skills"
+          subtitle="A comprehensive overview of my technical expertise and proficiency levels."
+          showDecoration={false}
+        >
+          Technical Skills
+        </SectionTitle>
         
         <div className="mt-12 space-y-16">
           {Object.entries(skills).map(([category, categorySkills]) => (

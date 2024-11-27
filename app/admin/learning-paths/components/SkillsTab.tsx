@@ -6,9 +6,9 @@ import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/core/dialog';
-import { Card } from '@/components/shared/ui/data-display/card';
-import { Badge } from '@/components/shared/ui/data-display/badge';
-import { toast } from 'sonner';
+import { Card } from '@/components/shared/ui/core/card';
+import { Badge } from '@/components/shared/ui/core/badge';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 interface Skill {
@@ -24,7 +24,7 @@ interface Skill {
 export default function SkillsTab() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [skillForm, setSkillForm] = useState({
     name: '',
@@ -33,6 +33,7 @@ export default function SkillsTab() {
     level: 'beginner' as const,
     prerequisites: [] as string[],
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchSkills();
@@ -46,13 +47,17 @@ export default function SkillsTab() {
       setSkills(data);
     } catch (error) {
       console.error('Error fetching skills:', error);
-      toast.error('Failed to fetch skills');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch skills"
+      });
     }
   };
 
   const handleAddSkill = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/admin/learning-paths/skills', {
@@ -63,7 +68,10 @@ export default function SkillsTab() {
 
       if (!response.ok) throw new Error('Failed to add skill');
 
-      toast.success('Skill added successfully');
+      toast({
+        title: "Success",
+        description: "Skill added successfully"
+      });
       setIsDialogOpen(false);
       setSkillForm({
         name: '',
@@ -75,9 +83,13 @@ export default function SkillsTab() {
       fetchSkills();
     } catch (error) {
       console.error('Error adding skill:', error);
-      toast.error('Failed to add skill');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add skill"
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -91,11 +103,18 @@ export default function SkillsTab() {
 
       if (!response.ok) throw new Error('Failed to delete skill');
 
-      toast.success('Skill deleted successfully');
+      toast({
+        title: "Success",
+        description: "Skill deleted successfully"
+      });
       fetchSkills();
     } catch (error) {
       console.error('Error deleting skill:', error);
-      toast.error('Failed to delete skill');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete skill"
+      });
     }
   };
 
@@ -148,8 +167,8 @@ export default function SkillsTab() {
                   <SelectItem value="advanced">Advanced</SelectItem>
                 </SelectContent>
               </Select>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Adding...' : 'Add Skill'}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Adding...' : 'Add Skill'}
               </Button>
             </form>
           </DialogContent>

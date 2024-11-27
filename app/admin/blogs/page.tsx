@@ -121,9 +121,6 @@ export default function BlogsPage() {
         return;
       }
 
-      console.log('Sending blog data:', blogData);
-      console.log('URL:', editingBlog ? `/api/admin/blogs/${editingBlog._id}` : '/api/admin/blogs');
-
       const response = await fetch(
         editingBlog ? `/api/admin/blogs/${editingBlog._id}` : '/api/admin/blogs',
         {
@@ -134,7 +131,6 @@ export default function BlogsPage() {
       );
 
       const data = await response.json();
-      console.log('Response:', response.status, data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to save blog');

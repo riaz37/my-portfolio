@@ -120,7 +120,7 @@ export default function ChallengePage({ params }: { params: { id: string } }) {
                 className="gap-2"
                 onClick={() => {
                   // Add run logic here
-                  console.log('Running code:', code);
+                  // console.log('Running code:', code);
                 }}
               >
                 <div className="i-lucide-play w-4 h-4" />

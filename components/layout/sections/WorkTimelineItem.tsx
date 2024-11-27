@@ -3,28 +3,43 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { WorkExperience } from '@/data/workExperience';
+import { cn } from '@/lib/utils';
 
 interface WorkTimelineItemProps {
   experience: WorkExperience;
   index: number;
-  setActive: (experience: WorkExperience) => void;
+  onClick: () => void;
+  isActive: boolean;
 }
 
-const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({ experience, index, setActive }) => {
+const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({ 
+  experience, 
+  index, 
+  onClick,
+  isActive 
+}) => {
   const isEven = index % 2 === 0;
 
   return (
     <motion.div 
-      className={`mb-16 relative ${isEven ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'}`}
+      className={cn(
+        "mb-16 relative",
+        isEven ? 'md:text-right md:pr-8' : 'md:text-left md:pl-8'
+      )}
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       {/* Year badge */}
       <motion.div 
-        className={`absolute top-0 left-4 md:left-1/2 transform -translate-y-1/2 ${
+        className={cn(
+          "absolute top-0 transform -translate-y-1/2 z-10",
+          "bg-gradient-to-r from-primary/90 to-primary/80 backdrop-blur-sm",
+          "text-background rounded-full px-4 py-1 font-medium",
+          "border border-white/10 shadow-lg",
+          "left-4 md:left-1/2",
           isEven ? 'md:translate-x-8' : 'md:-translate-x-8'
-        } bg-primary text-black rounded-full px-4 py-1 font-medium z-10`}
+        )}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: "spring" }}
@@ -34,34 +49,60 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({ experience, index, 
       
       {/* Timeline dot */}
       <motion.div
-        className={`absolute top-0 left-4 md:left-1/2 w-4 h-4 bg-primary rounded-full transform -translate-x-[7px] -translate-y-[7px] z-20`}
+        className={cn(
+          "absolute top-0 transform -translate-x-[7px] -translate-y-[7px] z-20",
+          "left-4 md:left-1/2 w-4 h-4",
+          "bg-gradient-to-r from-primary to-primary/80 rounded-full",
+          "shadow-lg shadow-primary/20"
+        )}
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.3, type: "spring" }}
       >
         <motion.div
           className="absolute inset-0 bg-primary rounded-full"
-          animate={{ scale: [1, 1.5, 1] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          style={{ opacity: 0.3 }}
+          animate={{ 
+            scale: [1, 1.5, 1],
+            opacity: [0.3, 0.1, 0.3]
+          }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
       </motion.div>
       
       {/* Content card */}
       <motion.div
-        className={`relative bg-card hover:bg-card/80 p-6 rounded-lg ml-12 md:ml-0 ${
-          isEven ? 'md:mr-8' : 'md:ml-8'
-        } border border-border/50 backdrop-blur-sm cursor-pointer group transition-all`}
+        className={cn(
+          "relative p-6 rounded-lg cursor-pointer transition-all duration-300",
+          "border border-border/50 backdrop-blur-sm",
+          "bg-gradient-to-br from-card via-card/95 to-card/90",
+          "hover:from-card/95 hover:via-card/90 hover:to-card/85",
+          "shadow-lg hover:shadow-xl",
+          "ml-12 md:ml-0",
+          isEven ? 'md:mr-8' : 'md:ml-8',
+          isActive && "ring-2 ring-primary/50 shadow-xl"
+        )}
         whileHover={{ 
           scale: 1.02,
           transition: { duration: 0.2 }
         }}
-        onClick={() => setActive(experience)}
+        onClick={onClick}
       >
+        {/* Glass overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/0 rounded-lg" />
+        
         {/* Company logo and details */}
-        <div className="flex items-center mb-4">
+        <div className="relative flex items-center mb-4 gap-4">
           <motion.div 
-            className="relative bg-primary/5 rounded-lg p-3 mr-4 overflow-hidden group-hover:bg-primary/10 transition-colors"
+            className={cn(
+              "relative overflow-hidden rounded-lg",
+              "bg-gradient-to-br from-primary/10 to-primary/5",
+              "group-hover:from-primary/15 group-hover:to-primary/10",
+              "p-3 transition-colors duration-300"
+            )}
             whileHover={{ scale: 1.1 }}
           >
             <Image
@@ -71,10 +112,11 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({ experience, index, 
               height={40}
               className="rounded-lg"
             />
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>
           <div>
             <motion.h3 
-              className="text-xl font-semibold text-primary"
+              className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent"
             >
               {experience.position}
             </motion.h3>
@@ -87,42 +129,57 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({ experience, index, 
           </div>
         </div>
 
+        {/* Description preview */}
+        <motion.p 
+          className="text-muted-foreground/90 mb-4 line-clamp-2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
+          {experience.description[0]}
+        </motion.p>
+
         {/* Skills */}
         <motion.div 
-          className="flex flex-wrap gap-2 mt-4"
+          className="flex flex-wrap gap-2"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
           {experience.skills.slice(0, 5).map((skill, i) => (
-            <motion.div
+            <motion.span
               key={i}
-              className="flex items-center bg-primary/5 hover:bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-sm transition-colors"
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-300",
+                "bg-gradient-to-br from-primary/10 to-primary/5",
+                "hover:from-primary/15 hover:to-primary/10",
+                "text-primary/90 hover:text-primary",
+                "border border-primary/10",
+                "backdrop-blur-sm"
+              )}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.5 + i * 0.1 }}
+              transition={{ delay: 0.4 + i * 0.1 }}
+              whileHover={{ scale: 1.05 }}
             >
-              {React.createElement(skill.icon, { className: "mr-1.5 w-4 h-4" })}
-              <span className="text-xs font-medium">{skill.name}</span>
-            </motion.div>
+              {React.createElement(skill.icon, { className: "w-4 h-4" })}
+              {skill.name}
+            </motion.span>
           ))}
           {experience.skills.length > 5 && (
-            <motion.div
-              className="flex items-center bg-primary/5 hover:bg-primary/10 text-primary px-3 py-1.5 rounded-lg text-sm transition-colors"
+            <motion.span
+              className={cn(
+                "flex items-center px-3 py-1.5 rounded-lg text-sm",
+                "bg-primary/5 text-primary/80",
+                "border border-primary/10"
+              )}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ delay: 0.5 + 5 * 0.1 }}
+              transition={{ delay: 0.9 }}
             >
-              <span className="text-xs font-medium">+{experience.skills.length - 5} more</span>
-            </motion.div>
+              +{experience.skills.length - 5} more
+            </motion.span>
           )}
-        </motion.div>
-
-        {/* View more hint */}
-        <motion.div
-          className="absolute bottom-2 right-2 text-xs text-primary/60 opacity-0 group-hover:opacity-100 transition-opacity"
-        >
-          Click to view details
         </motion.div>
       </motion.div>
     </motion.div>

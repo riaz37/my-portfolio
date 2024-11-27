@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Input } from '@/components/shared/ui/core/input';

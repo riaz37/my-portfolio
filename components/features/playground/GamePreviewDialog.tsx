@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/shared/ui/overlay/dialog';
 import GamePreview from './GamePreview';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { ScrollArea } from '@/components/shared/ui/layout/scroll-area';
 
 interface Game {

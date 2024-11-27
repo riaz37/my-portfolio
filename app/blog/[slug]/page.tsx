@@ -1,58 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { formatDistanceToNow, format } from 'date-fns';
-import { Eye, Clock, Calendar, ChevronLeft, Share2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import SectionTransition from "@/components/shared/ui/SectionTransition";
-import TableOfContents from "@/components/features/blog/TableOfContents";
-import ReadingProgress from "@/components/features/blog/ReadingProgress";
-import ShareButtons from "@/components/features/blog/ShareButtons";
-import { cn } from '@/lib/utils';
+import { ArrowLeft, Calendar, Clock, Share2 } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
+import { Button } from '@/components/shared/ui/core/button';
+import { Badge } from '@/components/shared/ui/core/badge';
+import { useEffect, useState } from 'react';
+import { blogService } from '@/services/blog.service';
+import { Skeleton } from '@/components/shared/ui/feedback/skeleton';
+import { Markdown } from '@/components/shared/ui/core/markdown';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/shared/ui/core/tooltip";
+import { toast } from 'sonner';
+import { BlogPost } from '@/models/blog/BlogPost';
 
-interface BlogPost {
-  _id: string;
-  slug: string;
-  title: string;
-  content: string;
-  excerpt: string;
-  coverImage: string;
-  tags: string[];
-  createdAt: string;
-  updatedAt: string;
-  views: number;
-}
-
-export default function BlogPost({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [readingProgress, setReadingProgress] = useState(0);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const response = await fetch(`/api/blog?slug=${params.slug}`);
-        if (!response.ok) {
-          throw new Error('Post not found');
-        }
-        const data = await response.json();
-        if (!data.data) {
-          throw new Error('Invalid response format');
-        }
-        setPost(data.data);
-      } catch (error) {
-        console.error('Error fetching post:', error);
-        notFound();
+        setIsLoading(true);
+        const data = await blogService.getBlogBySlug(params.slug);
+        setPost(data);
+      } catch (err) {
+        setError(err as Error);
+        console.error('Error fetching blog post:', err);
       } finally {
         setIsLoading(false);
       }
@@ -61,138 +42,168 @@ export default function BlogPost({
     fetchPost();
   }, [params.slug]);
 
-  useEffect(() => {
-    const updateReadingProgress = () => {
-      const element = document.documentElement;
-      const scrollTop = element.scrollTop || document.body.scrollTop;
-      const scrollHeight = element.scrollHeight || document.body.scrollHeight;
-      const clientHeight = element.clientHeight;
-      
-      const windowHeight = scrollHeight - clientHeight;
-      const progress = Math.round((scrollTop / windowHeight) * 100);
-      
-      setReadingProgress(progress);
-    };
-
-    window.addEventListener('scroll', updateReadingProgress);
-    return () => window.removeEventListener('scroll', updateReadingProgress);
-  }, []);
-
-  const estimateReadingTime = (content: string) => {
-    const wordsPerMinute = 200;
-    const words = content.split(/\s+/).length;
-    return Math.ceil(words / wordsPerMinute);
+  const handleShare = async () => {
+    try {
+      await navigator.share({
+        title: post?.title,
+        text: post?.excerpt,
+        url: window.location.href,
+      });
+    } catch (error) {
+      // Fallback to copying to clipboard
+      navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied to clipboard!');
+    }
   };
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-8 space-y-8">
-        <Skeleton className="h-[500px] w-full rounded-xl" />
-        <div className="max-w-3xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-3/4" />
-          <Skeleton className="h-6 w-1/2" />
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-4 w-full" />
-            ))}
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-20">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-12 w-full" />
+            <div className="flex gap-4">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            <Skeleton className="h-[400px] w-full" />
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-full" />
+              <Skeleton className="h-6 w-3/4" />
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  if (!post) {
-    notFound();
+  if (error || !post) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Blog Post Not Found</h1>
+          <Link href="/blog">
+            <Button>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Blog
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <SectionTransition>
-      <div className="min-h-screen relative">
-        <ReadingProgress progress={readingProgress} />
-        
-        {/* Hero Section */}
-        <div className="relative">
-          <div className="relative h-[60vh] overflow-hidden">
-            <Image
-              src={post.coverImage || '/images/placeholder.jpg'}
-              alt={post.title}
-              fill
-              className="object-cover"
-              priority
-              sizes="100vw"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-background to-background/20" />
-            
-            {/* Navigation */}
-            <nav className="absolute top-0 left-0 right-0 z-10">
-              <div className="container mx-auto px-4 py-6 flex justify-between items-center">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex justify-between items-center mb-8">
                 <Link href="/blog">
-                  <Button variant="secondary" size="sm" className="gap-2 backdrop-blur-sm bg-background/50">
-                    <ChevronLeft className="w-4 h-4" />
+                  <Button variant="ghost" className="-ml-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Blog
                   </Button>
                 </Link>
-                <ShareButtons url={`/blog/${post.slug}`} title={post.title} />
-              </div>
-            </nav>
-          </div>
 
-          {/* Content Section */}
-          <div className="container mx-auto px-4 -mt-32 relative mb-16">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-              {/* Main Content */}
-              <motion.article
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="lg:col-span-8 bg-background border rounded-xl p-8 shadow-lg space-y-8"
-              >
-                {/* Tags */}
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={handleShare}
+                      >
+                        <Share2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Share this post</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+
+              <div className="space-y-4">
                 <div className="flex gap-2 flex-wrap">
-                  {post.tags.map(tag => (
-                    <Badge key={tag} variant="secondary" className="px-3 py-1">
+                  {post.tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="text-sm"
+                    >
                       {tag}
                     </Badge>
                   ))}
                 </div>
 
-                {/* Title */}
-                <h1 className="text-4xl lg:text-5xl font-bold tracking-tight">{post.title}</h1>
+                <h1 className="text-4xl md:text-5xl font-bold">
+                  {post.title}
+                </h1>
 
-                {/* Meta Info */}
-                <div className="flex flex-wrap items-center gap-6 text-muted-foreground border-b pb-6">
+                <div className="flex items-center gap-6 text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <time dateTime={post.createdAt}>{format(new Date(post.createdAt), 'MMM dd, yyyy')}</time>
+                    <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                      <Image
+                        src={post.author.avatar}
+                        alt={post.author.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                    <span>{post.author.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>{estimateReadingTime(post.content)} min read</span>
+                    <Calendar className="h-4 w-4" />
+                    <span>{formatDate(post.publishedAt || '')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Eye className="w-4 h-4" />
-                    <span>{post.views.toLocaleString()} views</span>
+                    <Clock className="h-4 w-4" />
+                    <span>{post.readingTime || '5 min read'}</span>
                   </div>
                 </div>
+              </div>
+            </motion.div>
 
-                {/* Content */}
-                <div className="prose prose-lg dark:prose-invert max-w-none">
-                  <div dangerouslySetInnerHTML={{ __html: post.content }} />
-                </div>
-              </motion.article>
-
-              {/* Sidebar */}
-              <aside className="lg:col-span-4 space-y-8">
-                <div className="sticky top-8">
-                  <div className="bg-background border rounded-xl p-6 shadow-lg">
-                    <TableOfContents content={post.content} />
-                  </div>
-                </div>
-              </aside>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="mt-8 relative aspect-video rounded-xl overflow-hidden"
+            >
+              <Image
+                src={post.coverImage}
+                alt={post.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </motion.div>
           </div>
         </div>
-      </div>
-    </SectionTransition>
+      </section>
+
+      {/* Content Section */}
+      <section className="py-12">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="prose prose-lg dark:prose-invert max-w-4xl mx-auto"
+          >
+            <Markdown>{post.content}</Markdown>
+          </motion.div>
+        </div>
+      </section>
+    </div>
   );
 }

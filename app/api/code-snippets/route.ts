@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import {
-  saveCodeSnippet,
-  getUserSnippets,
-  getSnippetById,
-  updateSnippet,
-  deleteSnippet,
-} from '@/lib/services/mongodb-service';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { CodeSnippet } from '@/models/CodeSnippet';
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,8 +16,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const result = await saveCodeSnippet(session.user.email, code, language, title);
-    return NextResponse.json(result);
+    await connectToDatabase();
+    const snippet = await CodeSnippet.create({
+      userId: session.user.email,
+      code,
+      language,
+      title,
+    });
+
+    return NextResponse.json(snippet);
   } catch (error) {
     console.error('Error saving code snippet:', error);
     return NextResponse.json(
@@ -42,8 +44,10 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
 
+    await connectToDatabase();
+
     if (id) {
-      const snippet = await getSnippetById(id);
+      const snippet = await CodeSnippet.findById(id);
       if (!snippet) {
         return NextResponse.json({ error: 'Snippet not found' }, { status: 404 });
       }
@@ -53,7 +57,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(snippet);
     }
 
-    const snippets = await getUserSnippets(session.user.email);
+    const snippets = await CodeSnippet.find({ userId: session.user.email })
+      .sort({ createdAt: -1 });
     return NextResponse.json(snippets);
   } catch (error) {
     console.error('Error fetching code snippets:', error);
@@ -71,21 +76,29 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, ...updates } = await req.json();
-    if (!id) {
-      return NextResponse.json({ error: 'Missing snippet ID' }, { status: 400 });
+    const { id, code, language, title } = await req.json();
+    if (!id || !code || !language || !title) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const snippet = await getSnippetById(id);
+    await connectToDatabase();
+    const snippet = await CodeSnippet.findById(id);
+    
     if (!snippet) {
       return NextResponse.json({ error: 'Snippet not found' }, { status: 404 });
     }
+    
     if (snippet.userId !== session.user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await updateSnippet(id, updates);
-    return NextResponse.json(result);
+    const updatedSnippet = await CodeSnippet.findByIdAndUpdate(
+      id,
+      { code, language, title },
+      { new: true }
+    );
+
+    return NextResponse.json(updatedSnippet);
   } catch (error) {
     console.error('Error updating code snippet:', error);
     return NextResponse.json(
@@ -108,16 +121,19 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'Missing snippet ID' }, { status: 400 });
     }
 
-    const snippet = await getSnippetById(id);
+    await connectToDatabase();
+    const snippet = await CodeSnippet.findById(id);
+    
     if (!snippet) {
       return NextResponse.json({ error: 'Snippet not found' }, { status: 404 });
     }
+    
     if (snippet.userId !== session.user.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await deleteSnippet(id);
-    return NextResponse.json(result);
+    await CodeSnippet.findByIdAndDelete(id);
+    return NextResponse.json({ message: 'Snippet deleted successfully' });
   } catch (error) {
     console.error('Error deleting code snippet:', error);
     return NextResponse.json(

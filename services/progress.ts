@@ -1,5 +1,5 @@
 import { ProgressStats } from '@/types/learningPath';
-import { LearningProgress } from '@/models/LearningProgress';
+import { LearningProgress } from '@/models/user/LearningProgress';
 
 export const progressService = {
   async getUserProgress(userId: string, learningPathId: string): Promise<ProgressStats | null> {

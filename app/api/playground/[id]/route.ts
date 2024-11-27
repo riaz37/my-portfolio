@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectToDatabase } from '@/lib/db';
-import { ObjectId } from 'mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import mongoose from 'mongoose';
+import { Playground } from '@/models/Playground';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { db } = await connectToDatabase();
-    const game = await db.collection('playground').findOne({
-      _id: new ObjectId(params.id)
-    });
+    await connectToDatabase();
+    const game = await Playground.findById(params.id);
 
     if (!game) {
       return NextResponse.json(
@@ -42,26 +41,22 @@ export async function PUT(
     }
 
     const updates = await request.json();
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
 
-    const result = await db.collection('playground').updateOne(
-      { _id: new ObjectId(params.id) },
-      {
-        $set: {
-          ...updates,
-          updatedAt: new Date()
-        }
-      }
+    const game = await Playground.findByIdAndUpdate(
+      params.id,
+      { ...updates, updatedAt: new Date() },
+      { new: true }
     );
 
-    if (result.matchedCount === 0) {
+    if (!game) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json(game);
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json(
@@ -81,12 +76,10 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { db } = await connectToDatabase();
-    const result = await db.collection('playground').deleteOne({
-      _id: new ObjectId(params.id)
-    });
+    await connectToDatabase();
+    const game = await Playground.findByIdAndDelete(params.id);
 
-    if (result.deletedCount === 0) {
+    if (!game) {
       return NextResponse.json(
         { error: 'Game not found' },
         { status: 404 }

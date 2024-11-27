@@ -1,6 +1,6 @@
 'use client';
 
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
 import { Progress } from '@/components/shared/ui/feedback/progress';
 import { LearningPath } from '@/types/learningPath';

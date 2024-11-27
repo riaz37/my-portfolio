@@ -1,123 +1,116 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Input } from '@/components/shared/ui/core/input';
+import { Section, SectionHeader, SectionTitle, SectionDescription, SectionContent } from '@/components/shared/ui/section';
+import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
-import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { FaNewspaper } from 'react-icons/fa';
+import { motion } from 'framer-motion';
+import { Mail } from 'lucide-react';
 
-export function Newsletter() {
+export default function Newsletter() {
   const [email, setEmail] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
+    setStatus('loading');
     try {
-      setLoading(true);
-      const response = await fetch('/api/newsletter', {
+      const response = await fetch('/api/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
-        toast.success('Successfully subscribed to the newsletter!');
+        setStatus('success');
+        setMessage('Thanks for subscribing! Check your email for confirmation.');
         setEmail('');
       } else {
         throw new Error(data.message || 'Something went wrong');
       }
-    } catch (error: any) {
-      if (error.code === 11000) {
-        toast.error('Email already subscribed');
-      } else {
-        toast.error(error.message);
-      }
-    } finally {
-      setLoading(false);
+    } catch (error) {
+      setStatus('error');
+      setMessage(error instanceof Error ? error.message : 'Failed to subscribe');
     }
   };
 
   return (
-    <section className="relative overflow-hidden py-16 sm:py-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="relative">
-          {/* Background gradient */}
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-gray-200 dark:border-gray-800" />
-          </div>
-          <div className="relative flex justify-center">
-            <span className="bg-background px-6 text-base text-muted-foreground flex items-center gap-2">
-              <FaNewspaper className="w-4 h-4" />
-              Stay Updated
-            </span>
-          </div>
-        </div>
-        
-        <motion.div 
-          className="mx-auto mt-12 max-w-xl text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Subscribe to My Newsletter
-          </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-            Get the latest updates about web development, AI, and tech delivered straight to your inbox.
-          </p>
-        </motion.div>
+    <Section id="newsletter" className="overflow-hidden">
+      <SectionHeader>
+        <SectionTitle>Stay Updated</SectionTitle>
+        <SectionDescription>
+          Get notified about the latest features, articles, and resources.
+        </SectionDescription>
+      </SectionHeader>
 
-        <motion.form 
-          onSubmit={handleSubmit}
-          className="mx-auto mt-10 flex max-w-md gap-x-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <div className="flex-grow">
-            <Input
-              type="email"
-              required
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={cn(
-                "w-full",
-                loading && "opacity-50 cursor-not-allowed"
-              )}
-              disabled={loading}
-            />
-          </div>
-          <Button 
-            type="submit" 
-            disabled={loading}
-            className={cn(
-              "flex-none text-black",
-              loading && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            {loading ? 'Subscribing...' : 'Subscribe'}
-          </Button>
-        </motion.form>
+      <SectionContent>
+        <Card className="mx-auto max-w-2xl">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="relative">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="relative flex gap-2"
+              >
+                <div className="relative flex-1">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <Mail className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter your email"
+                    className="block w-full rounded-lg border border-input bg-transparent py-3 pl-10 pr-4 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  variant="gradient"
+                  size="lg"
+                  disabled={status === 'loading'}
+                >
+                  {status === 'loading' ? 'Subscribing...' : 'Subscribe'}
+                </Button>
+              </motion.div>
 
-        <motion.p
-          className="mt-4 text-center text-sm text-muted-foreground"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-        >
-          No spam, unsubscribe at any time.
-        </motion.p>
-      </div>
-    </section>
+              {/* Status Message */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ 
+                  opacity: message ? 1 : 0,
+                  y: message ? 0 : 10 
+                }}
+                className={`mt-2 text-sm ${
+                  status === 'error' ? 'text-destructive' : 'text-primary'
+                }`}
+              >
+                {message}
+              </motion.div>
+            </div>
+
+            {/* Privacy Notice */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-center text-sm text-muted-foreground"
+            >
+              By subscribing, you agree to our{' '}
+              <a href="/privacy" className="underline hover:text-primary">
+                Privacy Policy
+              </a>
+              . Unsubscribe at any time.
+            </motion.p>
+          </form>
+        </Card>
+      </SectionContent>
+    </Section>
   );
 }

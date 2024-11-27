@@ -1,5 +1,5 @@
 import { Lock, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/ui/core/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { PlaygroundSection } from "../data/sections";

@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { executeCode } from '@/lib/services/code-execution';
 import { SnippetsDialog } from './SnippetsDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Label } from '@/components/shared/ui/core/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/shared/ui/navigation/dropdown-menu';

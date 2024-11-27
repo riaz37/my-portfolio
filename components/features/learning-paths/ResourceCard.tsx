@@ -1,8 +1,8 @@
 'use client';
 
 import { Resource } from "@/types/learningPath";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/data-display/card";
-import { Badge } from "@/components/shared/ui/data-display/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/core/card";
+import { Badge } from "@/components/shared/ui/core/badge";
 import { Button } from "@/components/shared/ui/core/button";
 import { Checkbox } from "@/components/shared/ui/core/checkbox";
 import { ExternalLink, CheckCircle } from "lucide-react";

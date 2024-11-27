@@ -9,6 +9,7 @@ declare module 'next-auth' {
       emailVerified: Date | null;
       isVerified: boolean;
       verifiedAt: Date | null;
+      isAdmin?: boolean;
     } & DefaultSession['user'];
   }
 
@@ -18,6 +19,7 @@ declare module 'next-auth' {
     emailVerified: Date | null;
     isVerified: boolean;
     verifiedAt: Date | null;
+    isAdmin?: boolean;
   }
 }
 
@@ -28,5 +30,6 @@ declare module 'next-auth/jwt' {
     emailVerified: Date | null;
     isVerified: boolean;
     verifiedAt: Date | null;
+    isAdmin?: boolean;
   }
 }

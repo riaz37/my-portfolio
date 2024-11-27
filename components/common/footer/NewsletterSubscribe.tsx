@@ -4,13 +4,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { FaPaperPlane, FaEnvelope } from 'react-icons/fa';
 
 export function NewsletterSubscribe() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,13 +28,21 @@ export function NewsletterSubscribe() {
       const data = await response.json();
 
       if (response.ok) {
-        toast.success('Successfully subscribed to the newsletter!');
+        toast({
+          title: "Success",
+          description: "Successfully subscribed to the newsletter!",
+          variant: "default",
+        });
         setEmail('');
       } else {
         throw new Error(data.message || 'Something went wrong');
       }
     } catch (error: any) {
-      toast.error(error.message);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

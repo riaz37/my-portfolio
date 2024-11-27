@@ -16,7 +16,7 @@ import {
   Palette,
   Lock,
 } from 'lucide-react';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/form/input';
@@ -178,7 +178,7 @@ export default function SettingsPage() {
             <div className="flex items-start gap-6">
               <AvatarSelector
                 currentAvatar="/avatars/avatar-1.png"
-                onSelect={(url) => console.log('Avatar selected:', url)}
+                onSelect={(url) => { /* Avatar selected: ${url} */ }}
               />
               <div className="flex-1 space-y-4">
                 <div className="space-y-2">

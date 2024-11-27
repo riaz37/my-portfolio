@@ -1,93 +1,117 @@
 import mongoose, { Schema, Document } from 'mongoose';
-import { slugify } from '@/lib/utils/string';
-import { withTimestamps } from './plugins/baseSchema';
 
 export interface IBlog extends Document {
   title: string;
-  slug: string;
+  description: string;
   content: string;
-  excerpt: string;
-  coverImage: string;
+  slug: string;
   tags: string[];
-  published: boolean;
+  author: {
+    name: string;
+    email: string;
+    image?: string;
+  };
+  coverImage?: string;
+  readingTime?: number;
   views: number;
-  authorEmail: string;
+  likes: number;
+  isPublished: boolean;
+  publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const BlogSchema = new Schema<IBlog>(
-  {
-    title: {
+const blogSchema = new Schema<IBlog>({
+  title: {
+    type: String,
+    required: [true, 'Title is required'],
+    trim: true,
+    maxlength: [100, 'Title cannot be more than 100 characters'],
+  },
+  description: {
+    type: String,
+    required: [true, 'Description is required'],
+    trim: true,
+    maxlength: [500, 'Description cannot be more than 500 characters'],
+  },
+  content: {
+    type: String,
+    required: [true, 'Content is required'],
+  },
+  slug: {
+    type: String,
+    required: [true, 'Slug is required'],
+    unique: true,
+    trim: true,
+    lowercase: true,
+  },
+  tags: [{
+    type: String,
+    trim: true,
+    lowercase: true,
+  }],
+  author: {
+    name: {
       type: String,
-      required: [true, 'Title is required'],
-      trim: true,
-      maxlength: [100, 'Title cannot be more than 100 characters'],
+      required: [true, 'Author name is required'],
     },
-    slug: {
-      type: String,
-      unique: true,
-      index: true,
-    },
-    content: {
-      type: String,
-      required: [true, 'Content is required'],
-    },
-    excerpt: {
-      type: String,
-      required: [true, 'Excerpt is required'],
-      maxlength: [200, 'Excerpt cannot be more than 200 characters'],
-    },
-    coverImage: {
-      type: String,
-      required: [true, 'Cover image is required'],
-    },
-    tags: [{
-      type: String,
-      trim: true,
-      lowercase: true,
-    }],
-    published: {
-      type: Boolean,
-      default: false,
-    },
-    views: {
-      type: Number,
-      default: 0,
-    },
-    authorEmail: {
+    email: {
       type: String,
       required: [true, 'Author email is required'],
-      index: true,
+      lowercase: true,
     },
-  }
-);
+    image: String,
+  },
+  coverImage: String,
+  readingTime: Number,
+  views: {
+    type: Number,
+    default: 0,
+  },
+  likes: {
+    type: Number,
+    default: 0,
+  },
+  isPublished: {
+    type: Boolean,
+    default: false,
+  },
+  publishedAt: Date,
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+}, {
+  timestamps: true,
+});
 
-// Create text index for full-text search
-BlogSchema.index({
-  title: 'text',
+// Add text index for search
+blogSchema.index({ 
+  title: 'text', 
+  description: 'text', 
   content: 'text',
-  excerpt: 'text',
-  tags: 'text',
+  tags: 'text' 
 });
 
-// Generate slug before saving
-BlogSchema.pre('save', function(next) {
-  if (this.isModified('title')) {
-    this.slug = slugify(this.title);
+// Ensure slug is unique before saving
+blogSchema.pre('save', async function(next) {
+  if (this.isModified('slug')) {
+    const count = await mongoose.models.Blog.countDocuments({ 
+      slug: this.slug,
+      _id: { $ne: this._id }
+    });
+    if (count > 0) {
+      throw new Error('Slug must be unique');
+    }
   }
   next();
 });
 
-// Clean up HTML content before saving
-BlogSchema.pre('save', function(next) {
-  if (this.isModified('content')) {
-    // Add any HTML sanitization here if needed
-  }
-  next();
-});
+// Create or get the model
+export const Blog = mongoose.models.Blog || mongoose.model<IBlog>('Blog', blogSchema);
 
-// Apply plugins
-BlogSchema.plugin(withTimestamps);
-
-export const Blog = mongoose.models.Blog || mongoose.model<IBlog>('Blog', BlogSchema);
+export default Blog;

@@ -7,7 +7,7 @@ import { Button } from '@/components/shared/ui/core/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/ui/core/select";
 import { Card } from '@/components/shared/ui/data-display/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/navigation/tabs";
-import { Badge } from "@/components/shared/ui/data-display/badge";
+import { Badge } from "@/components/shared/ui/core/badge";
 import { Play, Share2, Download, Copy, RefreshCw, Layout, Rocket, LightbulbIcon } from 'lucide-react';
 
 interface TutorialStep {

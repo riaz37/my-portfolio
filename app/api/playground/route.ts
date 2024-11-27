@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { connectToDatabase } from '@/lib/db';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { Playground } from '@/models/Playground';
 
 export async function GET() {
   try {
-    const { db } = await connectToDatabase();
-    const games = await db.collection('playground').find({}).toArray();
+    await connectToDatabase();
+    const games = await Playground.find().sort({ createdAt: -1 });
     return NextResponse.json(games);
   } catch (error) {
     console.error('Database error:', error);
@@ -25,19 +26,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const game = await request.json();
-    const { db } = await connectToDatabase();
+    const gameData = await request.json();
+    await connectToDatabase();
     
-    const result = await db.collection('playground').insertOne({
-      ...game,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    });
+    const game = await Playground.create(gameData);
 
-    return NextResponse.json({ 
-      _id: result.insertedId,
-      ...game
-    });
+    return NextResponse.json(game);
   } catch (error) {
     console.error('Database error:', error);
     return NextResponse.json(

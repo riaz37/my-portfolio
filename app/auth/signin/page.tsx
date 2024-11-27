@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { toast } from 'sonner';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 import { AuthContainer } from '@/components/features/auth/AuthContainer';
 import { GoogleButton } from '@/components/features/auth/GoogleButton';
@@ -19,10 +19,14 @@ export default function SignInPage() {
   const router = useRouter();
   const error = searchParams.get('error');
   const callbackUrl = searchParams.get('callbackUrl') || '/playground';
+  const { toast } = useToast();
+  const { update: updateSession } = useSession();
 
   // Handle error messages
   if (error) {
-    toast.error('Authentication Error', {
+    toast({
+      variant: "destructive",
+      title: "Authentication Error",
       description: error === 'OAuthSignin' ? 'Error signing in with provider' :
                   error === 'OAuthCallback' ? 'Error during authentication' :
                   error === 'OAuthCreateAccount' ? 'Could not create user account' :
@@ -32,8 +36,7 @@ export default function SignInPage() {
                   error === 'EmailSignin' ? 'Check your email for the sign in link' :
                   error === 'CredentialsSignin' ? 'Invalid email or password' :
                   error === 'Verification' ? 'Please verify your email before signing in' :
-                  'An error occurred during sign in',
-      duration: 5000,
+                  'An unknown error occurred'
     });
   }
 
@@ -54,36 +57,42 @@ export default function SignInPage() {
         email,
         password,
         redirect: false,
-        callbackUrl,
       });
 
       if (result?.error) {
         if (result.error === 'Please verify your email before signing in') {
-          toast.error('Email Not Verified', {
-            description: 'Please check your email for the verification link.',
-            duration: 5000,
+          toast({
+            variant: "destructive",
+            title: "Email Not Verified",
+            description: 'Please check your email for the verification link.'
           });
-          router.push('/auth/verify-request');
+          router.replace('/auth/verify-request');
           return;
         }
 
-        toast.error('Sign in failed', {
+        toast({
+          variant: "destructive",
+          title: "Sign in failed",
           description: result.error === 'Invalid credentials' 
             ? 'Invalid email or password. Please try again.' 
-            : result.error,
-          duration: 5000,
+            : result.error
         });
       } else if (result?.ok) {
-        toast.success('Welcome back!', {
-          description: 'Successfully signed in to your account.',
-          duration: 3000,
+        // Update session before redirecting
+        await updateSession();
+        
+        toast({
+          title: "Success",
+          description: "Successfully signed in to your account."
         });
-        router.push(callbackUrl);
+        
+        router.replace(callbackUrl);
       }
     } catch (error) {
-      toast.error('Error', {
-        description: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again later.',
-        duration: 5000,
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again later.'
       });
     } finally {
       setIsLoading(false);

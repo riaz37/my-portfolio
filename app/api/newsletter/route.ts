@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getServerSession } from 'next-auth';
-import { connectToDatabase } from '@/lib/db/mongodb';
-import Newsletter from '@/models/Newsletter';
+import { Subscriber } from '@/models/Subscriber';
+import connectToDatabase from '@/lib/db/mongodb';
 
 const schema = z.object({
   email: z.string().email('Invalid email address'),
@@ -18,7 +17,7 @@ export async function POST(request: Request) {
     const { email } = schema.parse(body);
 
     // Check if email already exists
-    const existingSubscriber = await Newsletter.findOne({ email });
+    const existingSubscriber = await Subscriber.findOne({ email });
 
     if (existingSubscriber) {
       return NextResponse.json(
@@ -28,7 +27,11 @@ export async function POST(request: Request) {
     }
 
     // Create new subscriber
-    await Newsletter.create({ email });
+    await Subscriber.create({ 
+      email,
+      isSubscribed: true,
+      subscribedAt: new Date()
+    });
 
     return NextResponse.json(
       { message: 'Successfully subscribed to the newsletter!' },
@@ -52,7 +55,7 @@ export async function POST(request: Request) {
 
     console.error('Newsletter subscription error:', error);
     return NextResponse.json(
-      { message: 'Something went wrong' },
+      { message: 'Failed to subscribe to newsletter' },
       { status: 500 }
     );
   }

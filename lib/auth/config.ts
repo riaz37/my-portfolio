@@ -114,12 +114,17 @@ export const authOptions: AuthOptions = {
           throw new Error('Invalid credentials');
         }
 
+        // Check if email is verified
+        if (!user.emailVerified && !user.isVerified) {
+          throw new Error('Please verify your email before signing in');
+        }
+
         return {
           id: user._id.toString(),
           email: user.email,
           name: user.name,
           role: user.role,
-          isVerified: user.isVerified,
+          isVerified: user.isVerified || !!user.emailVerified,
           emailVerified: user.emailVerified,
         };
       }
@@ -138,10 +143,11 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       await connectToDatabase();
       if (user) {
-        token.id = user.id;
+        token.id = user.id || user._id;
         token.role = user.role;
         token.isVerified = user.isVerified;
         token.emailVerified = user.emailVerified;
+        token.isAdmin = user.role === 'admin';
       }
       return token;
     },
@@ -151,7 +157,8 @@ export const authOptions: AuthOptions = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.isVerified = token.isVerified as boolean;
-        session.user.emailVerified = token.emailVerified as Date;
+        session.user.emailVerified = token.emailVerified as Date | null;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

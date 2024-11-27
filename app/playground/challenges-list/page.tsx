@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Input } from '@/components/shared/ui/core/input';
 import { Button } from '@/components/shared/ui/core/button';

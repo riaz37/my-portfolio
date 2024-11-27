@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Editor } from '@monaco-editor/react';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';

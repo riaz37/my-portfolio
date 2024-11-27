@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/shared/ui/core/button';
-import { toast } from 'sonner';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface GoogleButtonProps {
   isLoading: boolean;
-  callbackUrl: string;
+  callbackUrl?: string;
+  className?: string;
 }
 
-export function GoogleButton({ isLoading: parentLoading, callbackUrl }: GoogleButtonProps) {
+export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playground', className }: GoogleButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleGoogleSignIn = async () => {
     try {
@@ -24,7 +26,9 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl }: GoogleBu
 
       if (result?.error) {
         console.error('Google Sign In Error:', result.error);
-        toast.error('Google Sign In Failed', {
+        toast({
+          variant: "destructive",
+          title: "Google Sign In Failed",
           description: result.error === 'OAuthAccountNotLinked'
             ? 'An account with this email already exists. Please sign in with your existing provider.'
             : result.error === 'Configuration'
@@ -34,7 +38,6 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl }: GoogleBu
             : result.error === 'Callback'
             ? 'Authentication error occurred. Please try again.'
             : 'Failed to sign in with Google. Please try again.',
-          duration: 5000,
         });
       } else if (result?.url) {
         // Explicitly handle successful sign-in
@@ -42,9 +45,10 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl }: GoogleBu
       }
     } catch (error) {
       console.error('Unexpected Google Sign In Error:', error);
-      toast.error('Error', {
-        description: 'An unexpected error occurred. Please try again later.',
-        duration: 5000,
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "An unexpected error occurred. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -54,7 +58,7 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl }: GoogleBu
   return (
     <Button
       onClick={handleGoogleSignIn}
-      className="w-full bg-white text-black hover:bg-gray-50 border border-gray-300"
+      className={`w-full bg-white text-black hover:bg-gray-50 border border-gray-300 ${className}`}
       disabled={isLoading || parentLoading}
     >
       {isLoading ? (

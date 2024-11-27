@@ -1,9 +1,9 @@
 'use client';
 
 import { CareerPath } from "@/types/learningPath";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/data-display/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/core/card";
 import { Button } from "@/components/shared/ui/core/button";
-import { Badge } from "@/components/shared/ui/data-display/badge";
+import { Badge } from "@/components/shared/ui/core/badge";
 import { motion } from "framer-motion";
 import * as Icons from 'react-icons/fa';
 import { IconType } from "react-icons";

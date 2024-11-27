@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
-import { connectDB } from '@/lib/db/mongodb';
+import connectToDatabase from '@/lib/db/mongodb';
+import User from '@/models/auth/User';
+
 
 export async function POST(request: Request) {
   try {
-    const { email, password, adminKey } = await request.json();
+    const { email, password, secretKey } = await request.json();
 
     // Verify admin creation key
-    if (adminKey !== process.env.ADMIN_CREATION_KEY) {
+    if (secretKey !== process.env.ADMIN_CREATION_KEY) {
       return NextResponse.json(
         { error: 'Invalid admin creation key' },
         { status: 401 }
       );
     }
 
-    const { db } = await connectDB();
+    await connectToDatabase();
 
     // Check if admin already exists
-    const existingAdmin = await db.collection('users').findOne({
+    const existingAdmin = await User.findOne({
       email,
       role: 'admin'
     });
@@ -33,21 +35,23 @@ export async function POST(request: Request) {
     const hashedPassword = await hash(password, 12);
 
     // Create admin user
-    const result = await db.collection('users').insertOne({
+    const currentTime = new Date();
+    const adminUser = await User.create({
       email,
       password: hashedPassword,
       role: 'admin',
       name: 'Admin',
-      emailVerified: new Date(),
+      emailVerified: currentTime,
       isVerified: true,
-      verifiedAt: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
+      verifiedAt: currentTime,
+      createdAt: currentTime,
+      updatedAt: currentTime,
+      lastSignedIn: currentTime
     });
 
     return NextResponse.json({
       message: 'Admin user created successfully',
-      userId: result.insertedId
+      userId: adminUser._id
     });
   } catch (error) {
     console.error('Error creating admin:', error);

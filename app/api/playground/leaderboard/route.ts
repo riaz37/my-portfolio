@@ -1,190 +1,195 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { connectDB } from '@/lib/db/mongodb';
-import { ObjectId } from 'mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import mongoose from 'mongoose';
+import { Leaderboard } from '@/models/Leaderboard';
+import { UserSkill } from '@/models/UserSkill';
+import { Achievement } from '@/models/Achievement';
+import { User } from '@/models/User';
 
 // Sample leaderboard entries for initialization
 const SAMPLE_LEADERBOARD = [
   {
     userId: 'sample1',
-    name: 'Alex Thompson',
-    imageUrl: '/avatars/avatar1.png',
-    totalXP: 2500,
+    points: 2500,
     gamesCompleted: 15,
-    topSkill: 'JavaScript',
-    skillLevel: 75,
-    achievements: 8,
+    achievementsCount: 8,
+    topSkill: {
+      name: 'JavaScript',
+      level: 75
+    },
     rank: 1,
-    recentActivity: 'Mastered JavaScript Arena',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample2',
-    name: 'Sarah Chen',
-    imageUrl: '/avatars/avatar2.png',
-    totalXP: 2200,
+    points: 2200,
     gamesCompleted: 12,
-    topSkill: 'React',
-    skillLevel: 70,
-    achievements: 7,
+    achievementsCount: 7,
+    topSkill: {
+      name: 'React',
+      level: 70
+    },
     rank: 2,
-    recentActivity: 'Completed React Challenge',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample3',
-    name: 'Michael Kim',
-    imageUrl: '/avatars/avatar3.png',
-    totalXP: 1800,
+    points: 1800,
     gamesCompleted: 10,
-    topSkill: 'HTML/CSS',
-    skillLevel: 65,
-    achievements: 6,
+    achievementsCount: 6,
+    topSkill: {
+      name: 'HTML/CSS',
+      level: 65
+    },
     rank: 3,
-    recentActivity: 'Unlocked CSS Master',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample4',
-    name: 'Emma Davis',
-    imageUrl: '/avatars/avatar4.png',
-    totalXP: 1500,
+    points: 1500,
     gamesCompleted: 8,
-    topSkill: 'TypeScript',
-    skillLevel: 60,
-    achievements: 5,
+    achievementsCount: 5,
+    topSkill: {
+      name: 'TypeScript',
+      level: 60
+    },
     rank: 4,
-    recentActivity: 'Completed TypeScript Basics',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample5',
-    name: 'James Wilson',
-    imageUrl: '/avatars/avatar5.png',
-    totalXP: 1200,
+    points: 1200,
     gamesCompleted: 6,
-    topSkill: 'Node.js',
-    skillLevel: 55,
-    achievements: 4,
+    achievementsCount: 4,
+    topSkill: {
+      name: 'Node.js',
+      level: 55
+    },
     rank: 5,
-    recentActivity: 'Started Backend Track',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample6',
-    name: 'Sophia Garcia',
-    imageUrl: '/avatars/avatar6.png',
-    totalXP: 1000,
+    points: 1000,
     gamesCompleted: 5,
-    topSkill: 'Python',
-    skillLevel: 50,
-    achievements: 3,
+    achievementsCount: 3,
+    topSkill: {
+      name: 'Python',
+      level: 50
+    },
     rank: 6,
-    recentActivity: 'Learning Python Basics',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample7',
-    name: 'David Lee',
-    imageUrl: '/avatars/avatar7.png',
-    totalXP: 800,
+    points: 800,
     gamesCompleted: 4,
-    topSkill: 'Vue.js',
-    skillLevel: 45,
-    achievements: 2,
+    achievementsCount: 2,
+    topSkill: {
+      name: 'Vue.js',
+      level: 45
+    },
     rank: 7,
-    recentActivity: 'Started Frontend Track',
+    lastUpdated: new Date()
   },
   {
     userId: 'sample8',
-    name: 'Olivia Brown',
-    imageUrl: '/avatars/avatar8.png',
-    totalXP: 600,
+    points: 600,
     gamesCompleted: 3,
-    topSkill: 'Angular',
-    skillLevel: 40,
-    achievements: 1,
+    achievementsCount: 1,
+    topSkill: {
+      name: 'Angular',
+      level: 40
+    },
     rank: 8,
-    recentActivity: 'Learning Web Development',
+    lastUpdated: new Date()
   }
 ];
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    const { db } = await connectDB();
+    await connectToDatabase();
 
     // Initialize leaderboard if empty
-    const existingEntries = await db.collection('leaderboard').countDocuments();
+    const existingEntries = await Leaderboard.countDocuments();
     if (existingEntries === 0) {
-      await db.collection('leaderboard').insertMany(SAMPLE_LEADERBOARD);
+      await Leaderboard.insertMany(SAMPLE_LEADERBOARD);
     }
 
     // Get leaderboard
-    const leaderboard = await db.collection('leaderboard')
-      .find()
-      .sort({ totalXP: -1, gamesCompleted: -1 })
+    const leaderboard = await Leaderboard.find()
+      .sort({ points: -1, gamesCompleted: -1 })
       .limit(10)
-      .toArray();
+      .lean();
 
     // Add current user if authenticated
     if (session?.user?.id) {
-      // Get user stats for ranking
-      const userStats = await db.collection('userProgress').aggregate([
-        {
-          $match: {
-            userId: new ObjectId(session.user.id),
-            status: { $in: ['completed', 'mastered'] }
-          }
-        },
-        {
-          $group: {
-            _id: '$userId',
-            totalXP: { $sum: '$xpEarned' },
-            gamesCompleted: { $sum: 1 }
-          }
-        }
-      ]).toArray();
+      // Get user's top skill
+      const userSkills = await UserSkill.findOne({ userId: session.user.id })
+        .sort({ 'skills.level': -1 })
+        .lean();
 
-      if (userStats.length > 0) {
-        // Get top skills
-        const userTopSkill = await db.collection('userSkills').findOne(
-          { userId: new ObjectId(session.user.id) },
-          { sort: { level: -1 } }
-        );
+      // Get achievements count
+      const achievementsCount = await Achievement.countDocuments({
+        userId: session.user.id
+      });
 
-        // Get achievements count
-        const achievementsCount = await db.collection('userAchievements').countDocuments({
-          userId: new ObjectId(session.user.id)
-        });
+      // Get user's profile
+      const userProfile = await User.findById(session.user.id).select('name image').lean();
 
-        // Get user's current avatar from the database
-        const userProfile = await db.collection('users').findOne(
-          { _id: new ObjectId(session.user.id) }
-        );
-
-        const userEntry = {
+      if (userProfile) {
+        const userStats = {
           userId: session.user.id,
-          name: session.user.name || 'Anonymous User',
-          imageUrl: userProfile?.avatar || '/avatars/avatar1.png',
-          totalXP: userStats[0].totalXP,
-          gamesCompleted: userStats[0].gamesCompleted,
-          topSkill: userTopSkill?.skillName || 'None',
-          skillLevel: userTopSkill?.level || 0,
-          achievements: achievementsCount,
-          isCurrentUser: true
+          points: 0, // Calculate from achievements and games
+          gamesCompleted: 0, // Calculate from completed games
+          achievementsCount,
+          topSkill: userSkills ? {
+            name: Object.keys(userSkills.skills)[0],
+            level: Object.values(userSkills.skills)[0]
+          } : null,
+          rank: 0,
+          lastUpdated: new Date()
         };
 
-        // Find user's rank
-        const userRank = await db.collection('leaderboard').countDocuments({
-          totalXP: { $gt: userStats[0].totalXP }
-        }) + 1;
-
-        userEntry.rank = userRank;
+        // Calculate user's rank
+        const higherRankedUsers = await Leaderboard.countDocuments({
+          points: { $gt: userStats.points }
+        });
+        userStats.rank = higherRankedUsers + 1;
 
         // Add user to leaderboard if they're not already in top 10
         if (!leaderboard.some(entry => entry.userId === session.user.id)) {
-          leaderboard.push(userEntry);
+          leaderboard.push(userStats);
         }
       }
     }
 
-    return NextResponse.json(leaderboard);
+    // Enrich leaderboard with user details
+    const enrichedLeaderboard = await Promise.all(
+      leaderboard.map(async (entry) => {
+        if (entry.userId.startsWith('sample')) {
+          return {
+            ...entry,
+            name: `Player ${entry.rank}`,
+            image: `/avatars/avatar${entry.rank}.png`,
+            isCurrentUser: false
+          };
+        }
+
+        const user = await User.findById(entry.userId).select('name image').lean();
+        return {
+          ...entry,
+          name: user?.name || 'Anonymous User',
+          image: user?.image || '/avatars/default.png',
+          isCurrentUser: session?.user?.id === entry.userId
+        };
+      })
+    );
+
+    return NextResponse.json(enrichedLeaderboard);
   } catch (error) {
     console.error('Failed to fetch leaderboard:', error);
     return NextResponse.json(

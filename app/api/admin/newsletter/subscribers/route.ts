@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { Newsletter } from '@/models/content';
-import { connectToDatabase } from '@/lib/db';
+import { connectToDatabase } from '@/lib/db/mongodb';
 
 export async function GET() {
   try {

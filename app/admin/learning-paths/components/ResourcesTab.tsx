@@ -6,9 +6,9 @@ import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/core/dialog';
-import { Card } from '@/components/shared/ui/data-display/card';
-import { Badge } from '@/components/shared/ui/data-display/badge';
-import { toast } from 'sonner';
+import { Card } from '@/components/shared/ui/core/card';
+import { Badge } from '@/components/shared/ui/core/badge';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 
 interface Resource {
@@ -30,7 +30,7 @@ interface Resource {
 export default function ResourcesTab() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [resourceForm, setResourceForm] = useState({
     title: '',
@@ -46,6 +46,7 @@ export default function ResourcesTab() {
     language: '',
     solutionCode: '',
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchResources();
@@ -59,13 +60,17 @@ export default function ResourcesTab() {
       setResources(data);
     } catch (error) {
       console.error('Error fetching resources:', error);
-      toast.error('Failed to fetch resources');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch resources"
+      });
     }
   };
 
   const handleAddResource = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/admin/learning-paths/resources', {
@@ -76,7 +81,10 @@ export default function ResourcesTab() {
 
       if (!response.ok) throw new Error('Failed to add resource');
 
-      toast.success('Resource added successfully');
+      toast({
+        title: "Success",
+        description: "Resource added successfully"
+      });
       setIsDialogOpen(false);
       setResourceForm({
         title: '',
@@ -95,9 +103,13 @@ export default function ResourcesTab() {
       fetchResources();
     } catch (error) {
       console.error('Error adding resource:', error);
-      toast.error('Failed to add resource');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add resource"
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -111,11 +123,18 @@ export default function ResourcesTab() {
 
       if (!response.ok) throw new Error('Failed to delete resource');
 
-      toast.success('Resource deleted successfully');
+      toast({
+        title: "Success",
+        description: "Resource deleted successfully"
+      });
       fetchResources();
     } catch (error) {
       console.error('Error deleting resource:', error);
-      toast.error('Failed to delete resource');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete resource"
+      });
     }
   };
 
@@ -219,8 +238,8 @@ export default function ResourcesTab() {
             />
           </>
         )}
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Adding...' : 'Add Resource'}
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Adding...' : 'Add Resource'}
         </Button>
       </form>
     );

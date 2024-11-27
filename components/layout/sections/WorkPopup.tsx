@@ -4,42 +4,59 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { WorkExperience } from '@/data/workExperience';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import Image from 'next/image';
+import { cn } from '@/lib/utils';
 
 interface WorkPopupProps {
-  active: WorkExperience | null;
-  setActive: (experience: WorkExperience | null) => void;
+  experience: WorkExperience;
+  onClose: () => void;
 }
 
-const WorkPopup = forwardRef<HTMLDivElement, WorkPopupProps>(({ active, setActive }, ref) => {
-  if (!active) return null;
-
+const WorkPopup = forwardRef<HTMLDivElement, WorkPopupProps>(({ experience, onClose }, ref) => {
   return (
-    <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        onClick={(e) => {
-          if (e.target === e.currentTarget) setActive(null);
-        }}
+        ref={ref}
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: "spring", damping: 25, stiffness: 120 }}
+        className={cn(
+          "relative w-full max-w-2xl max-h-[80vh] overflow-y-auto",
+          "bg-gradient-to-br from-card via-card/95 to-card/90",
+          "text-card-foreground p-8 rounded-xl",
+          "border border-border/50 shadow-xl",
+          "backdrop-blur-sm"
+        )}
       >
-        <motion.div
-          ref={ref}
-          initial={{ scale: 0.9, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.9, opacity: 0, y: 20 }}
-          transition={{ type: "spring", damping: 25, stiffness: 120 }}
-          className="bg-card text-card-foreground p-8 rounded-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto relative border border-border/50 shadow-xl"
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent rounded-xl" />
+        <div className="absolute -inset-0.5 bg-gradient-to-br from-primary/20 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur" />
+        
+        {/* Close button */}
+        <motion.button
+          onClick={onClose}
+          className={cn(
+            "absolute top-4 right-4 p-2 rounded-full transition-all duration-300",
+            "bg-gradient-to-br from-primary/10 to-primary/5",
+            "hover:from-primary/20 hover:to-primary/10",
+            "text-primary shadow-lg",
+            "border border-primary/10"
+          )}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          {/* Close button */}
-          <button
-            onClick={() => setActive(null)}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-primary/10 text-primary transition-colors"
-          >
-            <XMarkIcon className="w-6 h-6" />
-          </button>
+          <XMarkIcon className="w-6 h-6" />
+        </motion.button>
 
+        <div className="relative">
           {/* Header */}
           <div className="flex items-start space-x-6 mb-8">
             <motion.div 
@@ -48,14 +65,20 @@ const WorkPopup = forwardRef<HTMLDivElement, WorkPopupProps>(({ active, setActiv
               animate={{ scale: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <div className="bg-primary/10 rounded-xl p-4">
+              <div className={cn(
+                "relative overflow-hidden rounded-xl",
+                "bg-gradient-to-br from-primary/10 to-primary/5 p-4",
+                "group hover:from-primary/15 hover:to-primary/10",
+                "transition-colors duration-300"
+              )}>
                 <Image
-                  src={active.logo}
-                  alt={`${active.company} logo`}
+                  src={experience.logo}
+                  alt={`${experience.company} logo`}
                   width={60}
                   height={60}
                   className="rounded-lg"
                 />
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
             </motion.div>
 
@@ -64,9 +87,9 @@ const WorkPopup = forwardRef<HTMLDivElement, WorkPopupProps>(({ active, setActiv
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/80 mb-2"
+                className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent mb-2"
               >
-                {active.position}
+                {experience.position}
               </motion.h3>
               <motion.div
                 initial={{ y: -20, opacity: 0 }}
@@ -74,60 +97,62 @@ const WorkPopup = forwardRef<HTMLDivElement, WorkPopupProps>(({ active, setActiv
                 transition={{ delay: 0.2 }}
                 className="space-y-1"
               >
-                <p className="text-lg font-semibold text-primary/80">{active.company}</p>
-                <p className="text-sm text-muted-foreground">{active.duration}</p>
-                <p className="text-sm text-muted-foreground">{active.year}</p>
+                <p className="text-lg font-semibold text-primary/80">{experience.company}</p>
+                <p className="text-sm text-muted-foreground">{experience.duration}</p>
+                <p className="text-sm text-muted-foreground">{experience.year}</p>
               </motion.div>
             </div>
           </div>
-
-          {/* Skills grid */}
-          <motion.div 
-            className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-6"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 }}
-          >
-            {active.skills.map((skill, i) => (
-              <motion.div
-                key={i}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.4 + i * 0.05 }}
-                className="flex items-center bg-primary/5 hover:bg-primary/10 text-primary px-3 py-2 rounded-lg transition-colors"
-              >
-                {React.createElement(skill.icon, { className: "mr-2 w-4 h-4" })}
-                <span className="text-sm font-medium">{skill.name}</span>
-              </motion.div>
-            ))}
-          </motion.div>
 
           {/* Description */}
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="space-y-4"
+            transition={{ delay: 0.3 }}
+            className="mb-8"
           >
-            <h4 className="text-lg font-semibold text-primary mb-4">Key Achievements & Responsibilities</h4>
-            <ul className="space-y-3">
-              {active.description.map((item, i) => (
-                <motion.li
-                  key={i}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.6 + i * 0.1 }}
-                  className="flex items-start space-x-2"
-                >
-                  <span className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2" />
-                  <span className="text-card-foreground/80">{item}</span>
-                </motion.li>
+            <h4 className="text-lg font-semibold text-primary/90 mb-3">About the Role</h4>
+            <div className="space-y-2">
+              {experience.description.map((desc, i) => (
+                <p key={i} className="text-muted-foreground leading-relaxed">
+                  {desc}
+                </p>
               ))}
-            </ul>
+            </div>
           </motion.div>
-        </motion.div>
+
+          {/* Skills */}
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.6 }}
+          >
+            <h4 className="text-lg font-semibold text-primary/90 mb-3">Technologies & Skills</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {experience.skills.map((skill, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.7 + i * 0.05 }}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300",
+                    "bg-gradient-to-br from-primary/10 to-primary/5",
+                    "hover:from-primary/15 hover:to-primary/10",
+                    "text-primary/90 hover:text-primary",
+                    "border border-primary/10",
+                    "group hover:shadow-md"
+                  )}
+                >
+                  {React.createElement(skill.icon, { className: "w-4 h-4" })}
+                  {skill.name}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 });
 

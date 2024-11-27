@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { User } from '@/models/User';
@@ -14,7 +14,7 @@ export async function GET() {
       );
     }
 
-    await connectDB();
+    await connectToDatabase();
     
     // Find user and check verification status
     const user = await User.findById(session.user.id)

@@ -1,80 +1,137 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { connectDB } from '@/lib/db/mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { Game } from '@/models/Game';
+import { Achievement } from '@/models/Achievement';
 
 const DEFAULT_GAMES = [
   {
     title: "HTML Puzzle",
     description: "Test your HTML knowledge by solving interactive puzzles",
     category: "Web Development",
-    difficulty: "Beginner",
+    difficulty: "easy",
     imageUrl: "/games/html-puzzle.png",
-    gameUrl: "/playground/html-puzzle",
     instructions: [
       "Arrange HTML elements in the correct order",
       "Match tags with their appropriate attributes",
       "Complete the missing parts of HTML structure"
     ],
-    controls: [
-      { key: "Drag and Drop", action: "Move elements" },
-      { key: "Click", action: "Select element" }
+    hints: [
+      "Start with basic HTML structure",
+      "Consider semantic meaning",
+      "Check tag nesting"
     ],
-    features: [
-      "Interactive drag-and-drop interface",
-      "Real-time validation",
-      "Progressive difficulty"
-    ],
-    xp: 100,
-    skills: ["HTML", "Web Structure", "Semantic HTML"],
+    points: 100,
+    solution: `<!DOCTYPE html>
+<html>
+<head>
+  <title>Sample Solution</title>
+</head>
+<body>
+  <header>
+    <h1>Welcome</h1>
+    <nav>
+      <ul>
+        <li><a href="#home">Home</a></li>
+      </ul>
+    </nav>
+  </header>
+  <main>
+    <article>
+      <h2>Article Title</h2>
+      <p>Content here...</p>
+    </article>
+  </main>
+  <footer>
+    <p>&copy; 2024</p>
+  </footer>
+</body>
+</html>`,
+    testCases: [
+      {
+        input: "document structure",
+        expectedOutput: "<!DOCTYPE html>",
+        description: "Check DOCTYPE declaration"
+      }
+    ]
   },
   {
     title: "CSS Challenge",
     description: "Master CSS styling through interactive challenges",
     category: "Web Development",
-    difficulty: "Intermediate",
+    difficulty: "medium",
     imageUrl: "/games/css-challenge.png",
-    gameUrl: "/playground/css-challenge",
     instructions: [
       "Write CSS to match the target design",
       "Use appropriate selectors and properties",
       "Optimize your CSS code"
     ],
-    controls: [
-      { key: "Type", action: "Write CSS" },
-      { key: "Enter", action: "Submit solution" }
+    hints: [
+      "Consider using flexbox",
+      "Check responsive breakpoints",
+      "Use CSS variables for colors"
     ],
-    features: [
-      "Live preview",
-      "Multiple difficulty levels",
-      "Best practices validation"
-    ],
-    xp: 150,
-    skills: ["CSS", "Layout", "Responsive Design"],
+    points: 150,
+    solution: `.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+}`,
+    testCases: [
+      {
+        input: "flex container",
+        expectedOutput: "display: flex",
+        description: "Check flexbox usage"
+      }
+    ]
   },
   {
     title: "JavaScript Arena",
     description: "Practice JavaScript by solving coding challenges",
     category: "Programming",
-    difficulty: "Advanced",
+    difficulty: "hard",
     imageUrl: "/games/js-arena.png",
-    gameUrl: "/playground/js-arena",
     instructions: [
       "Solve algorithmic challenges",
       "Implement JavaScript functions",
       "Optimize code performance"
     ],
-    controls: [
-      { key: "Type", action: "Write code" },
-      { key: "Ctrl + Enter", action: "Run code" }
+    hints: [
+      "Use array methods",
+      "Consider recursion",
+      "Check for edge cases"
     ],
-    features: [
-      "Built-in code editor",
-      "Test cases",
-      "Performance metrics"
-    ],
-    xp: 200,
-    skills: ["JavaScript", "Algorithms", "Problem Solving"],
+    points: 200,
+    solution: `function findMax(arr) {
+  return Math.max(...arr);
+}`,
+    testCases: [
+      {
+        input: [1, 2, 3, 4, 5],
+        expectedOutput: 5,
+        description: "Find maximum in array"
+      },
+      {
+        input: [-1, -5, -2],
+        expectedOutput: -1,
+        description: "Find maximum in negative numbers"
+      }
+    ]
   }
 ];
 
@@ -134,16 +191,16 @@ export async function GET() {
       );
     }
 
-    const { db } = await connectDB();
+    await connectToDatabase();
 
     // Initialize games if they don't exist
-    const existingGames = await db.collection('games').countDocuments();
+    const existingGames = await Game.countDocuments();
     if (existingGames === 0) {
-      await db.collection('games').insertMany(DEFAULT_GAMES);
+      await Game.insertMany(DEFAULT_GAMES);
     }
 
     // Get all games
-    const games = await db.collection('games').find().toArray();
+    const games = await Game.find().sort({ difficulty: 1, points: 1 });
     return NextResponse.json(games);
   } catch (error) {
     console.error('Failed to fetch games:', error);
@@ -164,23 +221,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { db } = await connectDB();
+    await connectToDatabase();
 
     // Initialize default games
-    await db.collection('games').deleteMany({});
-    await db.collection('games').insertMany(DEFAULT_GAMES);
+    await Game.deleteMany({});
+    const games = await Game.insertMany(DEFAULT_GAMES);
 
     // Initialize default achievements
-    await db.collection('achievements').deleteMany({});
-    await db.collection('achievements').insertMany(DEFAULT_ACHIEVEMENTS);
+    await Achievement.deleteMany({});
 
     return NextResponse.json({
-      message: 'Games and achievements initialized successfully',
-      gamesCount: DEFAULT_GAMES.length,
-      achievementsCount: DEFAULT_ACHIEVEMENTS.length
+      message: 'Games initialized successfully',
+      gamesCount: games.length
     });
   } catch (error) {
-    console.error('Failed to initialize games and achievements:', error);
+    console.error('Failed to initialize games:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

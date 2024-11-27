@@ -18,7 +18,6 @@ export default function ResetPasswordPage() {
     setMessage('');
 
     try {
-      console.log('Submitting password reset request for:', email);
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: {
@@ -28,7 +27,6 @@ export default function ResetPasswordPage() {
       });
 
       const data = await response.json();
-      console.log('Password reset response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Something went wrong');

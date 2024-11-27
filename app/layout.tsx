@@ -4,10 +4,14 @@ import { getServerSession } from "next-auth";
 import { Analytics } from "@vercel/analytics/react";
 import { authOptions } from "@/lib/auth";
 import { Inter } from 'next/font/google';
-import { ThemeProvider } from '@/components/shared/theme-provider';
-import { LayoutWrapper } from "./LayoutContent";
+import { RootProvider } from '@/components/providers/root-provider';
+import { LayoutWrapper } from "@/components/layout/layout-content";
 import { siteConfig } from '@/config/site';
+import { Toaster } from "@/components/shared/ui/feedback/toaster";
+import { Providers } from '@/components/providers/providers';
+import { ThemeProvider } from 'next-themes';
 import "./globals.css";
+import { cn } from '@/lib/utils';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -55,18 +59,27 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
-      <body className={inter.className}>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={cn(
+          'min-h-screen bg-background font-sans antialiased',
+          inter.variable
+        )}
+      >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
-          enableSystem={false}
-          forcedTheme="dark"
+          defaultTheme="system"
+          enableSystem
           disableTransitionOnChange
         >
-          <main>
-            <LayoutWrapper>{children}</LayoutWrapper>
-          </main>
+          <RootProvider>
+            <Providers>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+              <Toaster />
+            </Providers>
+          </RootProvider>
         </ThemeProvider>
         <Analytics />
       </body>

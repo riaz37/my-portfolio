@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Card } from '@/components/shared/ui/data-display/card';
 import { Badge } from '@/components/shared/ui/data-display/badge';
-import { toast } from 'react-hot-toast';
+import { useToast } from '@/hooks/useToast';
 import { motion } from 'framer-motion';
 import { Loading } from '@/components/shared/loading';
 
@@ -22,6 +22,7 @@ interface Challenge {
 export default function ChallengesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useToast();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingChallenge, setLoadingChallenge] = useState(false);
@@ -42,7 +43,11 @@ export default function ChallengesPage() {
       setChallenges(data);
     } catch (error) {
       console.error('Error fetching challenges:', error);
-      toast.error('Failed to load challenges');
+      toast({
+        title: "Error",
+        description: "Failed to load challenges",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

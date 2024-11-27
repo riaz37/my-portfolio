@@ -1,84 +1,64 @@
 'use client';
 
-import { memo, useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/utils/cn";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-interface NavItem {
-  name: string;
-  link: string;
-  icon: React.ReactNode;
-}
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface FloatingNavProps {
-  className?: string;
-  navItems: NavItem[];
+  navItems: {
+    name: string;
+    link: string;
+    icon?: React.ReactNode;
+  }[];
 }
 
-const FloatingNavbar = memo(({ className, navItems = [] }: FloatingNavProps) => {
+export default function FloatingNav({ navItems }: FloatingNavProps) {
   const pathname = usePathname();
 
-  const isActive = useCallback((link: string) => {
-    if (link.startsWith('/#')) {
-      return pathname === '/';
-    }
-    return pathname === link;
-  }, [pathname]);
-
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        className={cn(
-          "relative top-4 mx-auto z-40",
-          className
-        )}
-      >
-        <motion.div
-          className={cn(
-            "relative px-4 py-2 rounded-full",
-            "bg-white/80 dark:bg-gray-950/80",
-            "backdrop-blur-md backdrop-saturate-150",
-            "border border-gray-200 dark:border-gray-800",
-            "shadow-[0px_2px_3px_-1px_rgba(0,0,0,0.1),0px_1px_0px_0px_rgba(25,28,33,0.02),0px_0px_0px_1px_rgba(25,28,33,0.08)]"
-          )}
-        >
-          <ul className="flex items-center gap-2">
-            {navItems.map(({ name, link, icon }) => (
-              <motion.li key={link} className="relative">
-                <Link
-                  href={link}
-                  className={cn(
-                    "px-4 py-2 rounded-full text-sm font-medium",
-                    "flex items-center gap-2 relative z-20",
-                    "transition-colors duration-200",
-                    "text-gray-700 dark:text-gray-300",
-                    "hover:text-gray-900 dark:hover:text-gray-100"
-                  )}
-                >
-                  {icon}
-                  <span>{name}</span>
-                </Link>
-                {isActive(link) && (
+    <div className="fixed left-0 right-0 top-4 z-50 mx-auto flex w-fit animate-nav-show">
+      <nav className="relative flex space-x-2 rounded-full bg-white/30 p-2 backdrop-blur-lg dark:bg-gray-900/20">
+        {/* Background Glow */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-r from-primary/5 via-accent/5 to-primary/5 blur-xl" />
+        
+        {/* Navigation Items */}
+        <div className="relative flex space-x-2">
+          {navItems.map((item, index) => {
+            const isActive = pathname === item.link;
+            
+            return (
+              <Link
+                key={item.link}
+                href={item.link}
+                className={cn(
+                  "relative flex items-center space-x-1 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-300 hover:text-primary",
+                  {
+                    "text-primary": isActive,
+                    "text-muted-foreground/80": !isActive,
+                  }
+                )}
+              >
+                {isActive && (
                   <motion.div
                     layoutId="active-pill"
-                    className="absolute inset-0 z-10 rounded-full bg-gray-100 dark:bg-gray-800"
-                    transition={{ type: "spring", duration: 0.5 }}
+                    className="absolute inset-0 rounded-full bg-accent/30 backdrop-blur-sm"
+                    transition={{
+                      type: "spring",
+                      bounce: 0.3,
+                      duration: 0.6
+                    }}
                   />
                 )}
-              </motion.li>
-            ))}
-          </ul>
-        </motion.div>
-      </motion.div>
-    </AnimatePresence>
+                {item.icon && (
+                  <span className="relative">{item.icon}</span>
+                )}
+                <span className="relative">{item.name}</span>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
-});
-
-FloatingNavbar.displayName = "FloatingNavbar";
-
-export default FloatingNavbar;
+}

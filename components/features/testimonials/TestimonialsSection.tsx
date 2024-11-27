@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TestimonialCard } from "./TestimonialCard";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/ui/core/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sectionTitles } from '@/lib/config/section-titles';
-import { SectionTitle } from '@/components/shared/ui/layout/SectionTitle';
+import { SectionTitle } from '@/components/shared/ui/section';
 
 interface Testimonial {
   name: string;
@@ -77,11 +77,15 @@ export function TestimonialsSection() {
 
   return (
     <section className="py-20 px-4 relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5 -z-10" />
-      
+      {/* Remove background gradient */}
       <div className="max-w-6xl mx-auto">
-        <SectionTitle {...sectionTitles.testimonials} />
+        <SectionTitle 
+          highlight="Testimonials"
+          subtitle={sectionTitles.testimonials.description}
+          showDecoration={true}
+        >
+          Client Testimonials
+        </SectionTitle>
         
         <div className="relative">
           <div className="flex justify-center items-center">

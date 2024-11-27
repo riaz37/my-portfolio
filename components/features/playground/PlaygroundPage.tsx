@@ -10,7 +10,7 @@ import { Loading as LoadingComponent } from "@/components/shared/loading";
 import { motion } from "framer-motion";
 import { UserMenu } from "./user-menu";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/ui/core/button";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

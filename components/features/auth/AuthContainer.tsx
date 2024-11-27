@@ -1,7 +1,7 @@
 'use client';
 
 import { type ReactNode } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/shared/ui/data-display/card';
+import { Card, CardContent, CardHeader } from '@/components/shared/ui/core/card';
 
 interface AuthContainerProps {
   children: ReactNode;

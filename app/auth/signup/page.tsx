@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { toast } from 'sonner';
+import { useToast } from '@/components/shared/ui/feedback/use-toast';
 import { AuthContainer } from '@/components/features/auth/AuthContainer';
 import { GoogleButton } from '@/components/features/auth/GoogleButton';
 import { OrDivider } from '@/components/features/auth/OrDivider';
@@ -16,6 +16,8 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
+  const { update: updateSession } = useSession();
   const callbackUrl = searchParams.get('callbackUrl') || '/playground';
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -29,15 +31,15 @@ export default function SignUpPage() {
       const confirmPassword = formData.get('confirmPassword') as string;
       const username = formData.get('username') as string;
 
-      // Log form data (excluding passwords)
-      console.log('Form data:', { email, username });
-
       if (password !== confirmPassword) {
-        toast.error('Passwords do not match');
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Passwords do not match"
+        });
         return;
       }
 
-      console.log('Sending registration request...');
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
@@ -51,42 +53,40 @@ export default function SignUpPage() {
       });
 
       const data = await response.json();
-      console.log('Registration response:', { status: response.status, data });
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create account');
       }
 
       // Sign in the user after successful registration
-      console.log('Registration successful, attempting sign in...');
       const result = await signIn('credentials', {
         email,
         password,
         redirect: false,
-        callbackUrl,
       });
 
       if (result?.error) {
-        console.error('Sign in error:', result.error);
         throw new Error('Failed to sign in after registration');
       }
 
+      // Update session before showing toast and redirecting
+      await updateSession();
+
       // Show verification email toast
-      toast.success('Verification Email Sent', {
-        description: 'Please check your inbox and click the verification link.',
-        duration: 6000,
-        icon: '✉️',
-        style: {
-          backgroundColor: 'var(--primary)',
-          color: 'black',
-        },
-        className: 'font-medium',
+      toast({
+        title: "Verification Email Sent",
+        description: "Please check your inbox and click the verification link.",
       });
 
-      router.push(callbackUrl);
+      // Use router.replace instead of push to ensure clean navigation
+      router.replace(callbackUrl);
     } catch (error) {
       console.error('Signup error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create account');
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to create account'
+      });
     } finally {
       setIsLoading(false);
     }

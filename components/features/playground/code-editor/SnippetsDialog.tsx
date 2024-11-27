@@ -14,8 +14,8 @@ import {
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { ScrollArea } from '@/components/shared/ui/layout/scroll-area';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Save, FolderOpen, Loader2 } from 'lucide-react';
-import { Badge } from '@/components/shared/ui/data-display/badge';
 import { saveCodeSnippet, getUserSnippets } from '@/lib/services/code-execution';
 
 interface CodeSnippet {

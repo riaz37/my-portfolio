@@ -1,38 +1,65 @@
 import mongoose from 'mongoose';
+import { Schema } from 'mongoose';
+import { BaseDocument } from './types';
+import { withTimestamps } from './plugins/baseSchema';
 
-const newsletterSchema = new mongoose.Schema({
-  email: {
+export interface INewsletter extends BaseDocument {
+  subject: string;
+  content: string;
+  sentAt: Date;
+  sentBy: string;
+  recipientCount: number;
+  successCount: number;
+  failureCount: number;
+  isTest?: boolean;
+  testEmail?: string;
+}
+
+const newsletterSchema = new Schema<INewsletter>({
+  subject: {
     type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-    lowercase: true,
-    trim: true,
+    required: true,
   },
-  subscribed: {
+  content: {
+    type: String,
+    required: true,
+  },
+  sentAt: {
+    type: Date,
+    required: true,
+  },
+  sentBy: {
+    type: String,
+    required: true,
+  },
+  recipientCount: {
+    type: Number,
+    required: true,
+  },
+  successCount: {
+    type: Number,
+    required: true,
+  },
+  failureCount: {
+    type: Number,
+    required: true,
+  },
+  isTest: {
     type: Boolean,
-    default: true,
+    default: false,
   },
-  subscribedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  lastEmailSent: {
-    type: Date,
-    default: null,
-  },
-  preferences: {
-    type: {
-      updates: Boolean,
-      marketing: Boolean,
-    },
-    default: {
-      updates: true,
-      marketing: true,
-    },
-  },
+  testEmail: {
+    type: String,
+    required: false,
+  }
 });
 
-// Create or get the model
-const Newsletter = mongoose.models.Newsletter || mongoose.model('Newsletter', newsletterSchema);
+// Add timestamps
+newsletterSchema.plugin(withTimestamps);
 
-export default Newsletter;
+// Remove any existing indexes
+if (mongoose.models.Newsletter) {
+  mongoose.models.Newsletter.collection.dropIndexes();
+}
+
+export const Newsletter = mongoose.models.Newsletter || mongoose.model<INewsletter>('Newsletter', newsletterSchema);

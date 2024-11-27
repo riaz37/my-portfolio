@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Github, Star, GitFork, Users, ExternalLink, Search, Filter, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/shared/ui/core/button';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Input } from '@/components/shared/ui/form/input';
 import { useState } from 'react';

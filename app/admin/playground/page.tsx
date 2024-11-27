@@ -9,7 +9,7 @@ import { Textarea } from '@/components/shared/ui/form/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
 import { Badge } from '@/components/shared/ui/data-display/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Plus, Trash, Save, FileCode, Users, Edit, ExternalLink } from 'lucide-react';
 import { Loading } from '@/components/shared/loading';
 import {
@@ -59,6 +59,7 @@ type CommunityProject = {
 };
 
 export default function PlaygroundAdmin() {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('challenges');
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [communityProjects, setCommunityProjects] = useState<CommunityProject[]>([]);
@@ -119,7 +120,11 @@ export default function PlaygroundAdmin() {
       }
     } catch (error) {
       console.error('Error fetching data:', error);
-      toast.error('Failed to load data');
+      toast({
+        title: "Error",
+        description: "Failed to load data",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -160,11 +165,19 @@ export default function PlaygroundAdmin() {
         throw new Error('Failed to delete item');
       }
 
-      toast.success(`${itemToDelete.type === 'challenge' ? 'Challenge' : 'Project'} deleted successfully`);
+      toast({
+        title: "Success",
+        description: `${itemToDelete.type === 'challenge' ? 'Challenge' : 'Project'} deleted successfully`,
+        variant: "success",
+      });
       fetchData();
     } catch (error) {
       console.error('Error deleting item:', error);
-      toast.error('Failed to delete item');
+      toast({
+        title: "Error",
+        description: "Failed to delete item",
+        variant: "destructive",
+      });
     } finally {
       setDeleteDialogOpen(false);
       setItemToDelete(null);
@@ -183,7 +196,11 @@ export default function PlaygroundAdmin() {
       
       if (!response.ok) throw new Error('Failed to update challenge');
       
-      toast.success('Challenge updated successfully');
+      toast({
+        title: "Success",
+        description: "Challenge updated successfully",
+        variant: "success",
+      });
       setNewChallenge({
         title: '',
         description: '',
@@ -198,7 +215,11 @@ export default function PlaygroundAdmin() {
       setEditingItem(null);
       fetchData();
     } catch (error) {
-      toast.error('Failed to update challenge');
+      toast({
+        title: "Error",
+        description: "Failed to update challenge",
+        variant: "destructive",
+      });
     }
   };
 
@@ -214,7 +235,11 @@ export default function PlaygroundAdmin() {
       
       if (!response.ok) throw new Error('Failed to update project');
       
-      toast.success('Project updated successfully');
+      toast({
+        title: "Success",
+        description: "Project updated successfully",
+        variant: "success",
+      });
       setNewProject({
         name: '',
         description: '',
@@ -233,7 +258,11 @@ export default function PlaygroundAdmin() {
       setEditingItem(null);
       fetchData();
     } catch (error) {
-      toast.error('Failed to update project');
+      toast({
+        title: "Error",
+        description: "Failed to update project",
+        variant: "destructive",
+      });
     }
   };
 
@@ -249,7 +278,11 @@ export default function PlaygroundAdmin() {
       
       if (!response.ok) throw new Error('Failed to create challenge');
       
-      toast.success('Challenge created successfully');
+      toast({
+        title: "Success",
+        description: "Challenge created successfully",
+        variant: "success",
+      });
       setNewChallenge({
         title: '',
         description: '',
@@ -262,7 +295,11 @@ export default function PlaygroundAdmin() {
       setShowForm(false);
       fetchData();
     } catch (error) {
-      toast.error('Failed to create challenge');
+      toast({
+        title: "Error",
+        description: "Failed to create challenge",
+        variant: "destructive",
+      });
     }
   };
 
@@ -278,7 +315,11 @@ export default function PlaygroundAdmin() {
       
       if (!response.ok) throw new Error('Failed to create project');
       
-      toast.success('Project added successfully');
+      toast({
+        title: "Success",
+        description: "Project added successfully",
+        variant: "success",
+      });
       setNewProject({
         name: '',
         description: '',
@@ -295,7 +336,11 @@ export default function PlaygroundAdmin() {
       setShowForm(false);
       fetchData();
     } catch (error) {
-      toast.error('Failed to add project');
+      toast({
+        title: "Error",
+        description: "Failed to add project",
+        variant: "destructive",
+      });
     }
   };
 

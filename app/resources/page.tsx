@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Loading } from '@/components/shared/loading';
-import { Card, CardContent } from '@/components/shared/ui/data-display/card';
+import { Card, CardContent } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
 import {
   Select,

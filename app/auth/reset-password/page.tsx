@@ -34,7 +34,6 @@ export default function ResetPasswordPage() {
         return;
       }
 
-      console.log('Submitting password reset with token:', token);
       const response = await fetch('/api/auth/reset-password', {
         method: 'PUT',
         headers: {
@@ -47,7 +46,6 @@ export default function ResetPasswordPage() {
       });
 
       const data = await response.json();
-      console.log('Reset password response:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to reset password');

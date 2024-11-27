@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card } from '@/components/shared/ui/data-display/card';
+import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
 import { Expand, Minimize, RefreshCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';

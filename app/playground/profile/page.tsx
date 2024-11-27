@@ -30,7 +30,7 @@ import { UserProgress, UserSkill, UserAchievement } from '@/types/database';
 import { EmptyState } from '@/components/shared/ui/data-display/empty-state';
 import { cn } from '@/lib/utils';
 import { AvatarSelector } from '@/components/shared/ui/data-display/avatar-selector';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 import { Loading } from '@/components/shared/loading';
 
 interface Stats {
@@ -50,7 +50,8 @@ const DEFAULT_ACHIEVEMENTS = [
 ];
 
 export default function ProfilePage() {
-  const { data: session, update: updateSession } = useSession();
+  const { data: session } = useSession();
+  const { toast } = useToast();
   const [currentAvatar, setCurrentAvatar] = useState<string>('');
   const [stats, setStats] = useState<Stats>({
     totalXP: 0,
@@ -76,37 +77,31 @@ export default function ProfilePage() {
 
   const handleAvatarChange = async (newAvatar: string) => {
     try {
-      setCurrentAvatar(newAvatar); // Optimistic update
-
-      const response = await fetch('/api/user/update-avatar', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ avatarUrl: newAvatar }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        setCurrentAvatar(session?.user?.image || ''); // Revert on error
-        throw new Error(data.error || 'Failed to update avatar');
-      }
-
-      // Only update if the avatar actually changed
-      if (session?.user?.image !== newAvatar) {
-        await updateSession({
-          user: {
-            ...session?.user,
+      if (session?.user?.email) {
+        await fetch('/api/user/avatar', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: session.user.email,
             image: newAvatar
-          }
+          })
         });
       }
 
-      toast.success('Avatar updated successfully!');
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully!",
+        variant: "success",
+      });
     } catch (error) {
       console.error('Error updating avatar:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to update avatar. Please try again.');
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : 'Failed to update avatar. Please try again.',
+        variant: "destructive",
+      });
     }
   };
 
@@ -157,7 +152,11 @@ export default function ProfilePage() {
       });
     } catch (error) {
       console.error('Error fetching user data:', error);
-      toast.error('Failed to load profile data. Please try again.');
+      toast({
+        title: "Error",
+        description: 'Failed to load profile data. Please try again.',
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }

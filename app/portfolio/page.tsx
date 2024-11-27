@@ -8,7 +8,7 @@ import { Projects } from "@/components/layout/sections/Projects";
 import { Certifications } from "@/components/layout/sections/Certifications";
 import { Skills } from "@/components/layout/sections/Skills";
 import Services from "@/components/layout/sections/Services";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/shared/ui/core/button";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Code2 } from "lucide-react";
 import { MouseScroll } from '@/components/shared/ui/mouse-scroll';
@@ -82,126 +82,62 @@ export default function PortfolioPage() {
 
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Skills */}
-          <section className="py-20">
-            <Skills />
-          </section>
-
-          {/* Services */}
-          <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-            <Services />
-          </section>
-
-          {/* Work Experience */}
-          <section className="py-20">
-            <Work />
-          </section>
-
-          {/* Projects */}
-          <section className="py-20">
-            <Projects />
-          </section>
-
-          {/* Certifications */}
-          <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-            <Certifications />
-          </section>
-
-          {/* GitHub Stats */}
-          <section className="py-20">
-            <GitHubStats />
-          </section>
-
-          {/* Testimonials */}
-          <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
-            <TestimonialsSection />
-          </section>
-
-          {/* Work Together CTA */}
-          <motion.section 
-            className="relative py-32 overflow-hidden"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-          >
-           
-            
-            {/* Animated Gradient Orbs */}
-            <div className="absolute top-0 left-1/4 w-64 h-64 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-            <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-secondary/20 rounded-full blur-3xl animate-pulse delay-300" />
-
-            <div className="relative container mx-auto px-4">
-              <div className="max-w-4xl mx-auto text-center">
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.2 }}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary/10 border border-secondary/20 backdrop-blur-sm mb-8"
+          <div className="space-y-24">
+            {/* Top CTA Button */}
+            <div className="flex justify-center pt-8">
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  className="relative group bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors"
                 >
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-primary"></span>
-                  </span>
-                  <span className="text-sm text-muted-foreground">Available for New Projects</span>
-                </motion.div>
-
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.3 }}
-                  className="text-4xl md:text-5xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-primary bg-[length:200%_auto] animate-gradient"
-                >
-                  Let's Create Something Amazing Together
-                </motion.h2>
-
-                <motion.p
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.4 }}
-                  className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto"
-                >
-                  Whether you have a project in mind or just want to explore possibilities,
-                  I'm here to help turn your ideas into reality with cutting-edge technology and creative solutions.
-                </motion.p>
-
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5 }}
-                  className="flex justify-center"
-                >
-                  <Link href="/contact">
-                    <Button
-                      size="lg"
-                      className="relative group overflow-hidden min-w-[200px] bg-transparent border-0"
+                  <span className="relative flex items-center gap-2">
+                    Let's Work Together
+                    <motion.div
+                      animate={{ x: [0, 4, 0] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#FF0080] via-[#7928CA] to-[#FF0080] blur-sm opacity-75 group-hover:opacity-100 transition-opacity duration-300" />
-                      <div className="absolute inset-0 bg-gradient-to-r from-[#FF0080] via-[#7928CA] to-[#FF0080] animate-gradient-x group-hover:animate-gradient-x-fast" />
-                      <div className="relative bg-background/10 backdrop-blur-sm px-6 py-3 rounded-md border border-white/10 shadow-2xl">
-                        <motion.span 
-                          className="flex items-center justify-center gap-2 text-white font-medium"
-                          whileHover={{ scale: 1.05 }}
-                          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                        >
-                          Start a Project
-                          <motion.div
-                            animate={{ x: [0, 5, 0] }}
-                            transition={{ duration: 1.5, repeat: Infinity }}
-                          >
-                            <ArrowRight className="w-5 h-5" />
-                          </motion.div>
-                        </motion.span>
-                      </div>
-                    </Button>
-                  </Link>
-                </motion.div>
-              </div>
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.div>
+                  </span>
+                </Button>
+              </Link>
             </div>
-          </motion.section>
+
+            {/* Skills */}
+            <section className="py-20">
+              <Skills />
+            </section>
+
+            {/* Services */}
+            <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+              <Services />
+            </section>
+
+            {/* Work Experience */}
+            <section className="py-20">
+              <Work />
+            </section>
+
+            {/* Projects */}
+            <section className="py-20">
+              <Projects />
+            </section>
+
+            {/* GitHub Stats */}
+            <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+              <GitHubStats />
+            </section>
+
+            {/* Certifications */}
+            <section className="py-20">
+              <Certifications />
+            </section>
+
+            {/* Testimonials */}
+            <section className="py-20 bg-secondary/5 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+              <TestimonialsSection />
+            </section>
+          </div>
         </div>
       </div>
     </AnimatePresence>
