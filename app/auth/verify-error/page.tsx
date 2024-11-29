@@ -4,15 +4,21 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { XCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
+
 
 export default function VerificationError() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const error = searchParams.get('error') || 'An error occurred during verification';
+  const error = searchParams ? searchParams.get('error') || 'An error occurred during verification' : 'An error occurred during verification';
+  const {toast} = useCustomToast();
 
   useEffect(() => {
-    toast.error(error);
+    toast({
+      variant: "error",
+      title: "Verification Failed",
+      description: error,
+    });
 
     // Redirect to sign in after delay
     const timer = setTimeout(() => {

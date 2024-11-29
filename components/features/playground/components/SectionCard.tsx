@@ -1,4 +1,4 @@
-import { Lock, Sparkles } from "lucide-react";
+import { Lock, Sparkles, ArrowRight } from "lucide-react";
 import { Button } from "@/components/shared/ui/core/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -28,99 +28,156 @@ export function SectionCard({
   };
 
   const handleVerificationClick = () => {
-    // Removed toast message
+    if (onResendVerification) {
+      onResendVerification();
+    }
   };
 
   const Icon = section.icon;
 
-  return (
-    <div className="group relative">
-      {/* Card Container */}
-      <div
-        className={cn(
-          "relative h-full overflow-hidden rounded-xl border bg-card p-6 transition-all duration-300",
-          "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
-          "before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-primary/10 before:to-transparent group-hover:before:translate-x-full",
-          "after:absolute after:inset-0 after:rounded-xl after:opacity-0 after:transition-opacity after:duration-300 group-hover:after:opacity-100 after:bg-gradient-to-br after:from-primary/5 after:to-transparent after:-z-10",
-          (isRestricted || needsVerification) && "opacity-80"
-        )}
-      >
-        {/* Hover Glow Effect */}
-        <div className="absolute -inset-x-2 -inset-y-2 hidden rounded-[20px] bg-primary/10 opacity-0 blur-2xl transition duration-700 group-hover:opacity-70 group-hover:block" />
-        
-        {/* Icon */}
-        <div className="relative mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-primary/20">
-          <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
-        </div>
-
-        {/* Content */}
-        <div className="relative space-y-2">
-          <h3 className="font-semibold tracking-tight transition-colors duration-300 group-hover:text-primary">{section.title}</h3>
-          <p className="text-sm text-muted-foreground group-hover:text-muted-foreground/80 transition-colors duration-300">{section.description}</p>
-        </div>
-
-        {/* Progress Bar (if applicable) */}
-        {section.progress !== undefined && section.progress > 0 && (
-          <div className="relative mt-4">
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted transition-colors duration-300 group-hover:bg-muted/70">
-              <div
-                className="h-full bg-primary transition-all duration-300 group-hover:bg-primary/80"
-                style={{ width: `${section.progress}%` }}
-              />
+  const CardContent = () => (
+    <>
+      {/* Content */}
+      <div className="relative z-10 h-full flex flex-col">
+        {/* Header */}
+        <div className="mb-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className={cn(
+              "rounded-lg p-2 sm:p-2.5",
+              section.color
+            )}>
+              <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <p className="mt-2 text-xs text-muted-foreground transition-colors duration-300 group-hover:text-muted-foreground/80">
-              {section.progress}% Complete
-            </p>
+            {section.progress !== undefined && (
+              <div className="text-sm text-muted-foreground">
+                {section.progress}% Complete
+              </div>
+            )}
           </div>
-        )}
+          <h3 className="mt-4 text-lg sm:text-xl font-semibold tracking-tight">{section.title}</h3>
+          <p className="mt-2 text-sm sm:text-base text-muted-foreground line-clamp-3">{section.description}</p>
+        </div>
 
-        {/* Overlay for restricted content */}
-        {(isRestricted || needsVerification) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-[2px] rounded-xl">
-            <div className="flex flex-col items-center gap-3 p-4 text-center">
-              {isRestricted ? (
-                <>
-                  <Lock className="h-8 w-8 text-primary/80" />
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Sign in to access
-                    </p>
+        {/* Tags */}
+        <div className="mt-auto space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {section.tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs sm:text-sm bg-primary/10 text-primary whitespace-nowrap"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+
+          {/* Action Button */}
+          <div className="flex items-center justify-between">
+            <Button
+              className={cn(
+                "w-full sm:w-auto text-sm sm:text-base px-4 py-2 sm:px-6 sm:py-2.5",
+                "bg-primary/10 hover:bg-primary/20 text-primary"
+              )}
+            >
+              <span className="flex items-center justify-center w-full">
+                Explore
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay for restricted content */}
+      {(isRestricted || needsVerification) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-[2px] rounded-xl">
+          <div className="flex flex-col items-center gap-2 sm:gap-3 p-3 sm:p-4 text-center">
+            {isRestricted ? (
+              <>
+                <Lock className="h-6 w-6 sm:h-8 sm:w-8 text-primary/80" />
+                <div className="space-y-1.5 sm:space-y-2">
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Sign in to access
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRestrictedClick}
+                    className="w-full sm:w-auto"
+                  >
+                    Sign In
+                  </Button>
+                </div>
+              </>
+            ) : needsVerification ? (
+              <>
+                <Sparkles className="h-6 w-6 sm:h-8 sm:w-8 text-primary/80" />
+                <div className="space-y-1.5 sm:space-y-2">
+                  <p className="text-sm sm:text-base font-medium text-foreground">
+                    Verify to Access
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
+                    Check your email for the verification link
+                  </p>
+                  {onResendVerification && (
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={handleRestrictedClick}
+                      onClick={handleVerificationClick}
+                      disabled={isResending}
+                      className="w-full sm:w-auto"
                     >
-                      Sign In
+                      {isResending ? "Sending..." : "Resend Verification"}
                     </Button>
-                  </div>
-                </>
-              ) : needsVerification ? (
-                <>
-                  <Sparkles className="h-8 w-8 text-primary/80" />
-                  <div className="space-y-2">
-                    <p className="font-medium text-foreground">
-                      Verify to Access
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Check your email for the verification link
-                    </p>
-                  </div>
-                </>
-              ) : null}
-            </div>
+                  )}
+                </div>
+              </>
+            ) : null}
           </div>
-        )}
+        </div>
+      )}
+    </>
+  );
 
-        {/* Interactive Link Layer */}
-        {!isRestricted && !needsVerification && (
-          <Link
-            href={section.href}
-            className="absolute inset-0 z-10 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-          >
-            <span className="sr-only">Go to {section.title}</span>
-          </Link>
-        )}
-      </div>
+  // Wrapper with appropriate click handling
+  return (
+    <div className="group relative">
+      {isRestricted ? (
+        <div
+          onClick={handleRestrictedClick}
+          className="cursor-pointer"
+        >
+          <div className={cn(
+            "relative h-full overflow-hidden rounded-xl border bg-card p-4 sm:p-6 transition-all duration-300",
+            "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+            "opacity-80"
+          )}>
+            <CardContent />
+          </div>
+        </div>
+      ) : needsVerification ? (
+        <div
+          onClick={handleVerificationClick}
+          className="cursor-pointer"
+        >
+          <div className={cn(
+            "relative h-full overflow-hidden rounded-xl border bg-card p-4 sm:p-6 transition-all duration-300",
+            "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+            "opacity-80"
+          )}>
+            <CardContent />
+          </div>
+        </div>
+      ) : (
+        <Link href={section.href} className="block">
+          <div className={cn(
+            "relative h-full overflow-hidden rounded-xl border bg-card p-4 sm:p-6 transition-all duration-300",
+            "hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5",
+          )}>
+            <CardContent />
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

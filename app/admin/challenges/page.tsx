@@ -13,8 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/shared/ui/core/select';
-import { Card } from '@/components/shared/ui/data-display/card';
 import { Plus, Edit, Trash } from 'lucide-react';
+import { Loading } from '@/components/shared/loading';
+import { Card } from '@/components/shared/ui/core/card';
+import { Badge } from '@/components/shared/ui/core/badge';
+
 
 interface Step {
   title: string;
@@ -39,6 +42,7 @@ export default function ChallengesAdmin() {
   const router = useRouter();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [currentChallenge, setCurrentChallenge] = useState<Partial<Challenge>>({
     steps: [],
     hints: [],
@@ -56,11 +60,13 @@ export default function ChallengesAdmin() {
 
   const fetchChallenges = async () => {
     try {
-      const response = await fetch('/api/challenges');
+      const response = await fetch('/api/admin/challenges');
       const data = await response.json();
       setChallenges(data);
     } catch (error) {
-      console.error('Failed to fetch challenges:', error);
+      console.error('Error fetching challenges:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -154,6 +160,10 @@ export default function ChallengesAdmin() {
       hints: (prev.hints || []).filter((_, i) => i !== index),
     }));
   };
+
+  if (loading) {
+    return <Loading text="Loading challenges..." />;
+  }
 
   if (status === 'loading') {
     return <div>Loading...</div>;

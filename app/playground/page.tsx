@@ -1,7 +1,5 @@
 import { Metadata } from "next";
-import { getServerSession } from "next-auth";
-import { type AuthOptions } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { Session } from "next-auth";
 import { ClientWrapper } from '@/components/playground/client-wrapper';
 
 export const metadata: Metadata = {
@@ -9,7 +7,10 @@ export const metadata: Metadata = {
   description: "Interactive coding playground",
 };
 
-export default async function Page() {
-  const session = await getServerSession(authOptions satisfies AuthOptions);
+interface PageProps {
+  session: Session | null;
+}
+
+export default function Page({ session }: PageProps) {
   return <ClientWrapper session={session} />;
 }

@@ -14,7 +14,7 @@ import {
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 import { Loader2 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ interface AuthDialogProps {
 
 export default function AuthDialog({ trigger, open, onOpenChange }: AuthDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {

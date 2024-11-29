@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useToast } from '@/hooks/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import {
   Dialog,
   DialogContent,
@@ -38,7 +38,7 @@ export function SnippetsDialog({ code, language, onLoadSnippet }: SnippetsDialog
   const [snippets, setSnippets] = useState<CodeSnippet[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const { data: session } = useSession();
 
   const handleSave = useCallback(async () => {

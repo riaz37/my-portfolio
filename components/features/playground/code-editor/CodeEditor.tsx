@@ -7,7 +7,7 @@ import { Button } from '@/components/shared/ui/core/button';
 import { Card } from '@/components/shared/ui/core/card';
 import { Icons } from '@/components/shared/icons';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { executeCode } from '@/lib/services/code-execution';
 import { SnippetsDialog } from './SnippetsDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
@@ -41,7 +41,7 @@ export function CodeEditor({ initialLanguage = 'javascript', initialCode }: Code
   const [autoRun, setAutoRun] = useState(false);
   const [splitView, setSplitView] = useState(true);
   const [fontSize, setFontSize] = useState(14);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);

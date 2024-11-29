@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
 import { Textarea } from '@/components/shared/ui/core/textarea';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { PlusCircle } from 'lucide-react';
 import { Loading } from '@/components/shared/loading';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/ui/core/tabs';
@@ -51,7 +51,8 @@ export default function BlogsPage() {
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const [content, setContent] = useState('');
+  const { toast } = useCustomToast();
 
   const columns = [
     { key: 'title', label: 'Title', sortable: true },
@@ -192,227 +193,221 @@ export default function BlogsPage() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="space-y-8 p-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Blog Management</h1>
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Blog Posts</h1>
+          <p className="text-muted-foreground">Manage your blog content</p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingBlog(null)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Blog
+            <Button
+              onClick={() => {
+                setEditingBlog(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" />
+              Add Blog Post
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl">
+          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingBlog ? 'Edit Blog' : 'Add Blog'}
+                {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid gap-4 py-4">
-                <Tabs defaultValue="content">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="content">Content</TabsTrigger>
-                    <TabsTrigger value="seo">SEO</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="content" className="space-y-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="title" className="text-right">Title</Label>
-                      <Input
-                        id="title"
-                        name="title"
-                        defaultValue={editingBlog?.title}
-                        className="col-span-3"
-                      />
-                    </div>
-                    
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="excerpt" className="text-right">Excerpt</Label>
-                      <Textarea
-                        id="excerpt"
-                        name="excerpt"
-                        defaultValue={editingBlog?.excerpt}
-                        className="col-span-3"
-                      />
-                    </div>
+            <Tabs defaultValue="content" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 lg:w-[400px] mb-4">
+                <TabsTrigger value="content">Content</TabsTrigger>
+                <TabsTrigger value="seo">SEO</TabsTrigger>
+              </TabsList>
 
-                    <div className="grid grid-cols-4 items-start gap-4">
-                      <Label htmlFor="content" className="text-right pt-2">Content</Label>
-                      <div className="col-span-3">
-                        <RichTextEditor
-                          content={editingBlog?.content || ''}
-                          onChange={(content) => {
-                            const textarea = document.querySelector('textarea[name="content"]');
-                            if (textarea) {
-                              textarea.value = content;
-                            }
-                          }}
-                        />
-                        <textarea name="content" defaultValue={editingBlog?.content} hidden />
-                      </div>
-                    </div>
-                  </TabsContent>
+              <TabsContent value="content" className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      defaultValue={editingBlog?.title}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="slug">Slug</Label>
+                    <Input
+                      id="slug"
+                      name="slug"
+                      defaultValue={editingBlog?.slug}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="excerpt">Excerpt</Label>
+                  <Textarea
+                    id="excerpt"
+                    name="excerpt"
+                    defaultValue={editingBlog?.excerpt}
+                    required
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Content</Label>
+                  <RichTextEditor
+                    content={content}
+                    onChange={setContent}
+                    className="min-h-[300px]"
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="coverImage">Cover Image URL</Label>
+                    <Input
+                      id="coverImage"
+                      name="coverImage"
+                      defaultValue={editingBlog?.coverImage}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="scheduledPublishDate">Scheduled Publish Date</Label>
+                    <Input
+                      id="scheduledPublishDate"
+                      name="scheduledPublishDate"
+                      type="datetime-local"
+                      defaultValue={editingBlog?.scheduledPublishDate}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="tags">Tags (comma-separated)</Label>
+                    <Input
+                      id="tags"
+                      name="tags"
+                      defaultValue={editingBlog?.tags.join(', ')}
+                      placeholder="tech, programming, web development"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="categories">Categories (comma-separated)</Label>
+                    <Input
+                      id="categories"
+                      name="categories"
+                      defaultValue={editingBlog?.categories.join(', ')}
+                      placeholder="Tutorial, Guide, Opinion"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="published">Status</Label>
+                    <select
+                      id="published"
+                      name="published"
+                      defaultValue={editingBlog?.published?.toString()}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    >
+                      <option value="true">Published</option>
+                      <option value="false">Draft</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="featured">Featured</Label>
+                    <select
+                      id="featured"
+                      name="featured"
+                      defaultValue={editingBlog?.featured?.toString()}
+                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                    >
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="authorEmail">Author Email</Label>
+                    <Input
+                      id="authorEmail"
+                      name="authorEmail"
+                      type="email"
+                      defaultValue={editingBlog?.authorEmail}
+                      required
+                    />
+                  </div>
+                </div>
+              </TabsContent>
 
-                  <TabsContent value="seo" className="space-y-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="metaTitle" className="text-right">Meta Title</Label>
-                      <Input
-                        id="metaTitle"
-                        name="metaTitle"
-                        defaultValue={editingBlog?.seo?.metaTitle}
-                        className="col-span-3"
-                      />
-                    </div>
+              <TabsContent value="seo" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="metaTitle">Meta Title</Label>
+                  <Input
+                    id="metaTitle"
+                    name="metaTitle"
+                    defaultValue={editingBlog?.seo?.metaTitle}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="metaDescription">Meta Description</Label>
+                  <Textarea
+                    id="metaDescription"
+                    name="metaDescription"
+                    defaultValue={editingBlog?.seo?.metaDescription}
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="ogImage">OG Image URL</Label>
+                  <Input
+                    id="ogImage"
+                    name="ogImage"
+                    defaultValue={editingBlog?.seo?.ogImage}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
 
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="metaDescription" className="text-right">Meta Description</Label>
-                      <Textarea
-                        id="metaDescription"
-                        name="metaDescription"
-                        defaultValue={editingBlog?.seo?.metaDescription}
-                        className="col-span-3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="ogImage" className="text-right">OG Image</Label>
-                      <Input
-                        id="ogImage"
-                        name="ogImage"
-                        type="url"
-                        defaultValue={editingBlog?.seo?.ogImage}
-                        className="col-span-3"
-                      />
-                    </div>
-                  </TabsContent>
-
-                  <TabsContent value="settings" className="space-y-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="slug" className="text-right">Slug</Label>
-                      <Input
-                        id="slug"
-                        name="slug"
-                        defaultValue={editingBlog?.slug}
-                        className="col-span-3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="categories" className="text-right">Categories</Label>
-                      <Input
-                        id="categories"
-                        name="categories"
-                        defaultValue={editingBlog?.categories?.join(', ')}
-                        placeholder="Separate with commas"
-                        className="col-span-3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="tags" className="text-right">Tags</Label>
-                      <Input
-                        id="tags"
-                        name="tags"
-                        defaultValue={editingBlog?.tags?.join(', ')}
-                        placeholder="Separate with commas"
-                        className="col-span-3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="coverImage" className="text-right">Cover Image</Label>
-                      <Input
-                        id="coverImage"
-                        name="coverImage"
-                        type="url"
-                        defaultValue={editingBlog?.coverImage}
-                        className="col-span-3"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Status</Label>
-                      <div className="col-span-3 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="draft"
-                            name="published"
-                            value="false"
-                            defaultChecked={!editingBlog?.published}
-                          />
-                          <label htmlFor="draft">Draft</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="published"
-                            name="published"
-                            value="true"
-                            defaultChecked={editingBlog?.published}
-                          />
-                          <label htmlFor="published">Published</label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label className="text-right">Featured</Label>
-                      <div className="col-span-3">
-                        <input
-                          type="checkbox"
-                          id="featured"
-                          name="featured"
-                          defaultChecked={editingBlog?.featured}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-4 items-center gap-4">
-                      <Label htmlFor="scheduledPublishDate" className="text-right">Schedule Publish</Label>
-                      <Input
-                        id="scheduledPublishDate"
-                        name="scheduledPublishDate"
-                        type="datetime-local"
-                        defaultValue={editingBlog?.scheduledPublishDate}
-                        className="col-span-3"
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-              
-              <DialogFooter>
-                <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Saving...' : editingBlog ? 'Update Blog' : 'Create Blog'}
+            <DialogFooter className="mt-6">
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancel
                 </Button>
-              </DialogFooter>
-            </form>
+                <Button onClick={handleSubmit} disabled={isLoading}>
+                  {isLoading ? (
+                    <Loading className="mr-2" />
+                  ) : null}
+                  {editingBlog ? 'Update' : 'Create'} Blog Post
+                </Button>
+              </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      <Tabs defaultValue="posts" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="posts">
-          <DataTable
-            data={blogs}
-            columns={columns}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        </TabsContent>
-
-        <TabsContent value="analytics">
+      {loading ? (
+        <Loading text="Loading blog posts..." />
+      ) : (
+        <div className="space-y-6">
           <BlogAnalytics />
-        </TabsContent>
-      </Tabs>
+          <div className="bg-card rounded-lg border shadow-sm">
+            <DataTable
+              data={blogs}
+              columns={columns}
+              onEdit={(blog) => {
+                setEditingBlog(blog);
+                setIsDialogOpen(true);
+              }}
+              onDelete={handleDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

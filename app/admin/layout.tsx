@@ -12,6 +12,8 @@ import {
   GamepadIcon,
   BookOpen,
   Mail,
+  Menu,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -33,6 +35,16 @@ const sidebarItems = [
     name: 'Projects',
     icon: <Briefcase className="h-5 w-5" />,
     href: '/admin/projects',
+  },
+  {
+    name: 'Certificates',
+    icon: <FileText className="h-5 w-5" />,
+    href: '/admin/certificates',
+  },
+  {
+    name: 'Work Experience',
+    icon: <Briefcase className="h-5 w-5" />,
+    href: '/admin/experience',
   },
   {
     name: 'Resources',
@@ -63,6 +75,16 @@ export default function AdminLayout({
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    // Close sidebar on route change in mobile
+    const handleRouteChange = () => {
+      setIsSidebarOpen(false);
+    };
+    window.addEventListener('popstate', handleRouteChange);
+    return () => window.removeEventListener('popstate', handleRouteChange);
+  }, []);
 
   useEffect(() => {
     // Don't redirect if on login or reset password page
@@ -95,12 +117,33 @@ export default function AdminLayout({
 
   return (
     <div className={`min-h-screen bg-background ${inter.className}`}>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="fixed top-4 left-4 z-[70] p-2 rounded-lg bg-background border border-border md:hidden"
+      >
+        {isSidebarOpen ? (
+          <X className="h-6 w-6 text-foreground" />
+        ) : (
+          <Menu className="h-6 w-6 text-foreground" />
+        )}
+      </button>
+
       <div className="flex relative">
+        {/* Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-[50] md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
+
         {/* Sidebar */}
         <motion.aside
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          className="sticky top-0 left-0 z-[60] flex h-screen w-64 flex-col border-r border-border bg-card pt-24 overflow-y-auto"
+          initial={{ x: 0 }}
+          animate={{ x: isSidebarOpen || window.innerWidth >= 768 ? 0 : -300 }}
+          transition={{ type: "spring", bounce: 0.15 }}
+          className="fixed md:sticky top-0 left-0 z-[60] flex h-screen w-64 flex-col border-r border-border bg-card pt-24 overflow-y-auto md:translate-x-0"
         >
           <div className="flex h-full flex-col px-3 py-4">
             <div className="mb-10 flex items-center px-3">

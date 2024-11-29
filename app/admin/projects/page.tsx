@@ -15,8 +15,9 @@ import {
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
 import { Textarea } from '@/components/shared/ui/core/textarea';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { PlusCircle } from 'lucide-react';
+import { Loading } from '@/components/shared/loading';
 
 interface Project {
   _id: string;
@@ -35,13 +36,33 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const columns = [
-    { key: 'title', label: 'Title', sortable: true },
-    { key: 'technologies', label: 'Technologies', render: (techs: string[]) => techs.join(', ') },
-    { key: 'featured', label: 'Featured', render: (featured: boolean) => featured ? 'Yes' : 'No' },
-    { key: 'order', label: 'Order', sortable: true },
+    { 
+      key: 'title', 
+      label: 'Title', 
+      sortable: true,
+      className: 'min-w-[200px]'
+    },
+    { 
+      key: 'technologies', 
+      label: 'Technologies', 
+      render: (techs: string[]) => techs.join(', '),
+      className: 'hidden md:table-cell min-w-[200px]'
+    },
+    { 
+      key: 'featured', 
+      label: 'Featured', 
+      render: (featured: boolean) => featured ? 'Yes' : 'No',
+      className: 'w-[100px] text-center'
+    },
+    { 
+      key: 'order', 
+      label: 'Order', 
+      sortable: true,
+      className: 'w-[80px] text-center'
+    },
   ];
 
   useEffect(() => {
@@ -134,125 +155,153 @@ export default function ProjectsPage() {
     setIsDialogOpen(true);
   }
 
-  if (loading) return <div>Loading...</div>;
-
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Projects</h1>
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Projects</h1>
+          <p className="text-muted-foreground">Manage your portfolio projects</p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingProject(null)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button
+              onClick={() => {
+                setEditingProject(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" />
               Add Project
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingProject ? 'Edit Project' : 'Add Project'}
+                {editingProject ? 'Edit Project' : 'Add New Project'}
               </DialogTitle>
+              <DialogDescription>
+                Add details about your project
+              </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  defaultValue={editingProject?.title}
-                  required
-                />
+              <div className="grid grid-cols-1 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    name="title"
+                    defaultValue={editingProject?.title}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    name="description"
+                    defaultValue={editingProject?.description}
+                    required
+                    className="min-h-[100px]"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="technologies">Technologies (comma-separated)</Label>
+                  <Input
+                    id="technologies"
+                    name="technologies"
+                    defaultValue={editingProject?.technologies.join(', ')}
+                    required
+                    placeholder="React, TypeScript, Node.js"
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  defaultValue={editingProject?.description}
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="imageUrl">Image URL</Label>
+                  <Input
+                    id="imageUrl"
+                    name="imageUrl"
+                    defaultValue={editingProject?.imageUrl}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="githubUrl">GitHub URL</Label>
+                  <Input
+                    id="githubUrl"
+                    name="githubUrl"
+                    defaultValue={editingProject?.githubUrl}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="technologies">
-                  Technologies (comma-separated)
-                </Label>
-                <Input
-                  id="technologies"
-                  name="technologies"
-                  defaultValue={editingProject?.technologies.join(', ')}
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="liveUrl">Live URL</Label>
+                  <Input
+                    id="liveUrl"
+                    name="liveUrl"
+                    defaultValue={editingProject?.liveUrl}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="order">Display Order</Label>
+                  <Input
+                    id="order"
+                    name="order"
+                    type="number"
+                    defaultValue={editingProject?.order || 0}
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input
-                  id="imageUrl"
-                  name="imageUrl"
-                  defaultValue={editingProject?.imageUrl}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="githubUrl">GitHub URL</Label>
-                <Input
-                  id="githubUrl"
-                  name="githubUrl"
-                  defaultValue={editingProject?.githubUrl}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="liveUrl">Live URL</Label>
-                <Input
-                  id="liveUrl"
-                  name="liveUrl"
-                  defaultValue={editingProject?.liveUrl}
-                />
-              </div>
-              <div>
-                <Label htmlFor="featured">Featured</Label>
+              <div className="space-y-2">
+                <Label htmlFor="featured">Featured Project</Label>
                 <select
                   id="featured"
                   name="featured"
                   defaultValue={editingProject?.featured?.toString()}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
                 >
                   <option value="true">Yes</option>
                   <option value="false">No</option>
                 </select>
               </div>
-              <div>
-                <Label htmlFor="order">Order</Label>
-                <Input
-                  id="order"
-                  name="order"
-                  type="number"
-                  defaultValue={editingProject?.order || 0}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                {editingProject ? 'Update' : 'Create'} Project
-              </Button>
+              <DialogFooter>
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit">
+                    {editingProject ? 'Update' : 'Create'} Project
+                  </Button>
+                </div>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <DataTable
-        data={projects}
-        columns={columns}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onSort={(key) => {
-          const sorted = [...projects].sort((a, b) => {
-            if (a[key] < b[key]) return -1;
-            if (a[key] > b[key]) return 1;
-            return 0;
-          });
-          setProjects(sorted);
-        }}
-      />
+      {loading ? (
+        <Loading text="Loading projects..." />
+      ) : (
+        <div className="bg-card rounded-lg border shadow-sm overflow-x-auto">
+          <div className="min-w-full">
+            <DataTable
+              data={projects}
+              columns={columns}
+              onEdit={(project) => {
+                setEditingProject(project);
+                setIsDialogOpen(true);
+              }}
+              onDelete={handleDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -7,13 +7,16 @@ import { Inter } from 'next/font/google';
 import { RootProvider } from '@/components/providers/root-provider';
 import { LayoutWrapper } from "@/components/layout/layout-content";
 import { siteConfig } from '@/config/site';
-import { Toaster } from "@/components/shared/ui/feedback/toaster";
 import { Providers } from '@/components/providers/providers';
 import { ThemeProvider } from 'next-themes';
+import { ToastContextProvider } from '@/components/shared/ui/toast/toast-wrapper';
 import "./globals.css";
 import { cn } from '@/lib/utils';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ 
+  subsets: ['latin'], 
+  variable: '--font-inter' 
+});
 
 export const metadata: Metadata = {
   title: {
@@ -74,10 +77,11 @@ export default async function RootLayout({
         >
           <RootProvider>
             <Providers>
-              <LayoutWrapper>
-                {children}
-              </LayoutWrapper>
-              <Toaster />
+              <ToastContextProvider>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+              </ToastContextProvider>
             </Providers>
           </RootProvider>
         </ThemeProvider>

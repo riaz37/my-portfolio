@@ -2,7 +2,7 @@ import { CldUploadWidget } from "next-cloudinary";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
 import { Loader2, RefreshCcw, Upload, Camera } from "lucide-react";
-import { useToast } from "@/components/shared/ui/feedback/use-toast";
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/data-display/avatar";
 import { Button } from "@/components/shared/ui/core/button";
 import { Card } from "@/components/shared/ui/data-display/card";
@@ -23,7 +23,7 @@ const STYLE_OPTIONS = [
 
 export default function AvatarCustomizer() {
   const { data: session, update } = useSession();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const [uploadedAvatar, setUploadedAvatar] = useState<string>("");
   const [selectedStyle, setSelectedStyle] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);

@@ -4,7 +4,6 @@ import React from "react";
 import FloatingNav from "@/components/shared/ui/navigation/FloatingNavbar";
 import { AuthProvider } from "@/components/providers/auth-provider";
 import { GridBackground } from "@/components/shared/ui/effects/grid-background";
-import { Toaster } from "@/components/shared/ui/feedback/toaster";
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
 import { NavigationProvider, useNavItems } from "@/components/shared/ui/navigation/NavigationProvider";
@@ -12,6 +11,8 @@ import { TerminalProvider } from "@/providers/TerminalProvider";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { ToastContextProvider } from "../shared/ui/toast/toast-wrapper";
+import { Toast } from "@/components/shared/ui/toast";
 
 const Footer = dynamic(() => import("@/components/layout/sections/Footer"), {
   ssr: true,
@@ -35,15 +36,35 @@ export function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <NavigationProvider>
-      <MainContent pathname={pathname}>
-        {children}
-      </MainContent>
+      <ToastContextProvider>
+        <MainContent pathname={pathname}>
+          {children}
+        </MainContent>
+      </ToastContextProvider>
     </NavigationProvider>
   );
 }
 
-function MainContent({ children, pathname }: { children: React.ReactNode, pathname: string }) {
+function MainContent({ children, pathname }: { children: React.ReactNode, pathname: string | null }) {
   const navItems = useNavItems();
+  const isAuthPage = pathname?.startsWith('/auth') || false;
+  const isBlogPage = pathname?.startsWith('/blog') || false;
+  const isPortfolioPage = pathname?.startsWith('/portfolio') || false;
+  const isSimplePage = isAuthPage || isBlogPage;
+  
+  if (isAuthPage) {
+    return children;
+  }
+  
+  if (isBlogPage) {
+    return (
+      <div className="relative min-h-screen">
+        <main className="flex-1">
+          {children}
+        </main>
+      </div>
+    );
+  }
   
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -82,10 +103,10 @@ function MainContent({ children, pathname }: { children: React.ReactNode, pathna
       </div>
 
       {/* Terminal */}
-      <Terminal />
-      
+      {!isPortfolioPage && <Terminal />}
+
       {/* Toaster */}
-      <Toaster />
+      {!isPortfolioPage && <Toast id="layout-toast" />}
     </div>
   );
 }

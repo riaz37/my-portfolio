@@ -1,12 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useToast } from '@/hooks/useToast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { Session } from 'next-auth';
 
 export function useVerification(session: Session | null) {
   const [isResending, setIsResending] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const handleResendVerification = async () => {
     if (!session?.user?.email || isResending) return;

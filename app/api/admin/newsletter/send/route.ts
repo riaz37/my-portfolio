@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { Newsletter } from '@/models/Newsletter';
-import { Subscriber } from '@/models/Subscriber';
-import connectToDatabase from '@/lib/db/mongodb';
+import { Newsletter } from '@/models/content/Newsletter';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import nodemailer from 'nodemailer';
+import { Subscriber } from '@/models/Subscriber';
 
 if (!process.env.EMAIL_SERVER_HOST || !process.env.EMAIL_SERVER_PORT || !process.env.EMAIL_SERVER_USER || !process.env.EMAIL_SERVER_PASSWORD) {
   throw new Error('Missing email server environment variables');
@@ -25,10 +25,10 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     
     // Check if user is authenticated and is admin
-    if (!session?.user || session.user.role !== 'admin') {
+    if (!session?.user?.isAdmin) {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 403 }
+        { error: 'Unauthorized access' },
+        { status: 401 }
       );
     }
 

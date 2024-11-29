@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from '@/components/shared/ui/data-display/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Button } from '@/components/shared/ui/core/button';
 import YouTubeVideo from '@/components/sections/YouTubeVideo';
 

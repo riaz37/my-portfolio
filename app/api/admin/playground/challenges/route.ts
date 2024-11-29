@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
-import Challenge from '@/models/Challenge';
-import User from '@/models/User'; // Added missing import
-import { connectToDatabase } from '@/lib/mongoose';
+import { User } from '@/models/auth'; 
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { Challenge } from '@/lib/models/content/Challenge';
 
 // Validation schema for challenge
 const challengeSchema = z.object({
@@ -14,6 +14,10 @@ const challengeSchema = z.object({
   category: z.string().min(1),
   hints: z.array(z.string()),
   starterCode: z.object({
+    javascript: z.string(),
+    python: z.string(),
+  }),
+  solutionCode: z.object({
     javascript: z.string(),
     python: z.string(),
   }),

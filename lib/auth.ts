@@ -1,17 +1,14 @@
 import { NextAuthOptions } from "next-auth";
-import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import EmailProvider from "next-auth/providers/email";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { connectToDatabase, getMongoDb } from "@/lib/db/mongodb";
+import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/models/auth/User";
 
 const clientPromise = connectToDatabase();
 
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(getMongoDb()),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
@@ -20,8 +17,8 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: "/auth/signin",
     error: "/auth/error",
-    verifyRequest: "/auth/verify-request",
   },
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -71,13 +68,14 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user._id.toString(),
+          id: user._id,
           name: user.name,
           email: user.email,
-          image: user.image,
-          isVerified: isVerified || isFirstSignIn,
+          image: user.image || null,
+          isVerified: user.isVerified,
           emailVerified: user.emailVerified,
-          role: user.role
+          role: user.role,
+          verifiedAt: user.verifiedAt
         };
       }
     }),
@@ -98,17 +96,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GITHUB_SECRET as string,
       allowDangerousEmailAccountLinking: true,
     }),
-    EmailProvider({
-      server: {
-        host: process.env.EMAIL_SERVER_HOST,
-        port: process.env.EMAIL_SERVER_PORT,
-        auth: {
-          user: process.env.EMAIL_SERVER_USER,
-          pass: process.env.EMAIL_SERVER_PASSWORD
-        }
-      },
-      from: process.env.EMAIL_FROM
-    })
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
@@ -125,7 +112,7 @@ export const authOptions: NextAuthOptions = {
 
         // For OAuth providers (Google, GitHub)
         const currentTime = new Date();
-        const existingUser = await User.findOne({ email: user.email });
+        const existingUser = await User.findOne({ email: user.email }).select('+role');
 
         if (existingUser) {
           await User.findByIdAndUpdate(existingUser._id, {
@@ -139,6 +126,7 @@ export const authOptions: NextAuthOptions = {
           // Add verification info to user object
           user.isVerified = true;
           user.emailVerified = currentTime;
+          user.role = existingUser.role || 'user';
           return true;
         }
 
@@ -173,6 +161,7 @@ export const authOptions: NextAuthOptions = {
         session.user.image = token.picture as string;
         session.user.isVerified = token.isVerified as boolean;
         session.user.role = token.role as string;
+        session.user.isAdmin = token.role === 'admin' || token.role === 'superadmin';
         session.user.emailVerified = token.emailVerified as Date;
       }
       return session;
@@ -189,7 +178,7 @@ export const authOptions: NextAuthOptions = {
       if (token?.email) {
         try {
           await connectToDatabase();
-          const dbUser = await User.findOne({ email: token.email });
+          const dbUser = await User.findOne({ email: token.email }).select('+role');
           if (dbUser) {
             token.id = dbUser._id.toString();
             token.name = dbUser.name;
@@ -197,13 +186,12 @@ export const authOptions: NextAuthOptions = {
             token.picture = dbUser.image;
             token.isVerified = dbUser.isVerified;
             token.emailVerified = dbUser.emailVerified;
-            token.role = dbUser.role;
+            token.role = dbUser.role || 'user';
           }
         } catch (error) {
-          console.error("Error in jwt callback:", error);
+          console.error('Error in jwt callback:', error);
         }
       }
-
       return token;
     }
   }

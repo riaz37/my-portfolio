@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { Blog } from '@/lib/models/Blog';
+import { Blog } from '@/models/Blog';
 import { startOfMonth, subMonths, format } from 'date-fns';
 
 export async function GET() {

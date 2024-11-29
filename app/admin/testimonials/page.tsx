@@ -14,7 +14,7 @@ import {
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
 import { Textarea } from '@/components/shared/ui/core/textarea';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { PlusCircle } from 'lucide-react';
 
 interface Testimonial {
@@ -34,15 +34,43 @@ export default function TestimonialsPage() {
   const [loading, setLoading] = useState(true);
   const [editingTestimonial, setEditingTestimonial] = useState<Testimonial | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const columns = [
-    { key: 'name', label: 'Name', sortable: true },
-    { key: 'role', label: 'Role' },
-    { key: 'company', label: 'Company' },
-    { key: 'rating', label: 'Rating', sortable: true },
-    { key: 'featured', label: 'Featured', render: (featured: boolean) => featured ? 'Yes' : 'No' },
-    { key: 'order', label: 'Order', sortable: true },
+    { 
+      key: 'name', 
+      label: 'Name', 
+      sortable: true,
+      className: 'min-w-[150px]'
+    },
+    { 
+      key: 'role', 
+      label: 'Role',
+      className: 'hidden sm:table-cell min-w-[120px]'
+    },
+    { 
+      key: 'company', 
+      label: 'Company',
+      className: 'hidden md:table-cell min-w-[150px]'
+    },
+    { 
+      key: 'rating', 
+      label: 'Rating', 
+      sortable: true,
+      className: 'w-[80px] text-center'
+    },
+    { 
+      key: 'featured', 
+      label: 'Featured', 
+      render: (featured: boolean) => featured ? 'Yes' : 'No',
+      className: 'w-[100px] text-center'
+    },
+    { 
+      key: 'order', 
+      label: 'Order', 
+      sortable: true,
+      className: 'w-[80px] text-center'
+    },
   ];
 
   useEffect(() => {
@@ -58,7 +86,7 @@ export default function TestimonialsPage() {
       toast({
         title: 'Error',
         description: 'Failed to fetch testimonials',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setLoading(false);
@@ -100,7 +128,7 @@ export default function TestimonialsPage() {
       toast({
         title: 'Error',
         description: 'Failed to save testimonial',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   }
@@ -125,7 +153,7 @@ export default function TestimonialsPage() {
       toast({
         title: 'Error',
         description: 'Failed to delete testimonial',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   }
@@ -153,7 +181,7 @@ export default function TestimonialsPage() {
       toast({
         title: 'Error',
         description: 'Failed to reorder testimonial',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   }
@@ -163,137 +191,150 @@ export default function TestimonialsPage() {
     setIsDialogOpen(true);
   }
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <Loading text="Loading testimonials..." />
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-4 p-4">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Testimonials</h1>
+    <div className="container mx-auto p-4 sm:p-6 space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Testimonials</h1>
+          <p className="text-muted-foreground">Manage client testimonials and reviews</p>
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={() => setEditingTestimonial(null)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
+            <Button
+              onClick={() => {
+                setEditingTestimonial(null);
+              }}
+              className="w-full sm:w-auto"
+            >
+              <PlusCircle className="w-4 h-4 mr-2" />
               Add Testimonial
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
-                {editingTestimonial ? 'Edit Testimonial' : 'Add Testimonial'}
+                {editingTestimonial ? 'Edit Testimonial' : 'Add New Testimonial'}
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  name="name"
-                  defaultValue={editingTestimonial?.name}
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={editingTestimonial?.name}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="role">Role</Label>
+                  <Input
+                    id="role"
+                    name="role"
+                    defaultValue={editingTestimonial?.role}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="role">Role</Label>
-                <Input
-                  id="role"
-                  name="role"
-                  defaultValue={editingTestimonial?.role}
-                  required
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="company">Company</Label>
+                  <Input
+                    id="company"
+                    name="company"
+                    defaultValue={editingTestimonial?.company}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rating">Rating (1-5)</Label>
+                  <Input
+                    id="rating"
+                    name="rating"
+                    type="number"
+                    min="1"
+                    max="5"
+                    defaultValue={editingTestimonial?.rating || 5}
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  name="company"
-                  defaultValue={editingTestimonial?.company}
-                  required
-                />
-              </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="content">Content</Label>
                 <Textarea
                   id="content"
                   name="content"
                   defaultValue={editingTestimonial?.content}
                   required
+                  className="min-h-[100px]"
                 />
               </div>
-              <div>
-                <Label htmlFor="rating">Rating (1-5)</Label>
-                <Input
-                  id="rating"
-                  name="rating"
-                  type="number"
-                  min="1"
-                  max="5"
-                  defaultValue={editingTestimonial?.rating || 5}
-                  required
-                />
-              </div>
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="avatarUrl">Avatar URL</Label>
                 <Input
                   id="avatarUrl"
                   name="avatarUrl"
                   defaultValue={editingTestimonial?.avatarUrl}
-                  required
                 />
               </div>
-              <div>
-                <Label htmlFor="featured">Featured</Label>
-                <select
-                  id="featured"
-                  name="featured"
-                  defaultValue={editingTestimonial?.featured?.toString()}
-                  className="w-full rounded-md border border-input bg-background px-3 py-2"
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="featured">Featured</Label>
+                  <select
+                    id="featured"
+                    name="featured"
+                    defaultValue={editingTestimonial?.featured?.toString()}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="order">Display Order</Label>
+                  <Input
+                    id="order"
+                    name="order"
+                    type="number"
+                    defaultValue={editingTestimonial?.order || 0}
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
                 >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={false}>
+                  {editingTestimonial ? 'Update' : 'Create'} Testimonial
+                </Button>
               </div>
-              <div>
-                <Label htmlFor="order">Order</Label>
-                <Input
-                  id="order"
-                  name="order"
-                  type="number"
-                  defaultValue={editingTestimonial?.order || 0}
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                {editingTestimonial ? 'Update' : 'Create'} Testimonial
-              </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <DataTable
-        data={testimonials}
-        columns={columns}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onSort={(key) => {
-          if (key === 'order') {
-            // For order, we'll handle it differently to update the database
-            return;
-          }
-          const sorted = [...testimonials].sort((a, b) => {
-            if (a[key] < b[key]) return -1;
-            if (a[key] > b[key]) return 1;
-            return 0;
-          });
-          setTestimonials(sorted);
-        }}
-      />
+      {loading ? (
+        <Loading text="Loading testimonials..." />
+      ) : (
+        <div className="bg-card rounded-lg border shadow-sm overflow-x-auto">
+          <div className="min-w-full">
+            <DataTable
+              data={testimonials}
+              columns={columns}
+              onEdit={(testimonial) => {
+                setEditingTestimonial(testimonial);
+                setIsDialogOpen(true);
+              }}
+              onDelete={handleDelete}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

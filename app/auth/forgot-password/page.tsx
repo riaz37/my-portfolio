@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to send reset email',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsLoading(false);
@@ -59,7 +59,7 @@ export default function ForgotPasswordPage() {
             Forgot your password?
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Enter your email address and we'll send you a link to reset your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </p>
         </div>
 

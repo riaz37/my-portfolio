@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 import { Editor } from '@monaco-editor/react';
 import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 import { Play, RefreshCw, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import FloatingNav from "@/components/shared/ui/navigation/FloatingNavbar";

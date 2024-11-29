@@ -23,12 +23,12 @@ import {
   Mail,
   BadgeCheck,
 } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { cn } from '@/lib/utils';
 
 export function UserMenu() {
   const { data: session, status, update: updateSession } = useSession();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   if (status === 'loading') {
     return <Button variant="ghost" className="w-[120px] cursor-default" />;
@@ -60,7 +60,7 @@ export function UserMenu() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-12 w-12 rounded-full">
+        <Button variant="ghost" className="relative h-12 w-12 rounded-full cursor-pointer">
           <Avatar className="h-12 w-12">
             <AvatarImage src={session.user.image || ''} alt={session.user.name || ''} />
             <AvatarFallback>{userInitials}</AvatarFallback>
@@ -96,19 +96,19 @@ export function UserMenu() {
         </div>
         <DropdownMenuSeparator />
         <Link href="/playground/profile">
-          <DropdownMenuItem>
+          <DropdownMenuItem className='cursor-pointer'>
             <User className="mr-2 h-4 w-4" />
             Profile
           </DropdownMenuItem>
         </Link>
         <Link href="/playground/settings">
-          <DropdownMenuItem>
+          <DropdownMenuItem className='cursor-pointer'>
             <Settings className="mr-2 h-4 w-4" />
             Settings
           </DropdownMenuItem>
         </Link>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleSignOut} className="text-red-600">
+        <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
           <LogOut className="mr-2 h-4 w-4" />
           Sign out
         </DropdownMenuItem>

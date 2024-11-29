@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { AuthContainer } from '@/components/features/auth/AuthContainer';
 import { GoogleButton } from '@/components/features/auth/GoogleButton';
 import { OrDivider } from '@/components/features/auth/OrDivider';
@@ -16,9 +16,9 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const { update: updateSession } = useSession();
-  const callbackUrl = searchParams.get('callbackUrl') || '/playground';
+  const callbackUrl = searchParams?.get('callbackUrl') || '/playground';
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -33,7 +33,7 @@ export default function SignUpPage() {
 
       if (password !== confirmPassword) {
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Error",
           description: "Passwords do not match"
         });
@@ -83,7 +83,7 @@ export default function SignUpPage() {
     } catch (error) {
       console.error('Signup error:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: error instanceof Error ? error.message : 'Failed to create account'
       });
@@ -154,13 +154,12 @@ export default function SignUpPage() {
 
       <p className="text-center text-sm text-muted-foreground">
         Already have an account?{' '}
-        <Button
-          variant="link"
-          className="font-medium hover:text-primary"
-          onClick={() => router.push('/auth/signin')}
+        <span 
+          onClick={() => router.push('/auth/signin')} 
+          className="font-medium text-primary hover:underline cursor-pointer"
         >
           Sign in
-        </Button>
+        </span>
       </p>
     </AuthContainer>
   );

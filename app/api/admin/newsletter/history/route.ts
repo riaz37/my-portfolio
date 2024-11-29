@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { Newsletter } from '@/models/Newsletter';
+import { Newsletter } from '@/models/content/Newsletter';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import { Subscriber } from '@/models/Subscriber';
-import connectToDatabase from '@/lib/db/mongodb';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    // Check if user is authenticated and is an admin
-    if (!session?.user || session.user.role !== 'admin') {
+    // Check if user is authenticated and is admin
+    if (!session?.user?.isAdmin) {
       return NextResponse.json(
-        { error: 'Unauthorized - Admin access required' },
-        { status: 403 }
+        { error: 'Unauthorized access' },
+        { status: 401 }
       );
     }
 

@@ -1,98 +1,121 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { signIn, useSession } from 'next-auth/react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Button } from '@/components/shared/ui/core/button';
-import { Input } from '@/components/shared/ui/core/input';
-import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { AuthContainer } from '@/components/features/auth/AuthContainer';
-import { GoogleButton } from '@/components/features/auth/GoogleButton';
-import { OrDivider } from '@/components/features/auth/OrDivider';
-import { PasswordInput } from '@/components/features/auth/PasswordInput';
+import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Button } from "@/components/shared/ui/core/button";
+import { Input } from "@/components/shared/ui/core/input";
+import { Label } from "@/components/shared/ui/core/label";
+import { useCustomToast } from "@/components/shared/ui/toast/toast-wrapper";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shared/ui/navigation/tabs";
+import { AuthContainer } from "@/components/features/auth/AuthContainer";
+import { GoogleButton } from "@/components/features/auth/GoogleButton";
+import { OrDivider } from "@/components/features/auth/OrDivider";
+import { PasswordInput } from "@/components/features/auth/PasswordInput";
 
 export default function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const error = searchParams.get('error');
-  const callbackUrl = searchParams.get('callbackUrl') || '/playground';
-  const { toast } = useToast();
+  const error = searchParams?.get("error");
+  const callbackUrl = searchParams?.get("callbackUrl") || "/playground";
+  const { toast } = useCustomToast();
   const { update: updateSession } = useSession();
 
   // Handle error messages
   if (error) {
     toast({
-      variant: "destructive",
+      variant: "error",
       title: "Authentication Error",
-      description: error === 'OAuthSignin' ? 'Error signing in with provider' :
-                  error === 'OAuthCallback' ? 'Error during authentication' :
-                  error === 'OAuthCreateAccount' ? 'Could not create user account' :
-                  error === 'EmailCreateAccount' ? 'Could not create user account' :
-                  error === 'Callback' ? 'Error during authentication' :
-                  error === 'OAuthAccountNotLinked' ? 'Email already used with different provider' :
-                  error === 'EmailSignin' ? 'Check your email for the sign in link' :
-                  error === 'CredentialsSignin' ? 'Invalid email or password' :
-                  error === 'Verification' ? 'Please verify your email before signing in' :
-                  'An unknown error occurred'
+      description:
+        error === "OAuthSignin"
+          ? "Error signing in with provider"
+          : error === "OAuthCallback"
+          ? "Error during authentication"
+          : error === "OAuthCreateAccount"
+          ? "Could not create user account"
+          : error === "EmailCreateAccount"
+          ? "Could not create user account"
+          : error === "Callback"
+          ? "Error during authentication"
+          : error === "OAuthAccountNotLinked"
+          ? "Email already used with different provider"
+          : error === "EmailSignin"
+          ? "Check your email for the sign in link"
+          : error === "CredentialsSignin"
+          ? "Invalid email or password"
+          : error === "Verification"
+          ? "Please verify your email before signing in"
+          : "An unknown error occurred",
     });
   }
 
-  const handleCredentialsSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCredentialsSignIn = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       const formData = new FormData(e.currentTarget);
-      const email = formData.get('email') as string;
-      const password = formData.get('password') as string;
+      const email = formData.get("email") as string;
+      const password = formData.get("password") as string;
 
       if (!email || !password) {
-        throw new Error('Please fill in all fields');
+        throw new Error("Please fill in all fields");
       }
 
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
       if (result?.error) {
-        if (result.error === 'Please verify your email before signing in') {
+        if (result.error === "Please verify your email before signing in") {
           toast({
-            variant: "destructive",
+            variant: "error",
             title: "Email Not Verified",
-            description: 'Please check your email for the verification link.'
+            description: "Please check your email for the verification link.",
           });
-          router.replace('/auth/verify-request');
+          router.replace("/auth/verify-request");
           return;
         }
 
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Sign in failed",
-          description: result.error === 'Invalid credentials' 
-            ? 'Invalid email or password. Please try again.' 
-            : result.error
+          description:
+            result.error === "Invalid credentials"
+              ? "Invalid email or password. Please try again."
+              : result.error,
         });
       } else if (result?.ok) {
         // Update session before redirecting
         await updateSession();
-        
+
         toast({
+          variant: "success",
           title: "Success",
-          description: "Successfully signed in to your account."
+          description: "Successfully signed in to your account.",
         });
-        
-        router.replace(callbackUrl);
+
+        // Force full page reload
+        window.location.href = callbackUrl;
       }
     } catch (error) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
-        description: error instanceof Error ? error.message : 'An unexpected error occurred. Please try again later.'
+        description:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred. Please try again later.",
       });
     } finally {
       setIsLoading(false);
@@ -100,7 +123,7 @@ export default function SignInPage() {
   };
 
   return (
-    <AuthContainer 
+    <AuthContainer
       title="Sign in to Coding Playground"
       subtitle="Track your progress and improve your coding skills"
     >
@@ -136,7 +159,7 @@ export default function SignInPage() {
                   type="button"
                   variant="link"
                   className="text-sm"
-                  onClick={() => router.push('/auth/forgot-password')}
+                  onClick={() => router.push("/auth/forgot-password")}
                   disabled={isLoading}
                 >
                   Forgot password?
@@ -153,22 +176,20 @@ export default function SignInPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? "Signing in..." : "Sign in"}
             </Button>
           </form>
         </TabsContent>
       </Tabs>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
-        <Button
-          variant="link"
-          className="font-medium hover:text-primary"
-          onClick={() => router.push('/auth/signup')}
-          disabled={isLoading}
+        Don&apos;t have an account?{" "}
+        <span
+          onClick={() => router.push("/auth/signup")}
+          className="font-medium text-primary hover:underline cursor-pointer"
         >
           Sign up
-        </Button>
+        </span>
       </p>
     </AuthContainer>
   );

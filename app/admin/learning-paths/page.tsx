@@ -1,13 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { createElement, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/shared/ui/core/button';
-import { Input } from '@/components/shared/ui/core/input';
-import { Textarea } from '@/components/shared/ui/core/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shared/ui/core/dialog";
 import { Tab } from '@headlessui/react';
 import CareerPathsTab from './components/CareerPathsTab';
 import LearningPathsTab from './components/LearningPathsTab';
@@ -15,6 +10,8 @@ import SkillsTab from './components/SkillsTab';
 import ResourcesTab from './components/ResourcesTab';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
 import { CareerPath, LearningPath, Skill, Resource, ResourceType, SkillLevel } from '@/types/learningPath';
+import { Loading } from '@/components/shared/loading';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 const RESOURCE_TYPES: ResourceType[] = ['video', 'article', 'documentation', 'course', 'practice'];
 const SKILL_LEVELS: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
@@ -23,9 +20,10 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
 }
 
-export default function LearningPathsAdmin() {
+function LearningPathsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { toast } = useCustomToast();
   
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -94,11 +92,19 @@ export default function LearningPathsAdmin() {
 
       if (!response.ok) throw new Error('Failed to create career path');
 
-      toast.success('Career path created successfully');
+      toast({
+        title: 'Success',
+        description: 'Career path created successfully',
+        variant: 'success',
+      });
       setIsDialogOpen(false);
       // Reset form and refresh data
     } catch (error) {
-      toast.error('Failed to create career path');
+      toast({
+        title: 'Error',
+        description: 'Failed to create career path',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -118,11 +124,19 @@ export default function LearningPathsAdmin() {
 
       if (!response.ok) throw new Error('Failed to create learning path');
 
-      toast.success('Learning path created successfully');
+      toast({
+        title: 'Success',
+        description: 'Learning path created successfully',
+        variant: 'success',
+      });
       setIsDialogOpen(false);
       // Reset form and refresh data
     } catch (error) {
-      toast.error('Failed to create learning path');
+      toast({
+        title: 'Error',
+        description: 'Failed to create learning path',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -145,11 +159,19 @@ export default function LearningPathsAdmin() {
 
       if (!response.ok) throw new Error('Failed to create skill');
 
-      toast.success('Skill created successfully');
+      toast({
+        title: 'Success',
+        description: 'Skill created successfully',
+        variant: 'success',
+      });
       setIsDialogOpen(false);
       // Reset form and refresh data
     } catch (error) {
-      toast.error('Failed to create skill');
+      toast({
+        title: 'Error',
+        description: 'Failed to create skill',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -172,11 +194,19 @@ export default function LearningPathsAdmin() {
 
       if (!response.ok) throw new Error('Failed to create resource');
 
-      toast.success('Resource created successfully');
+      toast({
+        title: 'Success',
+        description: 'Resource created successfully',
+        variant: 'success',
+      });
       setIsDialogOpen(false);
       // Reset form and refresh data
     } catch (error) {
-      toast.error('Failed to create resource');
+      toast({
+        title: 'Error',
+        description: 'Failed to create resource',
+        variant: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -190,40 +220,40 @@ export default function LearningPathsAdmin() {
   ];
 
   return (
-    <div className="w-full px-2 py-16 sm:px-0">
-      <Tab.Group selectedIndex={selectedIndex} onChange={setSelectedIndex}>
-        <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
-          {tabs.map((tab) => (
-            <Tab
-              key={tab.name}
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white shadow text-blue-700'
-                    : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
-                )
-              }
-            >
-              {tab.name}
-            </Tab>
-          ))}
-        </Tab.List>
-        <Tab.Panels className="mt-2">
-          {tabs.map((tab, idx) => (
-            <Tab.Panel
-              key={idx}
-              className={classNames(
-                'rounded-xl bg-white p-3',
-                'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2'
-              )}
-            >
-              <tab.component />
-            </Tab.Panel>
-          ))}
-        </Tab.Panels>
-      </Tab.Group>
+    <div className="container mx-auto py-8">
+      {loading ? (
+        <Loading text="Loading learning paths..." />
+      ) : (
+        <Tab.Group>
+          <Tab.List className="flex space-x-1 rounded-xl bg-blue-900/20 p-1">
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.name}
+                className={({ selected }) =>
+                  classNames(
+                    'w-full rounded-lg py-2.5 text-sm font-medium leading-5 text-blue-700',
+                    'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
+                    selected
+                      ? 'bg-white shadow'
+                      : 'text-blue-100 hover:bg-white/[0.12] hover:text-white'
+                  )
+                }
+              >
+                {tab.name}
+              </Tab>
+            ))}
+          </Tab.List>
+          <Tab.Panels className="mt-2">
+            {tabs.map((tab, idx) => (
+              <Tab.Panel key={idx}>
+                {createElement(tab.component)}
+              </Tab.Panel>
+            ))}
+          </Tab.Panels>
+        </Tab.Group>
+      )}
     </div>
   );
 }
+
+export default LearningPathsPage;

@@ -14,11 +14,5 @@ export * from './data-display';
 export * from './effects';
 
 // Individual Components
-export * from './dialog';
-export * from './scroll-area';
-export * from './mouse-scroll';
-export * from './page-transition';
-export * from './section-header';
-export * from './FileUpload';
-export * from './LazyImage';
+
 export * from './MagicButton';

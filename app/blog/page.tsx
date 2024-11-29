@@ -1,335 +1,341 @@
 'use client';
 
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatDate } from '@/lib/utils';
-import { useInView } from 'react-intersection-observer';
-import { useEffect, useState, useRef } from 'react';
-import { Input } from '@/components/shared/ui/core/input';
-import { Button } from '@/components/shared/ui/core/button';
-import { Search, Tag, ArrowRight, TrendingUp, Clock } from 'lucide-react';
-import { Badge } from '@/components/shared/ui/core/badge';
-import { Skeleton } from '@/components/shared/ui/feedback/skeleton';
-import { blogService } from '@/services/blog.service';
-import { cn } from '@/lib/utils';
-import { AnimatedBackground } from '@/components/shared/ui/effects/animated-background';
+import { 
+  SearchIcon, 
+  FilterIcon, 
+  CalendarIcon, 
+  TagIcon, 
+  BookOpenIcon,
+  LayoutGridIcon,
+  ListIcon
+} from 'lucide-react';
 
-const ITEMS_PER_PAGE = 9;
+import { Badge } from '@/components/shared/ui/core/badge';
+import { Button } from '@/components/shared/ui/core/button';
+import { Input } from '@/components/shared/ui/core/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/shared/ui/core/select';
+import { Skeleton } from '@/components/shared/ui/feedback/skeleton';
+import { cn } from '@/lib/utils';
+
+// Blog Post Type Definition
+interface BlogPost {
+  _id: string;
+  title: string;
+  description: string;
+  content: string;
+  slug: string;
+  tags: string[];
+  author: {
+    name: string;
+    email: string;
+    image?: string;
+  };
+  coverImage?: string;
+  readingTime?: number;
+  views: number;
+  likes: number;
+  isPublished: boolean;
+  publishedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+type ViewMode = 'grid' | 'list';
 
 export default function BlogPage() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const { ref, inView } = useInView();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end start"]
-  });
-
-  const y = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
-
+  const { data: session } = useSession();
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [blogs, setBlogs] = useState<any[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTag, setSelectedTag] = useState('all');
+  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
 
+  // Fetch posts
   useEffect(() => {
-    const fetchBlogs = async () => {
+    const fetchPosts = async () => {
       try {
-        const response = await blogService.getBlogs(
-          {
-            search: searchQuery,
-            tag: selectedTag || undefined,
-            sort: 'newest',
-            published: true,
-          },
-          {
-            page,
-            limit: ITEMS_PER_PAGE,
+        const response = await fetch('/api/blogs', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           }
-        );
-        
-        if (page === 1) {
-          setBlogs(response.blogs);
-        } else {
-          setBlogs(prev => [...prev, ...response.blogs]);
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch blog posts');
         }
-        
-        setHasMore(response.pagination.hasMore);
-        setIsLoading(false);
+
+        const data = await response.json();
+        setPosts(data);
+        setFilteredPosts(data);
       } catch (error) {
-        console.error('Error fetching blogs:', error);
+        console.error('Error fetching blog posts:', error);
+      } finally {
         setIsLoading(false);
       }
     };
 
-    fetchBlogs();
-  }, [page, searchQuery, selectedTag]);
+    fetchPosts();
+  }, []);
 
+  // Filter and sort posts
   useEffect(() => {
-    if (inView && hasMore && !isLoading) {
-      setPage(prev => prev + 1);
-    }
-  }, [inView, hasMore, isLoading]);
+    let result = [...posts];
 
-  const allTags = Array.from(new Set(blogs.flatMap((blog) => blog.tags)));
-  const featuredPost = blogs[0];
+    // Search
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      result = result.filter(post => 
+        post.title.toLowerCase().includes(searchLower) ||
+        post.tags.some(tag => tag.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Filter by tag
+    if (selectedTag !== 'all') {
+      result = result.filter(post => 
+        post.tags.includes(selectedTag)
+      );
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      const dateA = new Date(a.publishedAt || a.createdAt).getTime();
+      const dateB = new Date(b.publishedAt || b.createdAt).getTime();
+      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+
+    setFilteredPosts(result);
+  }, [searchTerm, selectedTag, sortBy, posts]);
+
+  // Get unique tags
+  const allTags = Array.from(new Set(posts.flatMap(post => post.tags)));
+
+  const BlogPostCard = ({ post }: { post: BlogPost }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
+      className={cn(
+        "group bg-card border border-border overflow-hidden hover:border-primary/50 transition-colors",
+        viewMode === 'grid' ? 'rounded-lg' : 'rounded-md'
+      )}
+    >
+      <div className={cn(
+        "flex",
+        viewMode === 'grid' ? 'flex-col' : 'flex-row items-center'
+      )}>
+        {/* Cover Image */}
+        {post.coverImage && (
+          <div className={cn(
+            "relative overflow-hidden",
+            viewMode === 'grid' ? 'h-40 sm:h-48 w-full' : 'h-32 w-32 flex-shrink-0'
+          )}>
+            <Image
+              src={post.coverImage}
+              alt={post.title}
+              fill
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          </div>
+        )}
+
+        <div className={cn(
+          "flex flex-col",
+          viewMode === 'grid' ? 'p-4 sm:p-6' : 'p-4 flex-grow'
+        )}>
+          {/* Tags */}
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
+            {post.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary" className="text-xs">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Title */}
+          <h2 className={cn(
+            "font-semibold group-hover:text-primary transition-colors line-clamp-2",
+            viewMode === 'grid' ? 'text-lg sm:text-xl mb-2' : 'text-base sm:text-lg mb-1.5'
+          )}>
+            {post.title}
+          </h2>
+
+          {/* Description */}
+          <p className={cn(
+            "text-muted-foreground line-clamp-2 mb-4",
+            viewMode === 'grid' ? 'text-sm sm:text-base' : 'text-sm'
+          )}>
+            {post.description}
+          </p>
+
+          {/* Metadata */}
+          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-muted-foreground mt-auto">
+            <div className="flex items-center">
+              <CalendarIcon className="h-3 w-3 mr-1" />
+              <span>
+                {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+              </span>
+            </div>
+            <div className="flex items-center">
+              <BookOpenIcon className="h-3 w-3 mr-1" />
+              <span>{post.readingTime || '5'} min read</span>
+            </div>
+            <div className="flex items-center">
+              <TagIcon className="h-3 w-3 mr-1" />
+              <span>{post.tags.length} tags</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 
   return (
-    <div className="min-h-screen" ref={containerRef}>
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center">
-        <AnimatedBackground />
-        <motion.div 
-          className="absolute inset-0 pointer-events-none"
-          style={{ y, opacity }}
-        >
-          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background" />
-        </motion.div>
+    <div className="container mx-auto px-4 py-12 max-w-5xl">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-8 md:mb-12"
+      >
+        <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-foreground">
+          Tech Insights & Coding Chronicles
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-4">
+          Dive deep into technology, programming insights, and innovative solutions.
+        </p>
+      </motion.div>
 
-        <div className="container mx-auto px-4 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <Badge variant="secondary" className="mb-4">
-              <TrendingUp className="w-3 h-3 mr-1" />
-              Latest Articles
-            </Badge>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-500 to-primary animate-gradient-x">
-              My Blog
-            </h1>
-            <p className="text-muted-foreground text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-              Exploring the intersection of design, development, and innovation through in-depth articles and tutorials.
-            </p>
+      {/* Filters, Search, and View Toggle */}
+      <div className="mb-6 md:mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-grow">
+            <Input 
+              type="text" 
+              placeholder="Search blogs by title or tag" 
+              className="pl-10 w-full"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          </div>
 
-            {/* Search and Filter Section */}
-            <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto">
-              <div className="relative flex-1">
-                <Input
-                  type="text"
-                  placeholder="Search articles..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setPage(1);
-                  }}
-                  className="pl-10 h-12 text-lg"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              </div>
-              <Button
-                variant={selectedTag ? "secondary" : "outline"}
-                onClick={() => {
-                  setSelectedTag(null);
-                  setPage(1);
-                }}
-                className="whitespace-nowrap h-12 text-lg"
-              >
-                <Tag className="mr-2 h-5 w-5" />
-                All Tags
-              </Button>
-            </div>
-
-            {/* Tags */}
-            {allTags.length > 0 && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="flex flex-wrap gap-2 justify-center mt-6"
-              >
-                {allTags.map((tag) => (
-                  <Badge
-                    key={tag}
-                    variant={selectedTag === tag ? "default" : "secondary"}
-                    className="cursor-pointer text-sm py-1.5 px-3"
-                    onClick={() => {
-                      setSelectedTag(tag === selectedTag ? null : tag);
-                      setPage(1);
-                    }}
-                  >
-                    {tag}
-                  </Badge>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Select value={selectedTag} onValueChange={setSelectedTag}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Filter by Tag">
+                  {selectedTag === 'all' ? 'All Tags' : selectedTag}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Tags</SelectItem>
+                {allTags.map(tag => (
+                  <SelectItem key={tag} value={tag}>{tag}</SelectItem>
                 ))}
-              </motion.div>
-            )}
-          </motion.div>
+              </SelectContent>
+            </Select>
+
+            <Select value={sortBy} onValueChange={(val: 'newest' | 'oldest') => setSortBy(val)}>
+              <SelectTrigger className="w-full sm:w-[180px]">
+                <SelectValue placeholder="Sort By">
+                  {sortBy === 'newest' ? 'Newest First' : 'Oldest First'}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest First</SelectItem>
+                <SelectItem value="oldest">Oldest First</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
+        {/* View Toggle */}
+        <div className="flex justify-end">
+          <div className="bg-card border border-border rounded-lg p-1 flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-2 py-1",
+                viewMode === 'grid' && "bg-primary/10 text-primary"
+              )}
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGridIcon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "px-2 py-1",
+                viewMode === 'list' && "bg-primary/10 text-primary"
+              )}
+              onClick={() => setViewMode('list')}
+            >
+              <ListIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Blog Posts */}
+      <div className={cn(
+        viewMode === 'grid' 
+          ? 'grid gap-6 grid-cols-1 md:grid-cols-2' 
+          : 'flex flex-col gap-4'
+      )}>
+        {isLoading ? (
+          // Skeleton Loader
+          <div className={cn(
+            viewMode === 'grid' 
+              ? 'grid gap-6 grid-cols-1 md:grid-cols-2' 
+              : 'flex flex-col gap-4'
+          )}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton 
+                key={index} 
+                className={cn(
+                  viewMode === 'grid' 
+                    ? 'h-[400px]' 
+                    : 'h-[200px]'
+                )} 
+              />
+            ))}
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center text-muted-foreground py-12 col-span-full"
           >
-            <ArrowRight className="h-6 w-6 rotate-90 text-muted-foreground" />
+            No blog posts found
           </motion.div>
-        </div>
-      </section>
-
-      {/* Featured Post */}
-      {featuredPost && !searchQuery && !selectedTag && (
-        <section className="py-20 bg-gradient-to-b from-background to-background/50">
-          <div className="container mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              viewport={{ once: true }}
-              className="relative overflow-hidden rounded-2xl bg-card"
-            >
-              <Link href={`/blog/${featuredPost.slug}`}>
-                <div className="grid md:grid-cols-2 gap-8 p-8">
-                  <div className="relative aspect-[4/3] rounded-lg overflow-hidden">
-                    <Image
-                      src={featuredPost.coverImage}
-                      alt={featuredPost.title}
-                      fill
-                      className="object-cover"
-                      priority
-                    />
-                  </div>
-                  <div className="flex flex-col justify-center">
-                    <Badge variant="secondary" className="w-fit mb-4">Featured Post</Badge>
-                    <h2 className="text-3xl font-bold mb-4 line-clamp-2">
-                      {featuredPost.title}
-                    </h2>
-                    <p className="text-muted-foreground mb-6 line-clamp-3">
-                      {featuredPost.excerpt}
-                    </p>
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <div className="relative h-8 w-8 rounded-full overflow-hidden">
-                          <Image
-                            src={featuredPost.author.avatar}
-                            alt={featuredPost.author.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <span className="text-sm">{featuredPost.author.name}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{featuredPost.readingTime || '5 min read'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        ) : (
+          <AnimatePresence>
+            {filteredPosts.map((post) => (
+              <Link href={`/blog/${post.slug}`} key={post._id} className="block">
+                <BlogPostCard post={post} />
               </Link>
-            </motion.div>
-          </div>
-        </section>
-      )}
-
-      {/* Blog Posts Grid */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {isLoading ? (
-              // Loading skeletons
-              Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-                <div key={i} className="group">
-                  <div className="bg-card rounded-xl overflow-hidden">
-                    <Skeleton className="h-48 w-full" />
-                    <div className="p-6 space-y-4">
-                      <div className="flex gap-2">
-                        <Skeleton className="h-5 w-16" />
-                        <Skeleton className="h-5 w-16" />
-                      </div>
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <div className="flex justify-between">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              blogs.map((post, index) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  viewport={{ once: true }}
-                  className="group"
-                >
-                  <Link href={`/blog/${post.slug}`}>
-                    <div className="bg-card rounded-xl overflow-hidden border border-border/50 hover:border-border transition-colors duration-300">
-                      <div className="relative h-48 overflow-hidden">
-                        <Image
-                          src={post.coverImage}
-                          alt={post.title}
-                          fill
-                          className="object-cover transform group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                      <div className="p-6">
-                        <div className="flex gap-2 mb-3 flex-wrap">
-                          {post.tags.map((tag) => (
-                            <Badge
-                              key={tag}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {tag}
-                            </Badge>
-                          ))}
-                        </div>
-                        <h2 className="text-xl font-semibold mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                          {post.title}
-                        </h2>
-                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-                          {post.excerpt}
-                        </p>
-                        <div className="flex items-center justify-between text-sm text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <div className="relative h-6 w-6 rounded-full overflow-hidden">
-                              <Image
-                                src={post.author.avatar}
-                                alt={post.author.name}
-                                fill
-                                className="object-cover"
-                              />
-                            </div>
-                            <span>{post.author.name}</span>
-                          </div>
-                          <span>{formatDate(post.publishedAt || '')}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))
-            )}
-          </div>
-
-          {/* Load More */}
-          {(hasMore) && (
-            <div
-              ref={ref}
-              className="flex justify-center mt-12"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                disabled={isLoading}
-                className="min-w-[200px]"
-              >
-                {isLoading ? 'Loading more...' : 'Load more articles'}
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
+            ))}
+          </AnimatePresence>
+        )}
+      </div>
     </div>
   );
 }

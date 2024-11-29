@@ -32,7 +32,7 @@ const platforms: PracticePlatform[] = [
 
 export function CodePractice() {
   return (
-    <section className="py-8">
+    <section className="py-8 pb-16">
       <div className="container">
         <div className="mb-8">
           <motion.div
@@ -56,7 +56,7 @@ export function CodePractice() {
           </motion.p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           {platforms.map((platform, index) => (
             <motion.div
               key={platform.name}

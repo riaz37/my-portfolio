@@ -1,94 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
-import { ProgressStats } from '@/types/learningPath';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
 
-export function useLearningProgress(learningPathId: string | null) {
+export const useLearningProgress = (learningPathId: string | null) => {
   const { data: session } = useSession();
-  const [progress, setProgress] = useState<ProgressStats | null>(null);
+  const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
 
-  // Fetch progress when component mounts or learningPathId changes
-  useEffect(() => {
-    if (learningPathId && session?.user) {
-      fetchProgress();
-    }
-  }, [learningPathId, session?.user]);
+  const markResourceComplete = useCallback(async (resourceId: string) => {
+    if (!session?.user) return;
 
-  const fetchProgress = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch(`/api/learning-paths/progress?learningPathId=${learningPathId}`);
-      if (!response.ok) throw new Error('Failed to fetch progress');
-      
-      const data = await response.json();
-      setProgress(data);
-    } catch (error) {
-      console.error('Error fetching progress:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load progress"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const markResourceComplete = async (
-    resourceId: string,
-    skillId: string,
-    completed: boolean
-  ) => {
-    if (!learningPathId || !session?.user) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Please sign in to track progress"
-      });
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const response = await fetch('/api/learning-paths/progress', {
-        method: 'PUT',
+      const response = await fetch('/api/learning-progress', {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           learningPathId,
           resourceId,
-          skillId,
-          completed,
+          userId: session.user.id,
         }),
       });
 
-      if (!response.ok) throw new Error('Failed to update progress');
+      if (!response.ok) {
+        throw new Error('Failed to mark resource as complete');
+      }
 
-      const data = await response.json();
-      setProgress(data);
-      
-      toast({
-        title: "Success",
-        description: completed ? 'Resource marked as complete!' : 'Resource marked as incomplete'
-      });
+      setProgress(prev => ({
+        ...prev,
+        [resourceId]: true,
+      }));
     } catch (error) {
-      console.error('Error updating progress:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update progress"
-      });
+      console.error('Error marking resource complete:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [learningPathId, session]);
 
-  return {
-    progress,
-    loading,
-    markResourceComplete,
-  };
-}
+  return { progress, loading, markResourceComplete };
+};

@@ -4,14 +4,14 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
-import { useToast } from '@/hooks/useToast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { FaPaperPlane, FaEnvelope } from 'react-icons/fa';
 
 export function NewsletterSubscribe() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [focused, setFocused] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

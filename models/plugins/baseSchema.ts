@@ -1,51 +1,69 @@
 import { Schema } from 'mongoose';
-import { WithTimestamps, WithSoftDelete, WithOwnership, WithPublishStatus } from '../types';
 
-export function withTimestamps<T extends WithTimestamps>(schema: Schema<T>) {
+// Timestamp plugin to add createdAt and updatedAt fields
+export function withTimestamps(schema: Schema) {
   schema.add({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
   });
 
   schema.pre('save', function(next) {
-    if (this.isModified()) {
-      this.updatedAt = new Date();
-    }
+    this.updatedAt = new Date();
     next();
   });
 }
 
-export function withSoftDelete<T extends WithSoftDelete>(schema: Schema<T>) {
+// Optional: Add soft delete functionality
+export function withSoftDelete(schema: Schema) {
   schema.add({
     deletedAt: { type: Date, default: null }
   });
 
+  schema.methods.softDelete = function() {
+    this.deletedAt = new Date();
+    return this.save();
+  };
+
   schema.pre('find', function() {
     this.where({ deletedAt: null });
   });
+}
 
-  schema.pre('findOne', function() {
-    this.where({ deletedAt: null });
+// Optional: Add ownership tracking
+export function withOwnership(schema: Schema) {
+  schema.add({
+    owner: { type: Schema.Types.ObjectId, ref: 'User', required: true }
   });
 }
 
-export function withOwnership<T extends WithOwnership>(schema: Schema<T>) {
+// Optional: Add publish status
+export function withPublishStatus(schema: Schema) {
   schema.add({
-    createdBy: { type: String, required: true, index: true },
-    updatedBy: { type: String }
+    isPublished: { type: Boolean, default: false },
+    publishedAt: { type: Date, default: null }
   });
 }
 
-export function withPublishStatus<T extends WithPublishStatus>(schema: Schema<T>) {
+// Optional: Add view tracking
+export function withViews(schema: Schema) {
   schema.add({
-    published: { type: Boolean, default: false, index: true },
-    publishedAt: { type: Date }
+    views: { type: Number, default: 0 }
   });
 
-  schema.pre('save', function(next) {
-    if (this.isModified('published') && this.published && !this.publishedAt) {
-      this.publishedAt = new Date();
-    }
-    next();
+  schema.methods.incrementViews = function() {
+    this.views += 1;
+    return this.save();
+  };
+}
+
+// Optional: Add likes tracking
+export function withLikes(schema: Schema) {
+  schema.add({
+    likes: { type: Number, default: 0 }
   });
+
+  schema.methods.incrementLikes = function() {
+    this.likes += 1;
+    return this.save();
+  };
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/shared/ui/core/button';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { Loader2 } from 'lucide-react';
 
 interface GoogleButtonProps {
@@ -14,7 +14,7 @@ interface GoogleButtonProps {
 
 export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playground', className }: GoogleButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   const handleGoogleSignIn = async () => {
     try {

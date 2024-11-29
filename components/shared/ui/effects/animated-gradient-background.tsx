@@ -8,47 +8,32 @@ export const AnimatedGradientBackground = () => {
       {/* Base layer with light background */}
       <div className="absolute inset-0 bg-gradient-to-b from-white via-white to-white/98 dark:from-background dark:via-background dark:to-background/98" />
       
-      {/* Animated gradient layers */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.5 }}
-        className="absolute inset-0"
-      >
+      {/* Static gradient layers */}
+      <div className="absolute inset-0">
         {/* Light mode gradients */}
         <div className="light:block dark:hidden">
           {/* Soft purple gradient */}
-          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-purple-50/30 via-violet-50/20 to-transparent animate-gradient-y" />
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-purple-50/20 via-violet-50/10 to-transparent" />
           
           {/* Soft blue gradient */}
-          <div className="absolute top-1/4 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-50/20 via-sky-50/15 to-transparent animate-gradient-y-fast" />
+          <div className="absolute top-1/4 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-50/10 via-sky-50/5 to-transparent" />
           
           {/* Accent gradient */}
-          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-tr from-violet-50/20 via-primary/10 to-transparent animate-gradient-y" />
-          
-          {/* Moving highlight */}
-          <div className="absolute inset-0 opacity-20">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-transparent via-primary/5 to-transparent rotate-45 animate-pulse-soft" />
-          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-tr from-violet-50/10 via-primary/5 to-transparent" />
         </div>
 
         {/* Dark mode gradients */}
         <div className="hidden dark:block">
           {/* Deep purple gradient */}
-          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-purple-950/10 via-violet-950/8 to-transparent animate-gradient-y" />
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-purple-950/5 via-violet-950/3 to-transparent" />
           
           {/* Deep blue gradient */}
-          <div className="absolute top-1/4 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-950/8 via-sky-950/5 to-transparent animate-gradient-y-fast" />
+          <div className="absolute top-1/4 right-0 w-1/2 h-full bg-gradient-to-bl from-blue-950/3 via-sky-950/2 to-transparent" />
           
           {/* Accent gradient */}
-          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-tr from-violet-950/8 via-primary/5 to-transparent animate-gradient-y" />
-          
-          {/* Moving highlight */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-gradient-to-r from-transparent via-primary/5 to-transparent rotate-45 animate-pulse-soft" />
-          </div>
+          <div className="absolute bottom-0 left-0 w-full h-1/2 bg-gradient-to-tr from-violet-950/3 via-primary/2 to-transparent" />
         </div>
-      </motion.div>
+      </div>
 
       {/* Ultra subtle noise texture */}
       <div 

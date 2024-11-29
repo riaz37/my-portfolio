@@ -5,11 +5,12 @@ import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/core/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/overlay/dialog';
 import { Card } from '@/components/shared/ui/core/card';
 import { Badge } from '@/components/shared/ui/core/badge';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { Loading } from '@/components/shared/loading';
 
 interface Resource {
   _id: string;
@@ -30,7 +31,7 @@ interface Resource {
 export default function ResourcesTab() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
   const [resourceForm, setResourceForm] = useState({
     title: '',
@@ -46,7 +47,7 @@ export default function ResourcesTab() {
     language: '',
     solutionCode: '',
   });
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   useEffect(() => {
     fetchResources();
@@ -54,6 +55,7 @@ export default function ResourcesTab() {
 
   const fetchResources = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/admin/learning-paths/resources');
       if (!response.ok) throw new Error('Failed to fetch resources');
       const data = await response.json();
@@ -61,10 +63,12 @@ export default function ResourcesTab() {
     } catch (error) {
       console.error('Error fetching resources:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: "Failed to fetch resources"
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -104,7 +108,7 @@ export default function ResourcesTab() {
     } catch (error) {
       console.error('Error adding resource:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: "Failed to add resource"
       });
@@ -131,7 +135,7 @@ export default function ResourcesTab() {
     } catch (error) {
       console.error('Error deleting resource:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: "Failed to delete resource"
       });
@@ -245,6 +249,10 @@ export default function ResourcesTab() {
     );
   };
 
+  if (isLoading) {
+    return <Loading text="Loading resources..." />;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -302,7 +310,7 @@ export default function ResourcesTab() {
                   Edit
                 </Button>
                 <Button
-                  variant="destructive"
+                  variant="error"
                   size="sm"
                   onClick={() => handleDeleteResource(resource._id)}
                 >

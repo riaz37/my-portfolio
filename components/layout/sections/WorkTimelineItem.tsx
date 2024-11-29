@@ -77,10 +77,8 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({
       <motion.div
         className={cn(
           "relative p-6 rounded-lg cursor-pointer transition-all duration-300",
-          "border border-border/50 backdrop-blur-sm",
-          "bg-gradient-to-br from-card via-card/95 to-card/90",
-          "hover:from-card/95 hover:via-card/90 hover:to-card/85",
-          "shadow-lg hover:shadow-xl",
+          "border border-border/20 bg-card",
+          "hover:border-primary/20 hover:shadow-lg",
           "ml-12 md:ml-0",
           isEven ? 'md:mr-8' : 'md:ml-8',
           isActive && "ring-2 ring-primary/50 shadow-xl"
@@ -91,16 +89,12 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({
         }}
         onClick={onClick}
       >
-        {/* Glass overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-white/0 rounded-lg" />
-        
         {/* Company logo and details */}
         <div className="relative flex items-center mb-4 gap-4">
           <motion.div 
             className={cn(
               "relative overflow-hidden rounded-lg",
-              "bg-gradient-to-br from-primary/10 to-primary/5",
-              "group-hover:from-primary/15 group-hover:to-primary/10",
+              "bg-primary/5",
               "p-3 transition-colors duration-300"
             )}
             whileHover={{ scale: 1.1 }}
@@ -112,11 +106,10 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({
               height={40}
               className="rounded-lg"
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </motion.div>
           <div>
             <motion.h3 
-              className="text-xl font-semibold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent"
+              className="text-xl font-semibold text-primary"
             >
               {experience.position}
             </motion.h3>
@@ -151,11 +144,9 @@ const WorkTimelineItem: React.FC<WorkTimelineItemProps> = ({
               key={i}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all duration-300",
-                "bg-gradient-to-br from-primary/10 to-primary/5",
-                "hover:from-primary/15 hover:to-primary/10",
-                "text-primary/90 hover:text-primary",
-                "border border-primary/10",
-                "backdrop-blur-sm"
+                "bg-primary/5 text-primary/90",
+                "hover:bg-primary/10",
+                "border border-primary/10"
               )}
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}

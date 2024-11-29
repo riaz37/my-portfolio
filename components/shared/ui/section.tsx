@@ -8,6 +8,7 @@ interface SectionProps extends React.HTMLAttributes<HTMLElement> {
   className?: string;
   id?: string;
   fullWidth?: boolean;
+  onAnimationStart?: (definition: any) => void;
 }
 
 export function Section({ children, className, id, fullWidth = false, ...props }: SectionProps) {

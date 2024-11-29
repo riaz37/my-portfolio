@@ -47,15 +47,15 @@ export default function Hero() {
   }, []);
 
   return (
-    <div className="container mx-auto px-4 relative flex flex-col justify-center items-center">
-      <div className="relative z-10 flex flex-col items-center justify-center gap-12 max-w-4xl mx-auto w-full">
+    <div className="container mx-auto px-4 relative flex flex-col justify-center items-center min-h-[calc(100vh-5rem)]">
+      <div className="relative z-10 flex flex-col items-center justify-center gap-6 sm:gap-12 max-w-4xl mx-auto w-full">
         <motion.div
           variants={fadeInUpVariant}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           custom={0}
-          className="space-y-8 text-center"
+          className="space-y-4 sm:space-y-8 text-center"
         >
           <div className="flex justify-center">
             <motion.div
@@ -170,21 +170,21 @@ export default function Hero() {
                     priority
                     src="/profile.svg"
                     alt="Riaz's Profile"
-                    width={240}
-                    height={240}
-                    className="rounded-full bg-muted p-3 md:p-6 object-cover relative"
+                    width={160}
+                    height={160}
+                    className="rounded-full bg-muted p-2 sm:p-3 md:p-6 object-cover relative sm:w-[200px] sm:h-[200px] md:w-[240px] md:h-[240px]"
                   />
                 </motion.div>
               </motion.div>
             </motion.div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-sm sm:text-base text-muted-foreground font-medium tracking-wider uppercase"
+              className="text-xs sm:text-sm md:text-base text-muted-foreground font-medium tracking-wider uppercase"
             >
               Welcome to my world
             </motion.h2>
@@ -192,7 +192,7 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight"
+              className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight"
             >
               Hi, I'm{" "}
               <span className="inline-block relative">

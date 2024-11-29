@@ -15,7 +15,7 @@ export const siteConfig = {
     "TypeScript",
     "Node.js",
     "MongoDB",
-  ],
+  ] as string[],
   links: {
     github: "https://github.com/riaz37",
     linkedin: "https://linkedin.com/in/riaz37",

@@ -138,7 +138,7 @@ function Terminal() {
 
   return (
     <>
-      {/* Floating Toggle Button */}
+      {/* Floating Toggle Button - Hidden on Mobile */}
       <motion.button
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -150,11 +150,12 @@ function Terminal() {
           "hover:bg-background/90 hover:shadow-xl transition-all duration-200",
           "flex items-center gap-2 text-sm text-muted-foreground",
           "group",
+          "hidden md:flex", // Hide on mobile, show on desktop
           isOpen && "hidden"
         )}
       >
         <TerminalIcon className="h-4 w-4 text-primary group-hover:text-primary/80" />
-        <span className="hidden md:inline-flex items-center gap-2">
+        <span className="inline-flex items-center gap-2">
           Terminal
           <kbd className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-mono">Ctrl + /</kbd>
         </span>
@@ -167,7 +168,7 @@ function Terminal() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="fixed left-4 bottom-0 z-50 w-full md:bottom-4 md:w-[500px] md:left-4 p-4"
+            className="fixed hidden md:block left-4 bottom-0 z-50 w-full md:bottom-4 md:w-[500px] md:left-4 p-4" // Hide on mobile
           >
             <div
               ref={terminalRef}

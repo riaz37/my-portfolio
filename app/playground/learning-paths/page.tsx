@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/shared/ui/core/card';
 import { Button } from '@/components/shared/ui/core/button';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Input } from '@/components/shared/ui/core/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 import { Progress } from '@/components/shared/ui/feedback/progress';
@@ -238,7 +238,7 @@ const LearningPathsPage = () => {
                       <Badge variant="outline">{path.estimatedTime}</Badge>
                       <Badge variant={
                         path.difficulty === 'beginner' ? 'secondary' :
-                        path.difficulty === 'intermediate' ? 'default' : 'destructive'
+                        path.difficulty === 'intermediate' ? 'default' : 'error'
                       }>{path.difficulty}</Badge>
                     </div>
                     <Button className="w-full">Start Learning</Button>
@@ -268,7 +268,7 @@ const LearningPathsPage = () => {
                 <div className="mt-auto pt-4 border-t">
                   <Badge variant={
                     skill.level === 'beginner' ? 'secondary' :
-                    skill.level === 'intermediate' ? 'default' : 'destructive'
+                    skill.level === 'intermediate' ? 'default' : 'error'
                   }>{skill.level}</Badge>
                 </div>
               </Card>

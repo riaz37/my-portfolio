@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { BaseDocument } from '../types';
 import { WithAuth } from '../types/auth';
-import { withTimestamps } from '../plugins/baseSchema';
 import { withAuth, withVerification, withRole } from '../plugins/authSchema';
+import { withTimestamps } from '../plugins/baseSchema';
 
 export interface IUser extends BaseDocument, WithAuth {
   name: string;

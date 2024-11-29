@@ -28,7 +28,7 @@ export const playgroundSections: PlaygroundSection[] = [
     title: 'Coding Challenges',
     description: 'Master algorithms through interactive challenges with real-time feedback',
     icon: Code2,
-    href: '/playground/challenges-list',
+    href: '/playground/challenges',
     color: 'bg-blue-500/10',
     textColor: 'text-blue-500',
     borderColor: 'border-blue-500/20',

@@ -89,7 +89,7 @@ export function GitHubStats() {
 
   if (loading) {
     return (
-      <section className="container py-24">
+      <div id="github" className="container py-20">
         <SectionTitle 
           highlight="Open Source"
           badge="GitHub"
@@ -101,18 +101,12 @@ export function GitHubStats() {
         <div className="flex justify-center items-center min-h-[200px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="container py-24 relative overflow-hidden">
-      {/* Background Effects */}
-      <div className="absolute inset-0">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
-        <div className="absolute -bottom-8 right-0 w-72 h-72 bg-secondary/5 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
-      </div>
-
+    <div id="github" className="container py-20">
       <div className="relative">
         <SectionTitle 
           highlight="Open Source"
@@ -153,16 +147,15 @@ export function GitHubStats() {
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                   className="group"
                 >
-                  <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-background to-background/50 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br opacity-10 group-hover:opacity-20 transition-opacity duration-300" style={{ backgroundImage: `linear-gradient(to bottom right, ${card.gradient})` }} />
+                  <Card className="relative overflow-hidden border border-border/20 bg-background backdrop-blur-sm">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">
+                      <CardTitle className="text-sm font-medium text-indigo-600">
                         {card.title}
                       </CardTitle>
                       <card.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors duration-300" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold mb-1 bg-gradient-to-r bg-clip-text text-transparent group-hover:animate-gradient-x transition-all duration-300" style={{ backgroundImage: `linear-gradient(to right, ${card.gradient})` }}>
+                      <div className="text-3xl font-bold mb-1 text-primary">
                         {card.value.toLocaleString()}
                       </div>
                       <p className="text-xs text-muted-foreground">
@@ -181,10 +174,10 @@ export function GitHubStats() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <Card className="border-0 bg-gradient-to-br from-background to-background/50 backdrop-blur-sm">
+                <Card className="border border-border/20 bg-background backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-lg font-semibold">Most Used Languages</CardTitle>
-                    <CardDescription>Technologies I frequently work with</CardDescription>
+                    <CardTitle className="text-lg font-semibold text-indigo-600">Most Used Languages</CardTitle>
+                    <CardDescription className="text-muted-foreground">Technologies I frequently work with</CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="flex flex-wrap gap-2">
@@ -196,8 +189,7 @@ export function GitHubStats() {
                           transition={{ duration: 0.3, delay: index * 0.1 }}
                           className={cn(
                             "px-4 py-2 rounded-full text-sm font-medium",
-                            "bg-gradient-to-r from-primary/10 to-primary/5",
-                            "border border-primary/10",
+                            "bg-primary/5 border border-primary/10",
                             "hover:border-primary/20 transition-colors duration-300"
                           )}
                         >
@@ -209,37 +201,9 @@ export function GitHubStats() {
                 </Card>
               </motion.div>
             )}
-
-            {/* GitHub Profile Link */}
-            {stats?.profileUrl && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-                className="flex justify-center"
-              >
-                <a
-                  href={stats.profileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-block"
-                >
-                  <Button 
-                    variant="outline" 
-                    className="group relative overflow-hidden border-primary/20 hover:border-primary/30"
-                  >
-                    <span className="absolute inset-0 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <span className="relative flex items-center gap-2">
-                      <FaGithub className="h-4 w-4" />
-                      View GitHub Profile
-                    </span>
-                  </Button>
-                </a>
-              </motion.div>
-            )}
           </div>
         )}
       </div>
-    </section>
+    </div>
   );
 }

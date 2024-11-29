@@ -17,7 +17,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Card } from '@/components/shared/ui/core/card';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/form/input';
 import { Label } from '@/components/shared/ui/form/label';
@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/shared/ui/data-display/avatar';
 import { AvatarSelector } from '@/components/shared/ui/data-display/avatar-selector';
 import { Separator } from '@/components/shared/ui/core/separator';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 const languages = [
   { name: 'English', value: 'en', flag: '🇺🇸' },
@@ -47,7 +47,7 @@ const editorThemes = [
 ];
 
 export default function SettingsPage() {
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const [notifications, setNotifications] = useState({
     achievements: true,
     updates: true,

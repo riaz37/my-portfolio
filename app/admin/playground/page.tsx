@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/shared/ui/core/button';
-import { Card } from '@/components/shared/ui/data-display/card';
-import { Input } from '@/components/shared/ui/form/input';
-import { Textarea } from '@/components/shared/ui/form/textarea';
+import { Card } from '@/components/shared/ui/core/card';
+import { Input } from '@/components/shared/ui/core/input';
+import { Textarea } from '@/components/shared/ui/core/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
-import { Badge } from '@/components/shared/ui/data-display/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { useToast } from '@/hooks/useToast';
+import { Badge } from '@/components/shared/ui/core/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/core/tabs';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { Plus, Trash, Save, FileCode, Users, Edit, ExternalLink } from 'lucide-react';
 import { Loading } from '@/components/shared/loading';
 import {
@@ -21,7 +21,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/shared/ui/feedback/alert-dialog";
+  AlertDialogTrigger,
+} from '@/components/shared/ui/overlay/alert-dialog';
 
 // Types for challenges and community projects
 type Challenge = {
@@ -32,6 +33,10 @@ type Challenge = {
   category: string;
   hints: string[];
   starterCode: {
+    javascript: string;
+    python: string;
+  };
+  solutionCode: {
     javascript: string;
     python: string;
   };
@@ -59,7 +64,7 @@ type CommunityProject = {
 };
 
 export default function PlaygroundAdmin() {
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const [activeTab, setActiveTab] = useState('challenges');
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [communityProjects, setCommunityProjects] = useState<CommunityProject[]>([]);
@@ -78,6 +83,10 @@ export default function PlaygroundAdmin() {
     category: '',
     hints: [''],
     starterCode: {
+      javascript: '',
+      python: ''
+    },
+    solutionCode: {
       javascript: '',
       python: ''
     },
@@ -208,6 +217,7 @@ export default function PlaygroundAdmin() {
         category: '',
         hints: [''],
         starterCode: { javascript: '', python: '' },
+        solutionCode: { javascript: '', python: '' },
         testCases: [{ input: '', output: '' }]
       });
       setShowForm(false);
@@ -290,6 +300,7 @@ export default function PlaygroundAdmin() {
         category: '',
         hints: [''],
         starterCode: { javascript: '', python: '' },
+        solutionCode: { javascript: '', python: '' },
         testCases: [{ input: '', output: '' }]
       });
       setShowForm(false);
@@ -378,6 +389,7 @@ export default function PlaygroundAdmin() {
                   category: '',
                   hints: [''],
                   starterCode: { javascript: '', python: '' },
+                  solutionCode: { javascript: '', python: '' },
                   testCases: [{ input: '', output: '' }]
                 });
               }
@@ -439,32 +451,66 @@ export default function PlaygroundAdmin() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Starter Code (JavaScript)</label>
-                  <Textarea
-                    value={newChallenge.starterCode?.javascript}
-                    onChange={(e) => setNewChallenge({
-                      ...newChallenge,
-                      starterCode: { ...newChallenge.starterCode, javascript: e.target.value }
-                    })}
-                    placeholder="Enter JavaScript starter code"
-                    className="font-mono"
-                    rows={5}
-                  />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Starter Code</h3>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">JavaScript Starter Code</label>
+                    <Textarea
+                      value={newChallenge.starterCode?.javascript}
+                      onChange={(e) => setNewChallenge({
+                        ...newChallenge,
+                        starterCode: { ...newChallenge.starterCode, javascript: e.target.value }
+                      })}
+                      placeholder="Enter JavaScript starter code"
+                      className="font-mono"
+                      rows={6}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Python Starter Code</label>
+                    <Textarea
+                      value={newChallenge.starterCode?.python}
+                      onChange={(e) => setNewChallenge({
+                        ...newChallenge,
+                        starterCode: { ...newChallenge.starterCode, python: e.target.value }
+                      })}
+                      placeholder="Enter Python starter code"
+                      className="font-mono"
+                      rows={6}
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2">Starter Code (Python)</label>
-                  <Textarea
-                    value={newChallenge.starterCode?.python}
-                    onChange={(e) => setNewChallenge({
-                      ...newChallenge,
-                      starterCode: { ...newChallenge.starterCode, python: e.target.value }
-                    })}
-                    placeholder="Enter Python starter code"
-                    className="font-mono"
-                    rows={5}
-                  />
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Solution Code</h3>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">JavaScript Solution</label>
+                    <Textarea
+                      value={newChallenge.solutionCode?.javascript}
+                      onChange={(e) => setNewChallenge({
+                        ...newChallenge,
+                        solutionCode: { ...newChallenge.solutionCode, javascript: e.target.value }
+                      })}
+                      placeholder="Enter JavaScript solution code"
+                      className="font-mono"
+                      rows={6}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Python Solution</label>
+                    <Textarea
+                      value={newChallenge.solutionCode?.python}
+                      onChange={(e) => setNewChallenge({
+                        ...newChallenge,
+                        solutionCode: { ...newChallenge.solutionCode, python: e.target.value }
+                      })}
+                      placeholder="Enter Python solution code"
+                      className="font-mono"
+                      rows={6}
+                    />
+                  </div>
                 </div>
 
                 <Button type="submit" className="w-full">

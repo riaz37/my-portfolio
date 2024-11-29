@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 export default function VerificationSuccess() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const message = searchParams.get('message') || 'Email verified successfully!';
   const redirect = searchParams.get('redirect') || '/playground';
 

@@ -5,10 +5,10 @@ import Editor from '@monaco-editor/react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/shared/ui/core/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shared/ui/core/select";
-import { Card } from '@/components/shared/ui/data-display/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shared/ui/navigation/tabs";
 import { Badge } from "@/components/shared/ui/core/badge";
 import { Play, Share2, Download, Copy, RefreshCw, Layout, Rocket, LightbulbIcon } from 'lucide-react';
+import { Card } from '@/components/shared/ui/core/card';
 
 interface TutorialStep {
   title: string;
@@ -198,7 +198,12 @@ const CodePlayground = () => {
         setOutput(prev => prev + '\n\nCongratulations! All tests passed! 🎉');
       }
     } catch (error) {
-      setOutput(`Error: ${error.message}`);
+      // Properly type and handle the error
+      if (error instanceof Error) {
+        setOutput(`Error: ${error.message}`);
+      } else {
+        setOutput(`An unknown error occurred: ${String(error)}`);
+      }
     }
   };
 

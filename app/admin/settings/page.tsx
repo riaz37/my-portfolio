@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Save, LogOut } from 'lucide-react';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import {
   Dialog,
   DialogContent,
@@ -13,14 +13,14 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/shared/ui/overlay/dialog';
 import { Button } from '@/components/shared/ui/core/button';
 import { Loading } from '@/components/shared/loading';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     currentPassword: '',
@@ -44,7 +44,7 @@ export default function SettingsPage() {
       toast({
         title: 'Error',
         description: 'New passwords do not match',
-        variant: 'destructive',
+        variant: 'error',
       });
       return;
     }
@@ -82,7 +82,7 @@ export default function SettingsPage() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to change password',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsLoading(false);
@@ -100,7 +100,7 @@ export default function SettingsPage() {
       toast({
         title: 'Error',
         description: 'Failed to sign out. Please try again.',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   };
@@ -203,12 +203,12 @@ export default function SettingsPage() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="max-w-2xl rounded-lg border border-destructive/20 bg-card p-6"
+        className="max-w-2xl rounded-lg border border-error/20 bg-card p-6"
       >
         <h2 className="text-xl font-semibold text-foreground mb-6">Sign Out</h2>
         <div className="space-y-4">
           <p className="text-muted-foreground">
-            Ready to leave? Don't worry, you can always sign back in later.
+            Ready to leave? Don&apos;t worry, you can always sign back in later.
           </p>
           <Button
             variant="destructive"

@@ -26,7 +26,7 @@ const socialLinks = [
 const Footer: React.FC = () => {
   return (
     <motion.footer
-      className="py-16 mt-20 bg-background border-t"
+      className="py-16 bg-background border-t relative z-10"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

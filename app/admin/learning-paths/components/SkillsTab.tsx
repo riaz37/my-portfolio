@@ -5,11 +5,12 @@ import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/shared/ui/core/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/core/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/shared/ui/overlay/dialog';
 import { Card } from '@/components/shared/ui/core/card';
 import { Badge } from '@/components/shared/ui/core/badge';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { FaPlus, FaEdit, FaTrash } from 'react-icons/fa';
+import { Loading } from '@/components/shared/loading';
 
 interface Skill {
   _id: string;
@@ -21,19 +22,25 @@ interface Skill {
   resources: string[];
 }
 
+type SkillLevel = 'beginner' | 'intermediate' | 'advanced';
+
 export default function SkillsTab() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
-  const [skillForm, setSkillForm] = useState({
+  const [skillForm, setSkillForm] = useState<{
+    name: string;
+    description: string;
+    icon: string;
+    level: SkillLevel;
+  }>({
     name: '',
     description: '',
     icon: '',
-    level: 'beginner' as const,
-    prerequisites: [] as string[],
+    level: 'beginner',
   });
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   useEffect(() => {
     fetchSkills();
@@ -41,17 +48,19 @@ export default function SkillsTab() {
 
   const fetchSkills = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/admin/learning-paths/skills');
       if (!response.ok) throw new Error('Failed to fetch skills');
       const data = await response.json();
       setSkills(data);
     } catch (error) {
-      console.error('Error fetching skills:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch skills"
+        title: 'Error',
+        description: 'Failed to fetch skills',
+        variant: 'destructive',
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -78,13 +87,12 @@ export default function SkillsTab() {
         description: '',
         icon: '',
         level: 'beginner',
-        prerequisites: [],
       });
       fetchSkills();
     } catch (error) {
       console.error('Error adding skill:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: "Failed to add skill"
       });
@@ -111,12 +119,16 @@ export default function SkillsTab() {
     } catch (error) {
       console.error('Error deleting skill:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Error",
         description: "Failed to delete skill"
       });
     }
   };
+
+  if (isLoading) {
+    return <Loading text="Loading skills..." />;
+  }
 
   return (
     <div className="space-y-4">
@@ -154,7 +166,7 @@ export default function SkillsTab() {
               />
               <Select
                 value={skillForm.level}
-                onValueChange={(value: 'beginner' | 'intermediate' | 'advanced') =>
+                onValueChange={(value: SkillLevel) =>
                   setSkillForm({ ...skillForm, level: value })
                 }
               >

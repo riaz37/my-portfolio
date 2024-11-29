@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TestimonialCard } from "./TestimonialCard";
-import { Button } from "@/components/shared/ui/core/button";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { sectionTitles } from '@/lib/config/section-titles';
 import { SectionTitle } from '@/components/shared/ui/section';
 
@@ -17,107 +15,90 @@ interface Testimonial {
   rating: number;
 }
 
-const testimonials: Testimonial[] = [
-  {
-    name: "John Doe",
-    role: "Senior Developer",
-    company: "Tech Corp",
-    image: "/testimonials/person1.jpg",
-    content: "Working with you was an incredible experience. Your attention to detail and problem-solving skills are outstanding!",
-    rating: 5
-  },
-  {
-    name: "Jane Smith",
-    role: "Project Manager",
-    company: "Digital Solutions",
-    image: "/testimonials/person2.jpg",
-    content: "Your ability to translate complex requirements into elegant solutions is remarkable. You're a true professional!",
-    rating: 5
-  },
-  {
-    name: "Alex Johnson",
-    role: "CTO",
-    company: "Startup Inc",
-    image: "/testimonials/person3.jpg",
-    content: "I'm impressed by your technical expertise and collaborative approach. You're a valuable asset to any team!",
-    rating: 5
-  },
-];
-
 export function TestimonialsSection() {
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [autoPlay, setAutoPlay] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handlePrevious = () => {
-    setAutoPlay(false);
-    setCurrentIndex((prev) => 
-      prev === 0 ? testimonials.length - 1 : prev - 1
-    );
-  };
+  useEffect(() => {
+    const fetchTestimonials = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/testimonials');
+        if (!response.ok) {
+          throw new Error('Failed to fetch testimonials');
+        }
+        const data = await response.json();
+        setTestimonials(data);
+      } catch (error) {
+        console.error('Error fetching testimonials:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const handleNext = () => {
-    setAutoPlay(false);
-    setCurrentIndex((prev) => (prev + 1) % testimonials.length);
-  };
+    fetchTestimonials();
+  }, []);
 
   const handleDotClick = (index: number) => {
-    setAutoPlay(false);
     setCurrentIndex(index);
   };
 
   useEffect(() => {
-    if (!autoPlay) return;
+    if (testimonials.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [autoPlay]);
+  }, [testimonials.length]);
+
+  if (isLoading) {
+    return (
+      <div className="container py-16">
+        <div className="max-w-4xl mx-auto">
+          <SectionTitle {...sectionTitles.testimonials} />
+          <div className="flex justify-center items-center mt-12">
+            <div className="animate-pulse w-full max-w-md h-64 bg-gray-200 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (testimonials.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="py-20 px-4 relative overflow-hidden">
-      {/* Remove background gradient */}
-      <div className="max-w-6xl mx-auto">
-        <SectionTitle 
-          highlight="Testimonials"
-          subtitle={sectionTitles.testimonials.description}
-          showDecoration={true}
-        >
-          Client Testimonials
-        </SectionTitle>
+    <div id="clienttestimonial" className="container py-16">
+      <div className="max-w-4xl mx-auto">
+        <SectionTitle {...sectionTitles.testimonials} />
         
-        <div className="relative">
+        <div className="relative mt-12">
           <div className="flex justify-center items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-0 z-10 bg-background/80 backdrop-blur-sm"
-              onClick={handlePrevious}
-              aria-label="Previous testimonial"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-
-            <div className="overflow-hidden w-full max-w-md">
-              <AnimatePresence mode="wait" initial={false}>
-                <TestimonialCard key={currentIndex} {...testimonials[currentIndex]} />
+            <div className="overflow-hidden w-full max-w-md flex justify-center">
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={currentIndex}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ 
+                    duration: 0.3,
+                    type: "tween"
+                  }}
+                  className="w-full relative"
+                >
+                  <TestimonialCard {...testimonials[currentIndex]} />
+                </motion.div>
               </AnimatePresence>
             </div>
-
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 z-10 bg-background/80 backdrop-blur-sm"
-              onClick={handleNext}
-              aria-label="Next testimonial"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
           </div>
 
           {/* Progress indicators */}
-          <div className="flex justify-center gap-2 mt-6">
+          <div className="flex justify-center gap-2 mt-8">
             {testimonials.map((_, index) => (
               <button
                 key={index}
@@ -132,6 +113,6 @@ export function TestimonialsSection() {
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 }

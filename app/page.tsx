@@ -14,7 +14,7 @@ export default function Home() {
       {/* Hero Section */}
       <section 
         id="home" 
-        className="min-h-[calc(100vh-4rem)] flex items-center justify-center w-full relative"
+        className="min-h-[calc(100vh-4rem)] flex items-center justify-center w-full relative py-8 sm:py-12"
       >
         <Hero />
       </section>
@@ -24,12 +24,12 @@ export default function Home() {
         {/* Interactive Learning Section */}
         <motion.section
           id="learning"
-          className="w-full py-24 relative"
+          className="w-full py-12 sm:py-16 md:py-24 relative"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-5xl mx-auto">
               <InteractiveLearning />
             </div>
@@ -38,12 +38,12 @@ export default function Home() {
 
         {/* Learning CTA */}
         <motion.section 
-          className="w-full py-24 relative"
+          className="w-full py-12 sm:py-16 md:py-24 relative"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="container mx-auto px-4">
+          <div className="container mx-auto px-4 sm:px-6">
             <div className="max-w-3xl mx-auto">
               <SectionTitle
                 badge="Start Learning"
@@ -58,7 +58,7 @@ export default function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: 0.2 }}
-                className="mt-8 flex justify-center"
+                className="mt-6 sm:mt-8 flex justify-center"
               >
                 <Button size="lg" className="group">
                   Get Started 

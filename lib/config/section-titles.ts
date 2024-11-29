@@ -1,27 +1,38 @@
 export const sectionTitles = {
+  services: {
+    badge: "Expert Services",
+    highlight: "Services",
+    subtitle: "Innovative solutions that push the boundaries of digital excellence.",
+    children: "My Services"
+  },
   work: {
-    badge: "Experience",
-    title: "Work History",
-    description: "A timeline of my professional journey and key achievements in software development."
+    badge: "Professional Journey",
+    highlight: "Experience",
+    subtitle: "A timeline of my professional journey and key achievements in software development.",
+    children: "Work Experience"
   },
   projects: {
     badge: "Portfolio",
-    title: "Featured Projects",
-    description: "A showcase of my best work, personal projects, and contributions to open source."
+    highlight: "Projects",
+    subtitle: "A showcase of my best work, personal projects, and contributions to open source.",
+    children: "Featured Projects"
   },
   certifications: {
-    badge: "Achievements",
-    title: "Certifications",
-    description: "Professional certifications and credentials that validate my expertise."
+    badge: "Certifications",
+    highlight: "Achievements",
+    subtitle: "Professional certifications and credentials that validate my expertise.",
+    children: "My Certifications"
   },
   github: {
     badge: "Open Source",
-    title: "GitHub Activity",
-    description: "My contributions to open source and coding activity metrics."
+    highlight: "GitHub",
+    subtitle: "My contributions to open source and coding activity metrics.",
+    children: "GitHub Activity"
   },
   testimonials: {
     badge: "References",
-    title: "Client Testimonials",
-    description: "What others say about working with me and my development approach."
+    highlight: "Feedback",
+    subtitle: "What others say about working with me and my development approach.",
+    children: "Client Testimonials"
   }
 } as const;

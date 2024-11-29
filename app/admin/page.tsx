@@ -40,7 +40,7 @@ const statCards = [
   {
     name: 'Playground',
     icon: <GamepadIcon className="h-6 w-6" />,
-    color: 'from-indigo-500/20 to-violet-500/20',
+    color: 'from-emerald-500/20 to-teal-500/20',
     href: '/admin/playground',
     stat: 'games',
   },
@@ -121,10 +121,10 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8 p-4">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Dashboard Overview</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           Welcome back! Here's what's happening with your portfolio.
         </p>
       </div>
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
       {isLoading ? (
         <Loading text="Loading stats..." />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {statCards.map((card, index) => (
             <motion.div
               key={card.name}
@@ -165,9 +165,9 @@ export default function AdminDashboard() {
       )}
 
       {/* Recent Activity */}
-      <div className="rounded-lg border border-border bg-card p-6">
-        <h2 className="text-xl font-semibold mb-4 text-foreground">Recent Activity</h2>
-        <div className="space-y-4">
+      <div className="rounded-lg border border-border bg-card p-4 sm:p-6">
+        <h2 className="text-lg sm:text-xl font-semibold mb-4 text-foreground">Recent Activity</h2>
+        <div className="space-y-3 sm:space-y-4">
           {recentActivities.map((activity, index) => (
             <motion.div
               key={activity.id}

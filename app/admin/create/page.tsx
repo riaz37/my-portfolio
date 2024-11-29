@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/ui/data-display/card';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/shared/ui/core/card';
+import { Loading } from '@/components/shared/loading';
 
 export default function CreateAdmin() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,50 +56,52 @@ export default function CreateAdmin() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <Card className="w-[400px]">
         <CardHeader>
-          <CardTitle>Create Admin User</CardTitle>
-          <CardDescription>
-            Create a new admin user with full access to the admin panel.
-          </CardDescription>
+          <CardTitle>Create Admin Account</CardTitle>
+          <CardDescription>Create a new admin user account</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                placeholder="admin@example.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                placeholder="••••••••"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="adminKey">Admin Creation Key</Label>
-              <Input
-                id="adminKey"
-                name="adminKey"
-                type="password"
-                required
-                placeholder="Enter admin creation key"
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Admin'}
-            </Button>
-          </form>
+          {loading ? (
+            <Loading text="Creating admin account..." fullScreen={false} />
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="admin@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminKey">Admin Creation Key</Label>
+                <Input
+                  id="adminKey"
+                  name="adminKey"
+                  type="password"
+                  required
+                  placeholder="Enter admin creation key"
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Creating...' : 'Create Admin'}
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -16,7 +16,7 @@ export function ClientWrapper({ session }: ClientWrapperProps) {
   return (
     <div className="relative min-h-screen bg-background">
       {/* Main content */}
-      <main className="container mx-auto px-4 py-12">
+      <main className="container mx-auto px-4 sm:px-6 py-8 sm:py-12 md:py-16">
         <PlaygroundPage session={session} />
       </main>
     </div>

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { Medal, Trophy, Award, Crown, Sparkles, ChevronUp, Star, Construction } from 'lucide-react';
 import { Card } from '@/components/shared/ui/core/card';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Progress } from '@/components/shared/ui/feedback/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/shared/ui/data-display/avatar';
 import { AvatarSelector } from '@/components/shared/ui/data-display/avatar-selector';

@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useToast } from '@/hooks/useToast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 export function useUserProgress() {
   const { data: session } = useSession();
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
 
   useEffect(() => {
     const fetchUserProgress = async () => {

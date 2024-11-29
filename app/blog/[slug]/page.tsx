@@ -17,13 +17,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/shared/ui/core/tooltip";
-import { toast } from 'sonner';
 import { BlogPost } from '@/models/blog/BlogPost';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
+
 
 export default function BlogPostPage({ params }: { params: { slug: string } }) {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const {toast} = useCustomToast();
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -52,7 +54,12 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
     } catch (error) {
       // Fallback to copying to clipboard
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      toast({
+        title: 'Link Copied!',
+        description: 'The link has been copied to your clipboard.',
+        duration: 2000,
+        variant: 'success',
+      });
     }
   };
 
@@ -98,7 +105,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section className="relative py-20">
+      <section className="relative py-12 md:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <motion.div
@@ -106,11 +113,12 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="flex justify-between items-center mb-8">
+              <div className="flex justify-between items-center mb-6 md:mb-8">
                 <Link href="/blog">
-                  <Button variant="ghost" className="-ml-4">
+                  <Button variant="ghost" className="-ml-2 md:-ml-4">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Blog
+                    <span className="hidden sm:inline">Back to Blog</span>
+                    <span className="sm:hidden">Back</span>
                   </Button>
                 </Link>
 
@@ -133,25 +141,25 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               </div>
 
               <div className="space-y-4">
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex gap-1.5 sm:gap-2 flex-wrap">
                   {post.tags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
-                      className="text-sm"
+                      className="text-xs sm:text-sm"
                     >
                       {tag}
                     </Badge>
                   ))}
                 </div>
 
-                <h1 className="text-4xl md:text-5xl font-bold">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold">
                   {post.title}
                 </h1>
 
-                <div className="flex items-center gap-6 text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm sm:text-base text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <div className="relative h-8 w-8 rounded-full overflow-hidden">
+                    <div className="relative h-6 w-6 sm:h-8 sm:w-8 rounded-full overflow-hidden">
                       <Image
                         src={post.author.avatar}
                         alt={post.author.name}
@@ -162,11 +170,11 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
                     <span>{post.author.name}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>{formatDate(post.publishedAt || '')}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
+                    <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                     <span>{post.readingTime || '5 min read'}</span>
                   </div>
                 </div>
@@ -177,7 +185,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2, duration: 0.5 }}
-              className="mt-8 relative aspect-video rounded-xl overflow-hidden"
+              className="mt-6 sm:mt-8 relative aspect-video rounded-lg sm:rounded-xl overflow-hidden"
             >
               <Image
                 src={post.coverImage}
@@ -192,13 +200,13 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       </section>
 
       {/* Content Section */}
-      <section className="py-12">
+      <section className="py-8 sm:py-12">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="prose prose-lg dark:prose-invert max-w-4xl mx-auto"
+            className="prose prose-sm sm:prose-base lg:prose-lg dark:prose-invert max-w-4xl mx-auto"
           >
             <Markdown>{post.content}</Markdown>
           </motion.div>

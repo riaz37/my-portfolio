@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Label } from '@/components/shared/ui/core/label';
-import { useToast } from '@/components/shared/ui/feedback/use-toast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const token = searchParams.get('token');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -28,7 +28,7 @@ export default function ResetPasswordPage() {
         toast({
           title: 'Error',
           description: 'Passwords do not match',
-          variant: 'destructive',
+          variant: 'error',
         });
         setIsLoading(false);
         return;
@@ -65,7 +65,7 @@ export default function ResetPasswordPage() {
       toast({
         title: 'Error',
         description: error instanceof Error ? error.message : 'Failed to reset password',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsLoading(false);

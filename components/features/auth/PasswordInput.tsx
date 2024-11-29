@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { Input } from '@/components/shared/ui/core/input';
 import { Eye, EyeOff } from 'lucide-react';
-import { Button } from '@/components/shared/ui/core/button';
 import { cn } from '@/lib/utils';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper'
 
 interface PasswordInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   id: string;
@@ -21,23 +21,20 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
         type={showPassword ? 'text' : 'password'}
         className={cn('pr-10', className)}
       />
-      <Button
+      <button
         type="button"
-        variant="ghost"
-        size="sm"
-        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
         onClick={() => setShowPassword(!showPassword)}
-        tabIndex={-1}
+        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-500 focus:outline-none"
       >
         {showPassword ? (
-          <EyeOff className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <EyeOff className="h-4 w-4" />
         ) : (
-          <Eye className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Eye className="h-4 w-4" />
         )}
         <span className="sr-only">
           {showPassword ? 'Hide password' : 'Show password'}
         </span>
-      </Button>
+      </button>
     </div>
   );
 }

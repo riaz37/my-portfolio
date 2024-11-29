@@ -119,48 +119,50 @@ const ContactForm = () => {
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-12">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+    <div className="w-full max-w-6xl mx-auto px-4 py-8 sm:py-12 md:py-16">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
         {/* Contact Information */}
-        <div className="space-y-8">
-          <div className="space-y-6">
+        <div className="space-y-6 sm:space-y-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
             {contactInfo.map((info, index) => (
               <motion.a
                 key={index}
                 href={info.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center space-x-4 p-4 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors"
+                className="flex items-center space-x-4 p-3 sm:p-4 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-colors"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                <div className="flex-shrink-0 w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                   {info.icon}
                 </div>
                 <div>
-                  <h3 className="font-medium text-sm text-muted-foreground">{info.title}</h3>
-                  <p className="text-foreground">{info.value}</p>
+                  <h3 className="font-medium text-xs sm:text-sm text-muted-foreground">{info.title}</h3>
+                  <p className="text-sm sm:text-base text-foreground">{info.value}</p>
                 </div>
               </motion.a>
             ))}
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Connect with me</h3>
-            <div className="flex space-x-4">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold">Connect with me</h3>
+            <div className="flex space-x-3 sm:space-x-4">
               {socialLinks.map((social, index) => (
                 <motion.a
                   key={social.name}
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`p-3 rounded-full bg-secondary/10 hover:bg-secondary/20 transition-all transform hover:scale-110 ${social.color}`}
+                  className={`p-2 sm:p-3 rounded-full bg-secondary/10 hover:bg-secondary/20 transition-all transform hover:scale-110 ${social.color}`}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  {social.icon}
+                  <div className="w-5 h-5 sm:w-6 sm:h-6">
+                    {social.icon}
+                  </div>
                 </motion.a>
               ))}
             </div>
@@ -168,14 +170,15 @@ const ContactForm = () => {
         </div>
 
         {/* Contact Form */}
-        <Card className="p-6 backdrop-blur-sm bg-card/50">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="p-4 sm:p-6 backdrop-blur-sm bg-card/50">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className="space-y-1.5 sm:space-y-2"
             >
-              <label htmlFor="name" className="block text-sm font-medium mb-2">Name</label>
+              <label htmlFor="name" className="block text-xs sm:text-sm font-medium">Name</label>
               <div className="relative">
                 <Input
                   id="name"
@@ -183,20 +186,21 @@ const ContactForm = () => {
                   type="text"
                   value={formData.name}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-9 sm:pl-10 text-sm sm:text-base"
                   placeholder="John Doe"
                 />
-                <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              {errors.name && <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.name}</p>}
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
+              className="space-y-1.5 sm:space-y-2"
             >
-              <label htmlFor="email" className="block text-sm font-medium mb-2">Email</label>
+              <label htmlFor="email" className="block text-xs sm:text-sm font-medium">Email</label>
               <div className="relative">
                 <Input
                   id="email"
@@ -204,35 +208,36 @@ const ContactForm = () => {
                   type="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className="pl-10"
+                  className="pl-9 sm:pl-10 text-sm sm:text-base"
                   placeholder="john@example.com"
                 />
-                <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.email}</p>}
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
+              className="space-y-1.5 sm:space-y-2"
             >
-              <label htmlFor="message" className="block text-sm font-medium mb-2">Message</label>
+              <label htmlFor="message" className="block text-xs sm:text-sm font-medium">Message</label>
               <Textarea
                 id="message"
                 name="message"
                 value={formData.message}
                 onChange={handleChange}
-                rows={8}
+                rows={6}
                 placeholder="Your message here..."
-                className="resize-none min-h-[200px]"
+                className="resize-none min-h-[150px] sm:min-h-[200px] text-sm sm:text-base"
               />
-              {errors.message && <p className="mt-1 text-sm text-red-500">{errors.message}</p>}
+              {errors.message && <p className="mt-1 text-xs sm:text-sm text-red-500">{errors.message}</p>}
             </motion.div>
 
             {errors.form && (
               <motion.p
-                className="text-sm text-red-500"
+                className="text-xs sm:text-sm text-red-500"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >
@@ -247,21 +252,21 @@ const ContactForm = () => {
             >
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full h-9 sm:h-10 text-sm sm:text-base"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
-                  <span className="flex items-center space-x-2">
+                  <span className="flex items-center justify-center space-x-2">
                     <motion.div
-                      className="w-4 h-4 border-2 border-white rounded-full"
+                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-white rounded-full"
                       animate={{ rotate: 360 }}
                       transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                     />
                     <span>Sending...</span>
                   </span>
                 ) : (
-                  <span className="flex items-center space-x-2">
-                    <FaPaperPlane className="w-4 h-4" />
+                  <span className="flex items-center justify-center space-x-2">
+                    <FaPaperPlane className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     <span>Send Message</span>
                   </span>
                 )}
@@ -270,7 +275,7 @@ const ContactForm = () => {
 
             {isSubmitted && (
               <motion.div
-                className="text-center text-green-500 mt-4"
+                className="text-center text-xs sm:text-sm text-green-500 mt-3 sm:mt-4"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
               >

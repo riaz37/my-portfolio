@@ -6,11 +6,15 @@ import { cn } from '@/lib/utils';
 interface LoadingProps {
   text?: string;
   className?: string;
+  fullScreen?: boolean;
 }
 
-export function Loading({ text = 'Loading...', className }: LoadingProps) {
+export function Loading({ text = 'Loading...', className, fullScreen = true }: LoadingProps) {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center">
+    <div className={cn(
+      "w-full flex items-center justify-center",
+      fullScreen ? "min-h-screen" : "min-h-[200px]"
+    )}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

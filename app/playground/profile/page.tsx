@@ -23,14 +23,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/shared/ui/data-display/card';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+} from '@/components/shared/ui/core/card';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 import { UserProgress, UserSkill, UserAchievement } from '@/types/database';
 import { EmptyState } from '@/components/shared/ui/data-display/empty-state';
 import { cn } from '@/lib/utils';
 import { AvatarSelector } from '@/components/shared/ui/data-display/avatar-selector';
-import { useToast } from '@/hooks/useToast';
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { Loading } from '@/components/shared/loading';
 
 interface Stats {
@@ -51,7 +51,7 @@ const DEFAULT_ACHIEVEMENTS = [
 
 export default function ProfilePage() {
   const { data: session } = useSession();
-  const { toast } = useToast();
+  const { toast } = useCustomToast();
   const [currentAvatar, setCurrentAvatar] = useState<string>('');
   const [stats, setStats] = useState<Stats>({
     totalXP: 0,

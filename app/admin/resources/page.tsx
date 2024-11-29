@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/shared/ui/core/button';
 import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/shared/ui/data-display/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/shared/ui/core/card';
 import {
   Select,
   SelectContent,
@@ -16,7 +16,7 @@ import {
 } from "@/components/shared/ui/core/select";
 import { toast } from 'react-hot-toast';
 import { FiExternalLink, FiPlus, FiTrash2, FiCode } from 'react-icons/fi';
-import { Badge } from '@/components/shared/ui/data-display/badge';
+import { Badge } from '@/components/shared/ui/core/badge';
 import { Loading } from '@/components/shared/loading';
 import { careerPaths } from '@/data/careerPaths';
 
@@ -48,8 +48,19 @@ interface SkillLevel {
   title: string;
 }
 
-const resourceTypes: ResourceType[] = ['documentation', 'video', 'article', 'course', 'practice'];
-const skillLevels: SkillLevel[] = ['beginner', 'intermediate', 'advanced'];
+const resourceTypes: ResourceType[] = [
+  { id: 'documentation', title: 'Documentation' },
+  { id: 'video', title: 'Video' },
+  { id: 'article', title: 'Article' },
+  { id: 'course', title: 'Course' },
+  { id: 'practice', title: 'Practice' }
+];
+
+const skillLevels: SkillLevel[] = [
+  { id: 'beginner', title: 'Beginner' },
+  { id: 'intermediate', title: 'Intermediate' },
+  { id: 'advanced', title: 'Advanced' }
+];
 
 export default function ResourceManagement() {
   const { data: session, status } = useSession();
@@ -264,15 +275,15 @@ export default function ResourceManagement() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Select
                   value={formData.type}
-                  onValueChange={(value: ResourceType) => setFormData(prev => ({ ...prev, type: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, type: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Resource Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    {resourceTypes.map(type => (
-                      <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                    {resourceTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -280,15 +291,15 @@ export default function ResourceManagement() {
 
                 <Select
                   value={formData.level}
-                  onValueChange={(value: SkillLevel) => setFormData(prev => ({ ...prev, level: value }))}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, level: value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Difficulty Level" />
                   </SelectTrigger>
                   <SelectContent>
-                    {skillLevels.map(level => (
-                      <SelectItem key={level} value={level}>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                    {skillLevels.map((level) => (
+                      <SelectItem key={level.id} value={level.id}>
+                        {level.title}
                       </SelectItem>
                     ))}
                   </SelectContent>
