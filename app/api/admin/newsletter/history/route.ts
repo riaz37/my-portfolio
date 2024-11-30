@@ -4,13 +4,15 @@ import { authOptions } from '@/lib/auth';
 import { Newsletter } from '@/models/content/Newsletter';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Subscriber } from '@/models/Subscriber';
+import { User } from '@/models/User'; // Import the User model
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     
-    // Check if user is authenticated and is admin
-    if (!session?.user?.isAdmin) {
+    // Verify admin status
+    const user = await User.findOne({ email: session.user.email });
+    if (!user || !user.isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized access' },
         { status: 401 }

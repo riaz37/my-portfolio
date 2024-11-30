@@ -24,7 +24,7 @@ export default function CreateAdmin() {
     const secretKey = formData.get('secretKey') as string;
 
     try {
-      const response = await fetch('/api/admin/create', {
+      const response = await fetch('/api/auth/create-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -9,13 +9,17 @@ import {
   FaProjectDiagram,
   FaEnvelope,
   FaGamepad,
-  FaTachometerAlt
+  FaTachometerAlt,
+  FaSignInAlt,
+  FaUserPlus
 } from "react-icons/fa";
 
 interface NavItem {
   name: string;
   link: string;
   icon?: React.ReactNode;
+  requiresAuth?: boolean;
+  requiresAdmin?: boolean;
 }
 
 const defaultNavItems: NavItem[] = [
@@ -33,6 +37,7 @@ const defaultNavItems: NavItem[] = [
     name: "Playground",
     link: "/playground",
     icon: <FaGamepad className="w-4 h-4" />,
+    requiresAuth: true,
   },
   {
     name: "Blog",
@@ -50,19 +55,48 @@ const adminNavItem: NavItem = {
   name: "Dashboard",
   link: "/admin",
   icon: <FaTachometerAlt className="w-4 h-4" />,
+  requiresAdmin: true,
 };
+
+const authNavItems: NavItem[] = [
+  {
+    name: "Sign In",
+    link: "/auth/signin",
+    icon: <FaSignInAlt className="w-4 h-4" />,
+  },
+  {
+    name: "Sign Up",
+    link: "/auth/signup",
+    icon: <FaUserPlus className="w-4 h-4" />,
+  },
+];
 
 export function useNavItems() {
   const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const isAdmin = session?.user?.isAdmin;
+  const isAuthenticated = status === 'authenticated';
+  const isVerified = session?.user?.isVerified;
 
   return useMemo(() => {
     const items = [...defaultNavItems];
 
-    if (status === 'authenticated' && isAdmin) {
-      items.push(adminNavItem);
+    // Filter items based on auth status
+    const filteredItems = items.filter(item => {
+      if (item.requiresAuth && !isAuthenticated) return false;
+      if (item.requiresAdmin && !isAdmin) return false;
+      return true;
+    });
+
+    // Add admin dashboard if user is admin
+    if (isAuthenticated && isAdmin) {
+      filteredItems.push(adminNavItem);
     }
 
-    return items;
-  }, [status, isAdmin]);
+    // Add auth items if user is not authenticated
+    if (!isAuthenticated) {
+      filteredItems.push(...authNavItems);
+    }
+
+    return filteredItems;
+  }, [status, isAdmin, isAuthenticated, isVerified]);
 }

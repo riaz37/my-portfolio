@@ -71,7 +71,7 @@ export default function ProjectsPage() {
 
   async function fetchProjects() {
     try {
-      const response = await fetch('/api/projects');
+      const response = await fetch('/api/admin/projects');
       const data = await response.json();
       setProjects(data);
     } catch (error) {
@@ -100,7 +100,7 @@ export default function ProjectsPage() {
     };
 
     try {
-      const response = await fetch('/api/projects' + (editingProject ? `/${editingProject._id}` : ''), {
+      const response = await fetch('/api/admin/projects' + (editingProject ? `/${editingProject._id}` : ''), {
         method: editingProject ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingProject ? { id: editingProject._id, ...projectData } : projectData),
@@ -129,7 +129,7 @@ export default function ProjectsPage() {
     if (!confirm('Are you sure you want to delete this project?')) return;
 
     try {
-      const response = await fetch(`/api/projects?id=${project._id}`, {
+      const response = await fetch(`/api/admin/projects?id=${project._id}`, {
         method: 'DELETE',
       });
 

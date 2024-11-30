@@ -1,21 +1,15 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { Newsletter } from '@/models/content';
 import { connectToDatabase } from '@/lib/db/mongodb';
+import { Newsletter } from '@/models/content';
+import { authOptions } from '@/lib/auth';
+import { validateAdminAccess } from '@/lib/auth/admin';
 
 export async function GET() {
   try {
-    // Check authentication
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
+    await validateAdminAccess(session);
 
-    // Connect to database
     await connectToDatabase();
 
     // Get all subscribers with their preferences
@@ -36,8 +30,14 @@ export async function GET() {
     return NextResponse.json(formattedSubscribers);
   } catch (error) {
     console.error('Error fetching newsletter subscribers:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch subscribers' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
@@ -46,12 +46,7 @@ export async function GET() {
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.isAdmin) {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
+    await validateAdminAccess(session);
 
     const { email } = await req.json();
     if (!email) {
@@ -67,8 +62,14 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ message: 'Subscriber deleted successfully' });
   } catch (error) {
     console.error('Error deleting subscriber:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to delete subscriber' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from "react"
-import { Toast, ToastProvider, ToastPrimitive, useToast } from "./index"
+import { Toast, ToastProvider, useToast } from "./index"
 
 // Global Toast Context
 const ToastContext = React.createContext<ReturnType<typeof useToast> | undefined>(undefined)
@@ -14,17 +14,19 @@ export const ToastContextProvider = ({ children }: { children: React.ReactNode }
     <ToastProvider>
       <ToastContext.Provider value={toastHook}>
         {children}
-        {toastHook.toasts.map((toastProps) => (
-          <Toast 
-            key={toastProps.id} 
-            {...toastProps} 
-            onOpenChange={(open) => {
-              if (!open) {
-                toastHook.dismiss(toastProps.id)
-              }
-            }}
-          />
-        ))}
+        <div className="fixed top-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:right-0 sm:top-auto sm:flex-col md:max-w-[420px]">
+          {toastHook.toasts.map((toastProps) => (
+            <Toast 
+              key={toastProps.id} 
+              {...toastProps} 
+              onOpenChange={(open) => {
+                if (!open) {
+                  toastHook.dismiss(toastProps.id)
+                }
+              }}
+            />
+          ))}
+        </div>
       </ToastContext.Provider>
     </ToastProvider>
   )
@@ -39,25 +41,4 @@ export const useCustomToast = () => {
   return context
 }
 
-// Utility hook for showing toasts
-export const useShowToast = () => {
-  const toastContext = React.useContext(ToastContext)
-  
-  const showToast = React.useCallback((
-    type: 'default' | 'success' | 'error' | 'warning' | 'info', 
-    title: string, 
-    description?: string
-  ) => {
-    if (toastContext) {
-      toastContext.toast({
-        variant: type,
-        title,
-        description,
-      })
-    }
-  }, [toastContext])
-
-  return showToast
-}
-
-export { Toast, ToastProvider, ToastPrimitive }
+export { Toast, ToastProvider }

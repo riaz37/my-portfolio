@@ -31,8 +31,11 @@ export async function POST(req: Request) {
 
     // Check if user is admin
     const user = await User.findOne({ email: session.user.email });
-    if (!user?.isAdmin) {
-      return new NextResponse('Unauthorized', { status: 401 });
+    if (!user || !user.isAdmin) {
+      return NextResponse.json(
+        { error: 'Unauthorized access' },
+        { status: 401 }
+      );
     }
 
     const body = await req.json();

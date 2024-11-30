@@ -3,7 +3,9 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db/mongodb';
+import { User } from '@/models/auth';
 import { CareerPath } from '@/models/CareerPath';
+import { validateAdminAccess } from '@/lib/auth/admin';
 
 const careerPathSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -14,21 +16,25 @@ const careerPathSchema = z.object({
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
+    await validateAdminAccess(session);
 
     await connectToDatabase();
-    const careerPaths = await CareerPath.find().sort({ createdAt: -1 });
+    
+    const careerPaths = await CareerPath.find({ isDeleted: false })
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'name email');
 
     return NextResponse.json(careerPaths);
   } catch (error) {
     console.error('Error fetching career paths:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch career paths' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
@@ -37,32 +43,38 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'admin') {
+    
+    if (!session) {
       return NextResponse.json(
-        { error: 'Unauthorized access' },
+        { error: 'Unauthorized: User not authenticated' }, 
         { status: 401 }
       );
     }
+
+    await validateAdminAccess(session);
 
     const body = await request.json();
     const validatedData = careerPathSchema.parse(body);
 
     await connectToDatabase();
-    const careerPath = new CareerPath(validatedData);
-    await careerPath.save();
+    
+    const user = await User.findOne({ email: session.user.email });
+    const careerPath = await CareerPath.create({
+      ...validatedData,
+      createdBy: user._id,
+    });
 
-    return NextResponse.json(careerPath, { status: 201 });
+    return NextResponse.json(careerPath);
   } catch (error) {
+    console.error('Error creating career path:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid input', details: error.errors },
+        { error: 'Validation Error', details: error.errors },
         { status: 400 }
       );
     }
-
-    console.error('Error creating career path:', error);
     return NextResponse.json(
-      { error: 'Failed to create career path' },
+      { error: 'Internal Server Error' }, 
       { status: 500 }
     );
   }

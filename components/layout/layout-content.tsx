@@ -12,7 +12,6 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { ToastContextProvider } from "../shared/ui/toast/toast-wrapper";
-import { Toast } from "@/components/shared/ui/toast";
 
 const Footer = dynamic(() => import("@/components/layout/sections/Footer"), {
   ssr: true,
@@ -104,9 +103,6 @@ function MainContent({ children, pathname }: { children: React.ReactNode, pathna
 
       {/* Terminal */}
       {!isPortfolioPage && <Terminal />}
-
-      {/* Toaster */}
-      {!isPortfolioPage && <Toast id="layout-toast" />}
     </div>
   );
 }

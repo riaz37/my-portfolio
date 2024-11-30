@@ -1,12 +1,102 @@
 import { NextAuthOptions } from "next-auth";
+import { User as NextAuthUser } from "next-auth";
 import GitHubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
-import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/models/auth/User";
+import { JWT } from "next-auth/jwt";
+import { connectToDatabase } from "@/lib/db/mongodb";
 
-const clientPromise = connectToDatabase();
+interface User extends NextAuthUser {
+  id: string;
+  email: string;
+  name: string;
+  password?: string;
+  image?: string;
+  isAdmin: boolean;
+  isVerified: boolean;
+  emailVerified: Date | null;
+  role: string;
+}
+
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string;
+      image?: string;
+      isAdmin: boolean;
+      isVerified: boolean;
+      emailVerified: Date | null;
+      role: string;
+    };
+    id: string;
+    email: string;
+    name: string;
+    image?: string;
+    isAdmin: boolean;
+    isVerified: boolean;
+    emailVerified: Date | null;
+    role: string;
+  }
+  interface User {
+    id: string;
+    email: string;
+    name: string;
+    image?: string;
+    isAdmin: boolean;
+    isVerified: boolean;
+    emailVerified: Date | null;
+    role: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    isAdmin: boolean;
+    isVerified: boolean;
+    emailVerified: Date | null;
+    role: string;
+  }
+}
+
+const createUserFromProvider = async (
+  email: string,
+  name: string,
+  image?: string | null
+): Promise<User | null> => {
+  return await User.create({
+    email,
+    name,
+    image,
+    emailVerified: new Date(),
+    isVerified: true,
+    role: "user",
+    isAdmin: false,
+  });
+};
+
+const updateUserFromProvider = async (
+  email: string,
+  name: string,
+  image?: string | null
+): Promise<User | null> => {
+  return await User.findOneAndUpdate(
+    { email },
+    {
+      $set: {
+        name,
+        image,
+        emailVerified: new Date(),
+        isVerified: true,
+      }
+    },
+    { new: true }
+  );
+};
 
 export const authOptions: NextAuthOptions = {
   session: {
@@ -21,178 +111,134 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
-      id: "credentials",
       name: "credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" }
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials");
-        }
-
-        const db = await clientPromise;
-        const user = await User.findOne({ email: credentials.email }).select('+password');
-
-        if (!user || !user.password) {
-          throw new Error("Invalid credentials");
-        }
-
-        const isCorrectPassword = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
-
-        if (!isCorrectPassword) {
-          throw new Error("Invalid credentials");
-        }
-
-        const isFirstSignIn = !user.lastSignedIn;
-        const isVerified = user.isVerified || user.emailVerified;
-
-        if (!isVerified && !isFirstSignIn) {
-          throw new Error("Please verify your email before signing in");
-        }
-
         try {
-          await User.findByIdAndUpdate(user._id, {
-            lastSignedIn: new Date(),
-            ...(isFirstSignIn && {
-              isVerified: true,
-              verifiedAt: new Date()
-            })
-          });
-        } catch (error) {
-          console.error('Error updating user:', error);
-        }
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Please enter an email and password");
+          }
 
-        return {
-          id: user._id,
-          name: user.name,
-          email: user.email,
-          image: user.image || null,
-          isVerified: user.isVerified,
-          emailVerified: user.emailVerified,
-          role: user.role,
-          verifiedAt: user.verifiedAt
-        };
+          await connectToDatabase();
+          
+          const user = await User.findOne({ email: credentials.email }).select("+password");
+          
+          if (!user) {
+            throw new Error("No user found with this email");
+          }
+
+          if (!user.password) {
+            throw new Error("Please login with your social provider");
+          }
+
+          const isPasswordMatch = await bcrypt.compare(credentials.password, user.password);
+
+          if (!isPasswordMatch) {
+            throw new Error("Incorrect password");
+          }
+
+          return user as User;
+        } catch (error) {
+          throw error instanceof Error ? error : new Error("Authentication failed");
+        }
       }
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       allowDangerousEmailAccountLinking: true,
-      authorization: {
-        params: {
-          prompt: "select_account",
-          access_type: "offline",
-          response_type: "code"
-        }
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name,
+          email: profile.email,
+          image: profile.picture,
+          emailVerified: new Date(),
+          isVerified: true,
+          role: "user",
+          isAdmin: false,
+          verifiedAt: new Date(),
+          lastSignedIn: new Date(),
+          $assertPopulated: () => {},
+          $clearModifiedPaths: () => {}
+        };
       }
     }),
     GitHubProvider({
       clientId: process.env.GITHUB_ID as string,
       clientSecret: process.env.GITHUB_SECRET as string,
       allowDangerousEmailAccountLinking: true,
-    }),
+      profile(profile) {
+        return {
+          id: profile.id.toString(),
+          name: profile.name || profile.login,
+          email: profile.email,
+          image: profile.avatar_url,
+          emailVerified: new Date(),
+          isVerified: true,
+          role: "user",
+          isAdmin: false,
+          verifiedAt: new Date(),
+          lastSignedIn: new Date(),
+          $assertPopulated: () => {},
+          $clearModifiedPaths: () => {}
+        };
+      }
+    })
   ],
   callbacks: {
-    async signIn({ user, account, profile }) {
-      if (!user?.email) {
-        return false;
+    async signIn({ user, account }) {
+      if (account?.provider === "credentials") {
+        return true;
       }
 
       try {
         await connectToDatabase();
 
-        if (account?.provider === "credentials") {
-          return true;
-        }
-
-        // For OAuth providers (Google, GitHub)
-        const currentTime = new Date();
-        const existingUser = await User.findOne({ email: user.email }).select('+role');
+        const existingUser = await User.findOne({ email: user.email });
 
         if (existingUser) {
-          await User.findByIdAndUpdate(existingUser._id, {
-            name: user.name || existingUser.name,
-            image: user.image || existingUser.image,
-            emailVerified: currentTime,
-            isVerified: true,
-            verifiedAt: currentTime,
-            lastSignedIn: currentTime,
-          });
-          // Add verification info to user object
-          user.isVerified = true;
-          user.emailVerified = currentTime;
-          user.role = existingUser.role || 'user';
-          return true;
+          const updatedUser = await updateUserFromProvider(
+            user.email,
+            user.name,
+            user.image
+          );
+          return !!updatedUser;
         }
 
-        // Create new user
-        const newUser = await User.create({
-          name: user.name,
-          email: user.email,
-          image: user.image,
-          emailVerified: currentTime,
-          isVerified: true,
-          verifiedAt: currentTime,
-          lastSignedIn: currentTime,
-          role: "user",
-        });
-        // Add verification info to user object
-        user.isVerified = true;
-        user.emailVerified = currentTime;
-        user.id = newUser._id.toString();
-        user.role = "user";
-
-        return true;
+        const newUser = await createUserFromProvider(
+          user.email,
+          user.name,
+          user.image
+        );
+        return !!newUser;
       } catch (error) {
         console.error("Error in signIn callback:", error);
         return false;
       }
     },
-    async session({ token, session }) {
-      if (token) {
-        session.user.id = token.id as string;
-        session.user.name = token.name;
-        session.user.email = token.email;
-        session.user.image = token.picture as string;
-        session.user.isVerified = token.isVerified as boolean;
-        session.user.role = token.role as string;
-        session.user.isAdmin = token.role === 'admin' || token.role === 'superadmin';
-        session.user.emailVerified = token.emailVerified as Date;
-      }
-      return session;
-    },
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.isAdmin = user.isAdmin ?? false;
+        token.isVerified = user.isVerified ?? false;
+        token.emailVerified = user.emailVerified ?? null;
         token.role = user.role;
-        token.isVerified = user.isVerified;
-        token.emailVerified = user.emailVerified;
-      }
-
-      // Get latest user data
-      if (token?.email) {
-        try {
-          await connectToDatabase();
-          const dbUser = await User.findOne({ email: token.email }).select('+role');
-          if (dbUser) {
-            token.id = dbUser._id.toString();
-            token.name = dbUser.name;
-            token.email = dbUser.email;
-            token.picture = dbUser.image;
-            token.isVerified = dbUser.isVerified;
-            token.emailVerified = dbUser.emailVerified;
-            token.role = dbUser.role || 'user';
-          }
-        } catch (error) {
-          console.error('Error in jwt callback:', error);
-        }
       }
       return token;
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id || '';
+        session.user.isAdmin = token.isAdmin ?? false;
+        session.user.isVerified = token.isVerified ?? false;
+        session.user.emailVerified = token.emailVerified ?? null;
+        session.user.role = token.role || '';
+      }
+      return session;
     }
   }
 };

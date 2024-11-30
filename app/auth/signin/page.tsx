@@ -96,17 +96,23 @@ export default function SignInPage() {
               : result.error,
         });
       } else if (result?.ok) {
-        // Update session before redirecting
-        await updateSession();
+        // Update session to get latest user data
+        const session = await updateSession();
+        
+        // Redirect based on user role and verification status
+        if (session?.user?.isAdmin) {
+          router.push('/admin');
+        } else if (!session?.user?.isVerified) {
+          router.push('/auth/verify-request');
+        } else {
+          router.push(callbackUrl);
+        }
 
         toast({
           variant: "success",
           title: "Success",
           description: "Successfully signed in to your account.",
         });
-
-        // Force full page reload
-        window.location.href = callbackUrl;
       }
     } catch (error) {
       toast({

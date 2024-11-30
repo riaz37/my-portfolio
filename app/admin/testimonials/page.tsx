@@ -79,14 +79,13 @@ export default function TestimonialsPage() {
 
   async function fetchTestimonials() {
     try {
-      const response = await fetch('/api/testimonials');
+      const response = await fetch('/api/admin/testimonials');
       const data = await response.json();
       setTestimonials(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch testimonials',
         variant: 'error',
+        description: 'Failed to fetch testimonials',
       });
     } finally {
       setLoading(false);
@@ -108,7 +107,7 @@ export default function TestimonialsPage() {
     };
 
     try {
-      const response = await fetch('/api/testimonials' + (editingTestimonial ? `/${editingTestimonial._id}` : ''), {
+      const response = await fetch('/api/admin/testimonials' + (editingTestimonial ? `/${editingTestimonial._id}` : ''), {
         method: editingTestimonial ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingTestimonial ? { id: editingTestimonial._id, ...testimonialData } : testimonialData),
@@ -126,9 +125,8 @@ export default function TestimonialsPage() {
       fetchTestimonials();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to save testimonial',
         variant: 'error',
+        description: 'Failed to save testimonial',
       });
     }
   }
@@ -137,7 +135,7 @@ export default function TestimonialsPage() {
     if (!confirm('Are you sure you want to delete this testimonial?')) return;
 
     try {
-      const response = await fetch(`/api/testimonials?id=${testimonial._id}`, {
+      const response = await fetch(`/api/admin/testimonials?id=${testimonial._id}`, {
         method: 'DELETE',
       });
 
@@ -151,16 +149,15 @@ export default function TestimonialsPage() {
       fetchTestimonials();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to delete testimonial',
         variant: 'error',
+        description: 'Failed to delete testimonial',
       });
     }
   }
 
   async function handleReorder(testimonial: Testimonial, newOrder: number) {
     try {
-      const response = await fetch('/api/testimonials', {
+      const response = await fetch('/api/admin/testimonials', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -179,9 +176,8 @@ export default function TestimonialsPage() {
       fetchTestimonials();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to reorder testimonial',
         variant: 'error',
+        description: 'Failed to reorder testimonial',
       });
     }
   }

@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db/mongodb';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import { Blog } from '@/models/Blog';
+import { authOptions } from '@/lib/auth';
 import { startOfMonth, subMonths, format } from 'date-fns';
+import { validateAdminAccess } from '@/lib/auth/admin';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await validateAdminAccess(session);
 
     await connectToDatabase();
 
@@ -137,8 +136,14 @@ export async function GET() {
     return NextResponse.json(analyticsData);
   } catch (error) {
     console.error('Error fetching blog analytics:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch blog analytics' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }

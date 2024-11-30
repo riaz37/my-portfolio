@@ -7,15 +7,15 @@ import { cn } from '@/lib/utils';
 import { X } from 'lucide-react';
 
 const toastVariants = cva(
-  'group pointer-events-auto relative flex w-full max-w-md items-center justify-between space-x-4 overflow-hidden rounded-md p-4 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:transition-[translate] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=open]:slide-in-from-top-full data-[state=closed]:slide-out-to-right-full',
+  'group pointer-events-auto relative flex w-full items-center justify-between space-x-2 overflow-hidden rounded-md border p-4 pr-6 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=cancel]:transition-[translate] data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full',
   {
     variants: {
       variant: {
-        default: 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white dark:from-purple-600 dark:to-indigo-600',
-        success: 'bg-gradient-to-r from-emerald-400 to-green-500 text-white',
-        error: 'bg-gradient-to-r from-rose-500 to-red-500 text-white',
-        warning: 'bg-gradient-to-r from-amber-300 to-yellow-500 text-black',
-        info: 'bg-gradient-to-r from-sky-400 to-blue-500 text-white',
+        default: 'border-slate-200 bg-white text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50',
+        success: 'border-green-200 bg-green-50 text-green-900 dark:border-green-800/50 dark:bg-green-900/50 dark:text-green-50',
+        error: 'border-red-200 bg-red-50 text-red-900 dark:border-red-800/50 dark:bg-red-900/50 dark:text-red-50',
+        warning: 'border-yellow-200 bg-yellow-50 text-yellow-900 dark:border-yellow-800/50 dark:bg-yellow-900/50 dark:text-yellow-50',
+        info: 'border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-800/50 dark:bg-blue-900/50 dark:text-blue-50',
       },
     },
     defaultVariants: {
@@ -24,7 +24,7 @@ const toastVariants = cva(
   }
 );
 
-interface ToastProps extends ToastPrimitive.ToastProps, VariantProps<typeof toastVariants> {
+interface ToastProps extends React.ComponentPropsWithoutRef<typeof ToastPrimitive.Root>, VariantProps<typeof toastVariants> {
   title?: string;
   description?: string;
   id: string;
@@ -33,7 +33,7 @@ interface ToastProps extends ToastPrimitive.ToastProps, VariantProps<typeof toas
 const Toast = React.forwardRef<
   React.ElementRef<typeof ToastPrimitive.Root>,
   ToastProps
->(({ className, variant, title, description, ...props }, ref) => {
+>(({ className, variant, title, description, children, ...props }, ref) => {
   return (
     <ToastPrimitive.Root
       ref={ref}
@@ -51,12 +51,11 @@ const Toast = React.forwardRef<
             {description}
           </ToastPrimitive.Description>
         )}
+        {children}
       </div>
-      <ToastPrimitive.Close
-        className="absolute right-2 top-2 rounded-md p-1 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2"
-        aria-label="Close"
-      >
+      <ToastPrimitive.Close className="absolute right-1 top-1 rounded-md p-1 text-foreground/50 opacity-0 transition-opacity hover:text-foreground focus:opacity-100 focus:outline-none focus:ring-1 group-hover:opacity-100">
         <X className="h-4 w-4" />
+        <span className="sr-only">Close</span>
       </ToastPrimitive.Close>
     </ToastPrimitive.Root>
   );
@@ -67,13 +66,7 @@ const useToast = (duration = 5000) => {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
   const toast = React.useCallback(
-    ({
-      title,
-      description,
-      variant = 'default',
-      duration: toastDuration = duration,
-      ...props
-    }: Omit<ToastProps, 'id'>) => {
+    ({ title, description, variant = 'default', duration: toastDuration = duration, ...props }: Omit<ToastProps, 'id'>) => {
       const id = Math.random().toString(36).substring(2, 9);
       const newToast: ToastProps = {
         id,
@@ -91,6 +84,8 @@ const useToast = (duration = 5000) => {
           dismiss(id);
         }, toastDuration);
       }
+
+      return id;
     },
     [duration]
   );
@@ -104,15 +99,13 @@ const useToast = (duration = 5000) => {
   return { toast, dismiss, toasts };
 };
 
-const ToastProvider = ({ children }: { children: React.ReactNode }) => {
-  const [toasts] = React.useState<ToastProps[]>([]);
-
+function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
-    <ToastPrimitive.Provider swipeDirection="right">
+    <ToastPrimitive.Provider>
       {children}
-      <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[100] flex flex-col p-4" />
+      <ToastPrimitive.Viewport className="fixed bottom-0 right-0 z-[100] flex max-h-screen w-full flex-col-reverse gap-2 p-4 sm:right-0 sm:bottom-0 sm:flex-col md:max-w-[420px]" />
     </ToastPrimitive.Provider>
   );
-};
+}
 
-export { Toast, ToastProvider, ToastPrimitive, useToast };
+export { Toast, ToastProvider, useToast };

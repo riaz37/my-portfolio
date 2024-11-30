@@ -50,11 +50,11 @@ export function DataTable({
   const itemsPerPage = 10;
 
   // Filter data based on search
-  const filteredData = data.filter((item) =>
+  const filteredData = Array.isArray(data) ? data.filter((item) =>
     Object.values(item).some((value) =>
       String(value).toLowerCase().includes(search.toLowerCase())
     )
-  );
+  ) : [];
 
   // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);

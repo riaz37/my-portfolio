@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { baseSchema } from '../plugins/baseSchema';
+import { baseSchema } from './baseSchema';
 
 const communityProjectSchema = new mongoose.Schema({
   name: {

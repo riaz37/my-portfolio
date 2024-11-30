@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Resource } from '@/models/Resource';
+import { validateAdminAccess } from '@/lib/auth/admin';
 
 const resourceSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -23,20 +24,21 @@ const resourceSchema = z.object({
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
+    await validateAdminAccess(session);
 
     await connectToDatabase();
     const resources = await Resource.find({}).sort({ createdAt: -1 });
     return NextResponse.json(resources);
   } catch (error) {
     console.error('Error fetching resources:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to fetch resources' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }
@@ -45,12 +47,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (session?.user?.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized access' },
-        { status: 401 }
-      );
-    }
+    await validateAdminAccess(session);
 
     const body = await request.json();
     const validatedData = resourceSchema.parse(body);
@@ -69,8 +66,14 @@ export async function POST(request: Request) {
     }
 
     console.error('Error creating resource:', error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: error.message.includes('Unauthorized') ? 401 : 500 }
+      );
+    }
     return NextResponse.json(
-      { error: 'Failed to create resource' },
+      { error: 'An unexpected error occurred' },
       { status: 500 }
     );
   }

@@ -5,31 +5,32 @@ declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
-      role: string;
-      emailVerified: Date | null;
-      isVerified: boolean;
-      verifiedAt: Date | null;
-      isAdmin?: boolean;
+      email: string;
+      name: string;
+      isAdmin: boolean;
     } & DefaultSession['user'];
   }
 
   interface User {
     id: string;
-    role: string;
-    emailVerified: Date | null;
-    isVerified: boolean;
-    verifiedAt: Date | null;
-    isAdmin?: boolean;
+    email: string;
+    name: string;
+    isAdmin: boolean;
+  }
+
+  interface JWT {
+    id: string;
+    email: string;
+    name: string;
+    isAdmin: boolean;
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT {
     id: string;
-    role: string;
-    emailVerified: Date | null;
-    isVerified: boolean;
-    verifiedAt: Date | null;
-    isAdmin?: boolean;
+    email: string;
+    name: string;
+    isAdmin: boolean;
   }
 }

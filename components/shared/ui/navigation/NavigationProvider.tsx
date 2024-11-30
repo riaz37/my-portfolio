@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useMemo } from 'react';
+import { createContext, useContext, useMemo, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { 
   FaHome, 
@@ -61,22 +61,28 @@ interface NavigationContextValue {
 const NavigationContext = createContext<NavigationContextValue | undefined>(undefined);
 
 export function NavigationProvider({ children }: { children: React.ReactNode }) {
-  const { data: session, status } = useSession();
-  const isAdmin = session?.user?.role === 'admin';
+  const session = useSession();
+  const isAdmin = session.data?.user?.isAdmin;
+
+  useEffect(() => {
+    if (session.status === 'authenticated' && isAdmin) {
+      // No-op, just to satisfy the useEffect dependency
+    }
+  }, [session.status, isAdmin]);
 
   const value = useMemo(() => {
     const items = [...defaultNavItems];
 
-    if (status === 'authenticated' && isAdmin) {
+    if (session.status === 'authenticated' && isAdmin) {
       items.push(adminNavItem);
     }
 
     return {
       navItems: items,
       isAdmin,
-      status
+      status: session.status
     };
-  }, [status, isAdmin]);
+  }, [session.status, isAdmin]);
 
   return (
     <NavigationContext.Provider value={value}>

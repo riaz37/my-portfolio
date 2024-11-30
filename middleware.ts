@@ -85,7 +85,7 @@ export async function middleware(request: NextRequest) {
       }
 
       // Check admin access
-      if (needsAdmin && token.role !== 'admin') {
+      if (needsAdmin && !token.isAdmin) {
         return NextResponse.redirect(
           new URL('/', request.url)
         );
@@ -94,7 +94,7 @@ export async function middleware(request: NextRequest) {
       // Add user info to headers for downstream use
       const response = NextResponse.next();
       response.headers.set('x-user-id', token.sub || '');
-      response.headers.set('x-user-role', token.role || 'user');
+      response.headers.set('x-user-admin', token.isAdmin ? 'true' : 'false');
       return response;
 
     } catch (error) {

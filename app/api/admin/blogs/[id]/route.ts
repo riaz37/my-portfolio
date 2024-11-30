@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { Types } from 'mongoose';
-import connectToDatabase from '@/lib/db/mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
 import { Blog } from '@/models/Blog';
+import { authOptions } from '@/lib/auth';
+import { validateAdminAccess } from '@/lib/auth/admin';
+import { Types } from 'mongoose';
 
 export async function GET(
   request: Request,
@@ -11,9 +12,7 @@ export async function GET(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await validateAdminAccess(session);
 
     // Validate the ObjectId
     if (!Types.ObjectId.isValid(params.id)) {
@@ -47,13 +46,9 @@ export async function PUT(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  console.log('PUT request received for blog ID:', params.id);
-  
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await validateAdminAccess(session);
 
     // Validate the ObjectId
     if (!Types.ObjectId.isValid(params.id)) {
@@ -115,9 +110,7 @@ export async function DELETE(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    await validateAdminAccess(session);
 
     // Validate the ObjectId
     if (!Types.ObjectId.isValid(params.id)) {

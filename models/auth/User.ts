@@ -1,13 +1,12 @@
 import mongoose from 'mongoose';
 import { Schema } from 'mongoose';
 import { BaseDocument } from '../types';
-import { WithAuth } from '../types/auth';
-import { withAuth, withVerification, withRole } from '../plugins/authSchema';
 import { withTimestamps } from '../plugins/baseSchema';
 
-export interface IUser extends BaseDocument, WithAuth {
+export interface IUser extends BaseDocument {
   name: string;
   email: string;
+  password?: string;
   emailVerified: Date | null;
   isVerified: boolean;
   verifiedAt: Date | null;
@@ -29,6 +28,8 @@ export interface IUser extends BaseDocument, WithAuth {
     userId: string;
     expires: Date;
   }[];
+  isAdmin: boolean;
+  role: string;
 }
 
 const userSchema = new Schema<IUser>({
@@ -37,23 +38,27 @@ const userSchema = new Schema<IUser>({
     required: true,
     index: true
   },
-  email: { 
-    type: String, 
+  email: {
+    type: String,
     required: true,
     unique: true,
     index: true
   },
-  emailVerified: { 
-    type: Date,
-    default: null 
+  password: {
+    type: String,
+    select: false
   },
-  verifiedAt: { 
+  emailVerified: {
     type: Date,
-    default: null 
+    default: null
   },
-  isVerified: { 
+  isVerified: {
     type: Boolean,
-    default: false 
+    default: false
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
   },
   lastSignedIn: {
     type: Date,
@@ -69,39 +74,40 @@ const userSchema = new Schema<IUser>({
     token_type: String,
     scope: String,
     id_token: String,
-    session_state: String,
+    session_state: String
   }],
   sessions: [{
     sessionToken: String,
     userId: String,
-    expires: Date,
+    expires: Date
   }],
+  isAdmin: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  role: {
+    type: String,
+    default: 'user'
+  }
 });
 
-// Methods
-userSchema.methods.isAdmin = function(): boolean {
-  return this.role === 'admin';
-};
-
-userSchema.methods.isEmailVerified = function(): boolean {
-  return this.isVerified && this.emailVerified !== null;
-};
-
-// Virtual for full name
+// Virtual for display name
 userSchema.virtual('displayName').get(function() {
   return this.name || this.email.split('@')[0];
 });
 
-// Add index for account lookups
-userSchema.index({ 'accounts.provider': 1, 'accounts.providerAccountId': 1 });
-// Add index for session lookups
-userSchema.index({ 'sessions.sessionToken': 1 });
+// Pre-save middleware to handle verification
+userSchema.pre('save', function(next) {
+  if (this.isModified('isVerified') && this.isVerified && !this.verifiedAt) {
+    this.verifiedAt = new Date();
+  }
+  next();
+});
 
-// Apply plugins
+// Apply timestamps plugin
 userSchema.plugin(withTimestamps);
-userSchema.plugin(withAuth);
-userSchema.plugin(withVerification);
-userSchema.plugin(withRole);
 
 const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+
 export default User;

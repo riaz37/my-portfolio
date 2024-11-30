@@ -50,6 +50,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
+    const currentTime = new Date();
     const user = await User.create({
       name,
       email,
@@ -57,7 +58,12 @@ export async function POST(request: NextRequest) {
       emailVerified: null,
       isVerified: false,
       verifiedAt: null,
-      role: 'user',
+      lastSignedIn: null,
+      isAdmin: false,
+      accounts: [],
+      sessions: [],
+      createdAt: currentTime,
+      updatedAt: currentTime
     });
 
     // Generate verification token
@@ -81,42 +87,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create initial user skills
-    const initialSkills = [
-      'Data Structures',
-      'Algorithms',
-      'Problem Solving',
-      'Logic',
-      'Mathematics',
-    ].map(skillName => ({
-      userId: user._id,
-      skillName,
-      level: 1,
-      xp: 0,
-      gamesCompleted: [],
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    }));
-
-    await User.updateOne({ _id: user._id }, { $push: { skills: { $each: initialSkills } } });
-
-    // Remove password from response
-    const { password: _, ...userWithoutPassword } = user.toObject();
-
-    return NextResponse.json(
-      { 
-        message: 'Registration successful! Please check your email to verify your account.',
-        user: userWithoutPassword
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ 
+      message: 'Registration successful. Please check your email to verify your account.',
+      userId: user._id.toString() 
+    });
 
   } catch (error) {
+    console.error('Registration error:', error);
     return NextResponse.json(
-      { 
-        error: error instanceof Error ? error.message : 'Failed to register user',
-        details: error instanceof Error ? error.stack : undefined
-      },
+      { error: 'Failed to create account' },
       { status: 500 }
     );
   }

@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { Schema } from 'mongoose';
 import { BaseDocument } from '../types';
 import { withTimestamps } from '../plugins/baseSchema';
@@ -8,6 +8,14 @@ export interface IVerificationToken extends BaseDocument {
   userId: string;
   type: 'email-verification' | 'password-reset';
   expires: Date;
+}
+
+export interface IVerificationTokenModel extends Model<IVerificationToken> {
+  cleanupExpiredTokens(): Promise<void>;
+  findValidToken(
+    token: string, 
+    type: 'email-verification' | 'password-reset'
+  ): Promise<IVerificationToken | null>;
 }
 
 const verificationTokenSchema = new Schema<IVerificationToken>({
@@ -74,6 +82,6 @@ verificationTokenSchema.statics.cleanupExpiredTokens = async function(): Promise
 verificationTokenSchema.plugin(withTimestamps);
 
 const VerificationToken = mongoose.models.VerificationToken || 
-  mongoose.model<IVerificationToken>('VerificationToken', verificationTokenSchema);
+  mongoose.model<IVerificationToken, IVerificationTokenModel>('VerificationToken', verificationTokenSchema);
 
 export { VerificationToken };

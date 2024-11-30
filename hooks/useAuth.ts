@@ -27,7 +27,7 @@ const RETRY_DELAY = 1000; // 1 second
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-export function useAuth() {
+export function useAuth(requireAdmin = false) {
   const { data: session, status, update: updateSession } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -37,6 +37,20 @@ export function useAuth() {
   useEffect(() => {
     if (error) setError(null);
   }, [status]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/auth/signin");
+      return;
+    }
+
+    if (requireAdmin && !session.user?.isAdmin) {
+      router.push("/");
+      return;
+    }
+  }, [session, status, router, requireAdmin]);
 
   const signIn = useCallback(async (options: SignInOptions) => {
     try {
@@ -157,6 +171,6 @@ export function useAuth() {
     signIn,
     signOut,
     isAuthenticated: status === 'authenticated',
-    isAdmin: session?.user?.role === 'admin',
+    isAdmin: session?.user?.isAdmin || false,
   };
 }

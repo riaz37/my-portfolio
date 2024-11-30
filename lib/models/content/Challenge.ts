@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { withTimestamps, withSoftDelete, withOwnership, withPublishStatus } from '../../../models/plugins/baseSchema';
+import { baseSchema } from './baseSchema';
 
 const challengeSchema = new mongoose.Schema({
   title: {
@@ -52,6 +52,11 @@ const challengeSchema = new mongoose.Schema({
       required: true,
     },
   }],
-}).add(withTimestamps).add(withSoftDelete).add(withOwnership).add(withPublishStatus);
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  },
+}).add(baseSchema);
 
 export const Challenge = mongoose.models.Challenge || mongoose.model('Challenge', challengeSchema);

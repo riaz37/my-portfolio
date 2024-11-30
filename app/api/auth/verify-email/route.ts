@@ -9,46 +9,65 @@ export async function GET(request: Request) {
     const token = searchParams.get('token');
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'No token provided' },
-        { status: 400 }
+      return NextResponse.redirect(
+        new URL('/auth/verify-error?error=No token provided', request.url)
       );
     }
 
     await connectToDatabase();
 
-    const verificationToken = await VerificationToken.findOne({ token });
+    // Find and validate the token
+    const verificationToken = await VerificationToken.findOne({
+      token,
+      type: 'email-verification'
+    });
 
     if (!verificationToken) {
-      return NextResponse.json(
-        { error: 'Invalid or expired token' },
-        { status: 400 }
+      return NextResponse.redirect(
+        new URL('/auth/verify-error?error=Invalid token', request.url)
       );
     }
 
+    // Check if token is expired
+    if (verificationToken.isExpired()) {
+      await VerificationToken.deleteOne({ _id: verificationToken._id });
+      return NextResponse.redirect(
+        new URL('/auth/verify-error?error=Token has expired', request.url)
+      );
+    }
+
+    const now = new Date();
+
+    // Find and update user
     const user = await User.findOneAndUpdate(
-      { email: verificationToken.email },
-      { emailVerified: true },
+      { _id: verificationToken.userId },
+      { 
+        emailVerified: now,
+        isVerified: true,
+        verifiedAt: now
+      },
       { new: true }
     );
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
+      return NextResponse.redirect(
+        new URL('/auth/verify-error?error=User not found', request.url)
       );
     }
 
-    await VerificationToken.deleteOne({ token });
+    // Delete the used token
+    await VerificationToken.deleteOne({ _id: verificationToken._id });
 
-    return NextResponse.json(
-      { message: 'Email verified successfully' },
-      { status: 200 }
+    // Clean up any other expired tokens
+    await VerificationToken.cleanupExpiredTokens();
+
+    return NextResponse.redirect(
+      new URL('/auth/verify-success', request.url)
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to verify email' },
-      { status: 500 }
+    console.error('Email verification error:', error);
+    return NextResponse.redirect(
+      new URL('/auth/verify-error?error=Verification failed', request.url)
     );
   }
 }
@@ -63,7 +82,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return GET(request);
+    const newRequest = new Request(
+      `${request.url}?token=${encodeURIComponent(token)}`,
+      request
+    );
+    return GET(newRequest);
   } catch (error) {
     console.error('Error parsing request body:', error);
     return NextResponse.redirect(
