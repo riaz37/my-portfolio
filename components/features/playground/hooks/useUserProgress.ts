@@ -1,18 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 
 export function useUserProgress() {
-  const { data: session } = useSession();
+  const { status } = useSession();
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useCustomToast();
+  const hasFetched = useRef(false);
 
   useEffect(() => {
     const fetchUserProgress = async () => {
-      if (session?.user) {
+      if (status === 'authenticated' && !hasFetched.current) {
+        hasFetched.current = true;
         try {
           const response = await fetch('/api/user/progress');
           if (!response.ok) {
@@ -25,15 +27,18 @@ export function useUserProgress() {
           toast({
             title: 'Error',
             description: 'Failed to fetch your progress. Please try again later.',
-            variant: 'destructive',
+            variant: 'error',
           });
+        } finally {
+          setIsLoading(false);
         }
+      } else if (status !== 'loading') {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     fetchUserProgress();
-  }, [session, toast]);
+  }, [status]);
 
   return { progress, isLoading };
 }

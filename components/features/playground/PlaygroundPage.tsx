@@ -28,7 +28,12 @@ const item = {
 };
 
 export function PlaygroundPage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn();
+    },
+  });
   const { progress, isLoading: isLoadingProgress } = useUserProgress();
   const isAuthenticated = status === "authenticated";
 
