@@ -2,22 +2,25 @@
 
 import { useState, useEffect } from 'react';
 import { DataTable } from '@/components/features/admin/DataTable';
-import { Button } from '@/components/shared/ui/core/button';
 import {
+  Button,
+  Input,
+  Label,
+  Textarea,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from '@/components/shared/ui/overlay/dialog';
-import { Input } from '@/components/shared/ui/core/input';
-import { Label } from '@/components/shared/ui/core/label';
-import { Textarea } from '@/components/shared/ui/core/textarea';
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from '@/components/shared/ui';
 import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { PlusCircle } from 'lucide-react';
-import { Loading } from '@/components/shared/loading';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/shared/ui/core/tabs';
+import { Loading } from '@/components/shared/ui/feedback/loading';
 import RichTextEditor from '@/components/features/admin/RichTextEditor';
 import BlogAnalytics from '@/components/features/admin/BlogAnalytics';
 

@@ -1,4 +1,6 @@
 /** @type {import('next').NextConfig} */
+const path = require('path');
+
 const nextConfig = {
   // Disable TypeScript type checking
   typescript: {
@@ -34,6 +36,25 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   
+  // Module resolution
+  webpack: (config, { isServer }) => {
+    // Add path aliases
+    config.resolve.alias['@'] = path.resolve(__dirname);
+    config.resolve.alias['@components'] = path.resolve(__dirname, 'components');
+    
+    // Ignore certain modules on server-side
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    return config;
+  },
+  
   // Cache optimization
   onDemandEntries: {
     maxInactiveAge: 60 * 60 * 1000,
@@ -51,38 +72,6 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-  },
-
-  // Webpack configuration for MongoDB and Docker
-  webpack: (config, { isServer }) => {
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        net: false,
-        tls: false,
-        fs: false,
-        dns: false,
-        child_process: false,
-        aws4: false,
-        'timers/promises': false,
-        timers: require.resolve('timers-browserify'),
-        stream: require.resolve('stream-browserify'),
-        util: require.resolve('util/'),
-        buffer: require.resolve('buffer/'),
-        crypto: require.resolve('crypto-browserify'),
-        'ssh2': false,
-        'docker-modem': false,
-        'dockerode': false
-      };
-
-      const webpack = require('webpack');
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          Buffer: ['buffer', 'Buffer'],
-        })
-      );
-    }
-    return config;
   },
 }
 
