@@ -1,2 +1,4 @@
-export { User } from './User';
+import User from './User';
+
+export { User };
 export { VerificationToken } from './VerificationToken';

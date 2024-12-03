@@ -1,9 +1,10 @@
 'use client';
 
 import { useSession } from "next-auth/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/data-display/card";
+
 import { ProfileForm } from "./profile-form";
 import { PasswordForm } from "./password-form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shared/ui/core/card";
 
 export function UserSettings() {
   const { data: session } = useSession();

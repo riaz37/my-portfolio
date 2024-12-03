@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { progressService } from '@/services/progress';
 import connectDB from '@/lib/db/mongodb';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/lib/auth';
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +13,11 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const learningPathId = searchParams.get('learningPathId');
+    const getLastPath = searchParams.get('getLastPath');
+
+    if (getLastPath === 'true') {
+      return await getLastCompletedPath(session.user.email);
+    }
 
     if (!learningPathId) {
       return new NextResponse('Learning path ID is required', { status: 400 });
@@ -58,19 +63,16 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET_LAST_PATH(request: Request) {
+async function getLastCompletedPath(userEmail: string) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-
     await connectDB();
-
-    const lastPathId = await progressService.getLastAccessedPath(session.user.id);
-    return NextResponse.json({ learningPathId: lastPathId });
+    const lastPath = await progressService.getLastCompletedPath(userEmail);
+    return NextResponse.json(lastPath);
   } catch (error) {
-    console.error('Error fetching last path:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error getting last completed path:', error);
+    return NextResponse.json(
+      { error: 'Failed to get last completed path' },
+      { status: 500 }
+    );
   }
 }

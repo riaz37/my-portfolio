@@ -57,6 +57,7 @@ const challengeSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-}).add(baseSchema);
+}, baseSchema);
 
+// Check if the model is already registered
 export const Challenge = mongoose.models.Challenge || mongoose.model('Challenge', challengeSchema);

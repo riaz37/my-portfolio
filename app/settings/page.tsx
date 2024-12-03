@@ -1,5 +1,6 @@
+import { UserSettings } from "@/components/features/settings/user-settings";
 import { Metadata } from "next";
-import { UserSettings } from "@/components/settings/user-settings";
+
 
 export const metadata: Metadata = {
   title: "Settings | Portfolio",

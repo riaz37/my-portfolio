@@ -14,12 +14,31 @@ export const GET = createApiHandler(
     },
   },
   async ({ searchParams, session }) => {
+    const slug = searchParams.get('slug');
+    const getTags = searchParams.get('getTags');
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
+    
+    // If getTags is true, return all tags
+    if (getTags === 'true') {
+      const tags = await blogService.getAllTags();
+      return createSuccessResponse(tags);
+    }
+    
+    // If slug is provided, return single blog post
+    if (slug) {
+      const blog = await blogService.getBlogBySlug(slug, !isAdmin);
+      if (!isAdmin) {
+        await blogService.incrementViews(slug);
+      }
+      return createSuccessResponse(blog);
+    }
+
+    // Otherwise, return paginated blog posts
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const tag = searchParams.get('tag') || undefined;
     const search = searchParams.get('search') || undefined;
     const sort = searchParams.get('sort') || 'newest';
-    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
     const validatedParams = getBlogsSchema.parse({
       page,
@@ -43,28 +62,6 @@ export const GET = createApiHandler(
     );
 
     return createSuccessResponse(blogs, pagination);
-  }
-);
-
-// GET /api/v1/blog/[slug]
-export const GET_BY_SLUG = createApiHandler(
-  {
-    method: 'GET',
-    rateLimit: {
-      maxRequests: 100,
-      interval: 60 * 1000,
-    },
-  },
-  async ({ params, session }) => {
-    const { slug } = getBlogSchema.parse(params);
-    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
-    const blog = await blogService.getBlogBySlug(slug, !isAdmin);
-    
-    if (!isAdmin) {
-      await blogService.incrementViews(slug);
-    }
-    
-    return createSuccessResponse(blog);
   }
 );
 
@@ -133,20 +130,5 @@ export const DELETE = createApiHandler(
     const { slug } = getBlogSchema.parse(params);
     await blogService.deleteBlog(slug);
     return createSuccessResponse({ deleted: true });
-  }
-);
-
-// GET /api/v1/blog/tags
-export const GET_TAGS = createApiHandler(
-  {
-    method: 'GET',
-    rateLimit: {
-      maxRequests: 100,
-      interval: 60 * 1000,
-    },
-  },
-  async () => {
-    const tags = await blogService.getTags();
-    return createSuccessResponse(tags);
   }
 );

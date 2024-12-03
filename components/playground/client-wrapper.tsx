@@ -1,6 +1,6 @@
 'use client';
 
-import { Session } from 'next-auth';
+import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 
 const PlaygroundPage = dynamic(
@@ -8,11 +8,9 @@ const PlaygroundPage = dynamic(
   { ssr: false }
 );
 
-interface ClientWrapperProps {
-  session: Session | null;
-}
+export function ClientWrapper() {
+  const { data: session } = useSession();
 
-export function ClientWrapper({ session }: ClientWrapperProps) {
   return (
     <div className="relative min-h-screen bg-background">
       {/* Main content */}

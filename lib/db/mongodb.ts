@@ -88,3 +88,5 @@ export async function connectToDatabase() {
   const conn = await establishDatabaseConnection();
   return conn;
 }
+
+export { connectToDatabase as connectDB }
