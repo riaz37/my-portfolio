@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Button } from '@/components/shared/ui/core/button';
-import { toast } from 'react-hot-toast';
+import { useCustomToast } from "../toast/toast-wrapper";
 import { FiUpload } from 'react-icons/fi';
 import { Progress } from '@/components/shared/ui/feedback/progress';
 
@@ -44,6 +44,7 @@ export function FileUpload({
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useCustomToast();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,13 +52,21 @@ export function FileUpload({
 
     // Check file size
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`File size must be less than ${maxSize}MB`);
+      toast({
+        title: "Error",
+        description: `File size must be less than ${maxSize}MB`,
+        variant: "error"
+      });
       return;
     }
 
     // Check file type
     if (!fileTypeMap[type].types.includes(file.type)) {
-      toast.error(`Invalid file type. Please upload a ${type} file`);
+      toast({
+        title: "Error",
+        description: `Invalid file type. Please upload a ${type} file`,
+        variant: "error"
+      });
       return;
     }
 
@@ -95,10 +104,18 @@ export function FileUpload({
       setProgress(100);
       const data = await response.json();
       onUploadComplete(data.url);
-      toast.success('File uploaded successfully');
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+        variant: "success"
+      });
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload file');
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to upload file",
+        variant: "error"
+      });
     } finally {
       setUploading(false);
       setProgress(0);

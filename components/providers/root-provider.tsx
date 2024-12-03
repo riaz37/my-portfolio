@@ -2,10 +2,10 @@
 
 import { type ReactNode } from 'react';
 import { AuthProvider } from './auth-provider';
-import { ThemeProvider } from '@/components/theme-provider';
+import { ThemeProvider } from '../theme-provider';
 import { TerminalProvider } from '@/providers/TerminalProvider';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
-import { ToastProvider } from '../shared/ui/toast';
+import { ToastContextProvider } from '../shared/ui/toast/toast-wrapper';
 import { Session } from 'next-auth';
 
 interface ProvidersProps {
@@ -19,20 +19,16 @@ interface RootProviderProps {
 
 export function RootProvider({ children, session }: RootProviderProps) {
   return (
-    <ThemeProvider
-      attribute="class"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange
-    >
-      <AuthProvider session={session}>
-        <TerminalProvider>
-          <TooltipPrimitive.Provider>
-            <ToastProvider>
+    <AuthProvider session={session}>
+      <ThemeProvider>
+        <TooltipPrimitive.Provider>
+          <TerminalProvider>
+            <ToastContextProvider>
               {children}
-            </ToastPrimitive.Provider>
+            </ToastContextProvider>
           </TerminalProvider>
-        </AuthProvider>
+        </TooltipPrimitive.Provider>
       </ThemeProvider>
+    </AuthProvider>
   );
 }

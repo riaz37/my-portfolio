@@ -104,7 +104,7 @@ export default function SignInPage() {
       toast({
         title: "Error",
         description: error.message || "Failed to sign in",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsLoading(false);
@@ -122,7 +122,7 @@ export default function SignInPage() {
       toast({
         title: "Error",
         description: "Failed to sign in with Google",
-        variant: "destructive",
+        variant: "error",
       });
     } finally {
       setIsLoading(false);

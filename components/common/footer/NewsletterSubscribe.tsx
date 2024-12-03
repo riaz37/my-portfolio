@@ -16,7 +16,11 @@ export function NewsletterSubscribe() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast("error", "Error", "Please enter your email");
+      toast({
+        title: "Error",
+        description: "Please enter your email",
+        variant: "error"
+      });
       return;
     }
 
@@ -31,13 +35,21 @@ export function NewsletterSubscribe() {
       const data = await response.json();
 
       if (response.ok) {
-        toast("success", "Success", data.message || "Successfully subscribed to the newsletter!");
+        toast({
+          title: "Success",
+          description: data.message || "Successfully subscribed to the newsletter!",
+          variant: "success"
+        });
         setEmail('');
       } else {
         throw new Error(data.error || 'Something went wrong');
       }
     } catch (error: any) {
-      toast("error", "Error", error.message || "Failed to subscribe to newsletter");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to subscribe to newsletter",
+        variant: "error"
+      });
     } finally {
       setLoading(false);
     }

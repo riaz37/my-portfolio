@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/shared/ui/core/form";
 import { Input } from "@/components/shared/ui/core/input";
-import { toast } from "react-hot-toast";
+import { useCustomToast } from "@/components/shared/ui/toast/toast-wrapper";
 
 const formSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -40,6 +40,8 @@ export function PasswordForm() {
     },
   });
 
+  const { toast } = useCustomToast();
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = await fetch("/api/user/password", {
@@ -58,10 +60,18 @@ export function PasswordForm() {
         throw new Error(error.message || "Failed to update password");
       }
 
-      toast.success("Password updated successfully");
+      toast({
+        title: "Success",
+        description: "Password updated successfully",
+        variant: "success"
+      });
       form.reset();
     } catch (error: any) {
-      toast.error(error.message || "Failed to update password");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update password",
+        variant: "error"
+      });
     }
   }
 

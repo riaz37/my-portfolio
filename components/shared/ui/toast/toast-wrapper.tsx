@@ -39,23 +39,15 @@ export const useCustomToast = () => {
     throw new Error("useCustomToast must be used within a ToastContextProvider")
   }
 
-  // Wrapper function to simplify toast usage
-  const simpleToast = (
-    variant: 'success' | 'error' | 'warning' | 'info' | 'default', 
-    title: string, 
-    description?: string
-  ) => {
-    return context.toast({
-      title,
-      description,
-      variant
-    });
-  };
-
   return {
-    ...context,
-    toast: simpleToast
-  };
+    toast: (props: { title: string; description?: string; variant?: 'success' | 'error' | 'warning' | 'info' | 'default' }) => {
+      return context.toast({
+        title: props.title,
+        description: props.description,
+        variant: props.variant || 'default'
+      })
+    }
+  }
 }
 
 export { Toast, ToastProvider }

@@ -13,7 +13,7 @@ import {
   FormMessage,
 } from "@/components/shared/ui/core/form";
 import { Input } from "@/components/shared/ui/core/input";
-import { toast } from "react-hot-toast";
+import { useCustomToast } from "@/components/shared/ui/toast/toast-wrapper";
 import { User } from "next-auth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shared/ui/data-display/avatar";
 
@@ -31,6 +31,8 @@ export function ProfileForm({ user }: { user: User }) {
     },
   });
 
+  const { toast } = useCustomToast();
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     try {
       const response = await fetch("/api/user/profile", {
@@ -46,9 +48,17 @@ export function ProfileForm({ user }: { user: User }) {
         throw new Error(error.message || "Failed to update profile");
       }
 
-      toast.success("Profile updated successfully");
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+        variant: "success"
+      });
     } catch (error: any) {
-      toast.error(error.message || "Failed to update profile");
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile",
+        variant: "error"
+      });
     }
   }
 
