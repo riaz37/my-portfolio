@@ -16,7 +16,14 @@ export * from './feedback/loading';
 export * from './toast/toast-wrapper';
 
 // Navigation Components
-export * from './navigation';
+export { 
+  NavigationProvider,
+  useNavItems,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './navigation';
 
 // Data Display Components
 export * from './data-display';

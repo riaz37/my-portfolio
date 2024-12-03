@@ -61,3 +61,27 @@ export async function generatePasswordResetToken(userId: string) {
     throw error; // Re-throw to handle in the calling function
   }
 }
+
+export async function verifyToken(token: string, type: 'email-verification' | 'password-reset') {
+  try {
+    await connectToDatabase();
+    
+    const verificationToken = await VerificationToken.findOne({ 
+      token,
+      type,
+      expires: { $gt: new Date() }
+    });
+
+    if (!verificationToken) {
+      return null;
+    }
+
+    // Delete the token after verification
+    await VerificationToken.deleteOne({ _id: verificationToken._id });
+
+    return verificationToken;
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+}
