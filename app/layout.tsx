@@ -1,5 +1,6 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { getServerSession } from "next-auth";
 import { Analytics } from "@vercel/analytics/react";
 import { authOptions } from "@/lib/auth";
@@ -75,7 +76,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <RootProvider>
+          <RootProvider session={session}>
             <Providers>
               <ToastContextProvider>
                 <LayoutWrapper>

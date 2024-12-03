@@ -1,8 +1,10 @@
+import { getPublicUrl } from '@/utils/url';
+
 export const siteConfig = {
   name: "Riazul's Portfolio",
   description: "Full Stack Web Developer and AI Enthusiast",
   author: "Riazul Islam",
-  url: "https://riaz37.vercel.app",
+  url: process.env.NEXT_PUBLIC_APP_URL || "https://riaz37.vercel.app",
   keywords: [
     "Riazul Islam",
     "Portfolio",
@@ -17,30 +19,30 @@ export const siteConfig = {
     "MongoDB",
   ] as string[],
   links: {
-    github: "https://github.com/riaz37",
-    linkedin: "https://linkedin.com/in/riaz37",
-    twitter: "https://twitter.com/riaz37",
+    github: process.env.NEXT_PUBLIC_GITHUB_URL || "https://github.com/riaz37",
+    linkedin: process.env.NEXT_PUBLIC_LINKEDIN_URL || "https://linkedin.com/in/riaz37",
+    twitter: process.env.NEXT_PUBLIC_TWITTER_URL || "https://twitter.com/riaz37",
   },
   nav: [
     {
       title: "Home",
-      href: "/",
+      href: getPublicUrl("/"),
     },
     {
       title: "Blog",
-      href: "/blog",
+      href: getPublicUrl("/blog"),
     },
     {
       title: "Portfolio",
-      href: "/portfolio",
+      href: getPublicUrl("/portfolio"),
     },
     {
       title: "Playground",
-      href: "/playground",
+      href: getPublicUrl("/playground"),
     },
     {
       title: "Contact",
-      href: "/contact",
+      href: getPublicUrl("/contact"),
     },
   ],
 } as const;

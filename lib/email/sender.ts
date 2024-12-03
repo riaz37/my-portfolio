@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { getBaseUrl } from '@/utils/url';
 
 // Validate email configuration
 const requiredEnvVars = [
@@ -7,7 +8,6 @@ const requiredEnvVars = [
   'EMAIL_SERVER_USER',
   'EMAIL_SERVER_PASSWORD',
   'EMAIL_FROM',
-  'NEXTAUTH_URL'
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -55,53 +55,33 @@ interface SendVerificationEmailParams {
 }
 
 export async function sendVerificationEmail({ email, token, name }: SendVerificationEmailParams) {
-  console.log('Preparing to send verification email...');
-  
-  if (!email || !token) {
-    throw new Error('Missing required parameters for verification email');
-  }
-
-  // Ensure transporter is verified
-  console.log('Verifying email transporter...');
-  if (!await verifyTransporter()) {
-    throw new Error('Email service is not configured correctly');
-  }
-
-  const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '');
-  const verificationUrl = `${baseUrl}/api/verify/email?token=${token}`;
-
   try {
-    console.log('Sending verification email...');
-    const info = await transporter.sendMail({
+    const baseUrl = getBaseUrl();
+    const verificationUrl = `${baseUrl}/auth/verify-email?token=${encodeURIComponent(token)}`;
+
+    const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
       subject: 'Verify your email address',
-      text: `Hello ${name || 'there'},\n\nClick this link to verify your email: ${verificationUrl}`,
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">Welcome${name ? `, ${name}` : ''}!</h1>
-          <p style="color: #666; text-align: center;">
-            Click the button below to verify your email address and access all features.
-          </p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${verificationUrl}"
-               style="background: #0070f3; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block;">
-              Verify Email
-            </a>
-          </div>
-          <p style="color: #999; text-align: center; font-size: 0.9em;">
-            If you didn't request this email, you can safely ignore it.
-          </p>
+          <h1>Verify your email address</h1>
+          <p>Hello ${name || 'there'},</p>
+          <p>Please click the button below to verify your email address:</p>
+          <a href="${verificationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+            Verify Email
+          </a>
+          <p>Or copy and paste this URL into your browser:</p>
+          <p>${verificationUrl}</p>
+          <p>This link will expire in 24 hours.</p>
         </div>
-      `
-    });
+      `,
+    };
 
-    console.log('Verification email sent:', info.messageId);
-    return true;
+    await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Failed to send verification email:', error);
-    throw error;
+    console.error('Error sending verification email:', error);
+    throw new Error('Failed to send verification email');
   }
 }
 
@@ -112,53 +92,34 @@ interface SendPasswordResetEmailParams {
 }
 
 export async function sendPasswordResetEmail({ email, token, name }: SendPasswordResetEmailParams) {
-  console.log('Preparing to send password reset email...');
-  
-  if (!email || !token) {
-    throw new Error('Missing required parameters for password reset email');
-  }
-
-  // Ensure transporter is verified
-  console.log('Verifying email transporter...');
-  if (!await verifyTransporter()) {
-    throw new Error('Email service is not configured correctly');
-  }
-
-  const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '');
-  const resetUrl = `${baseUrl}/auth/reset-password?token=${token}`;
-
   try {
-    console.log('Sending password reset email...');
-    const info = await transporter.sendMail({
+    const baseUrl = getBaseUrl();
+    const resetUrl = `${baseUrl}/auth/reset-password?token=${encodeURIComponent(token)}`;
+
+    const mailOptions = {
       from: process.env.EMAIL_FROM,
       to: email,
       subject: 'Reset your password',
-      text: `Hello ${name || 'there'},\n\nClick this link to reset your password: ${resetUrl}`,
       html: `
         <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #333; text-align: center;">Reset your password</h1>
-          <p style="color: #666; text-align: center;">
-            Click the button below to reset your password.
-          </p>
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}"
-               style="background: #0070f3; color: white; padding: 12px 24px; 
-                      text-decoration: none; border-radius: 5px; display: inline-block;">
-              Reset Password
-            </a>
-          </div>
-          <p style="color: #999; text-align: center; font-size: 0.9em;">
-            If you didn't request this email, you can safely ignore it.
-          </p>
+          <h1>Reset your password</h1>
+          <p>Hello ${name || 'there'},</p>
+          <p>Please click the button below to reset your password:</p>
+          <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #0070f3; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0;">
+            Reset Password
+          </a>
+          <p>Or copy and paste this URL into your browser:</p>
+          <p>${resetUrl}</p>
+          <p>This link will expire in 1 hour.</p>
+          <p>If you didn't request this password reset, you can safely ignore this email.</p>
         </div>
-      `
-    });
+      `,
+    };
 
-    console.log('Password reset email sent:', info.messageId);
-    return true;
+    await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
-    throw error;
+    console.error('Error sending password reset email:', error);
+    throw new Error('Failed to send password reset email');
   }
 }
 

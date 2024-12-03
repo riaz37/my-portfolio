@@ -16,6 +16,7 @@ import { AuthContainer } from "@/components/features/auth/AuthContainer";
 import { GoogleButton } from "@/components/features/auth/GoogleButton";
 import { OrDivider } from "@/components/features/auth/OrDivider";
 import { PasswordInput } from "@/components/features/auth/PasswordInput";
+import { getAbsoluteUrl } from "@/utils/url";
 
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +44,7 @@ export default function SignUpPage() {
         throw new Error("Passwords do not match");
       }
 
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(getAbsoluteUrl("/api/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -55,10 +56,9 @@ export default function SignUpPage() {
         }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || "Failed to create account");
+        const data = await response.json();
+        throw new Error(data.error || "Registration failed");
       }
 
       toast({
@@ -67,16 +67,14 @@ export default function SignUpPage() {
         description: "Please verify your email to continue.",
       });
 
-      // Redirect to verification page with email
-      router.push(`/auth/verify-status?email=${encodeURIComponent(email)}`);
-    } catch (error) {
+      // Redirect to verification page
+      router.push("/auth/verify-status");
+    } catch (error: any) {
+      console.error("Registration error:", error);
       toast({
-        variant: "error",
         title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred. Please try again later.",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);

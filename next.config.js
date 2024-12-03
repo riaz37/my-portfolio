@@ -28,16 +28,24 @@ const nextConfig = {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   
+  // Production optimizations
+  poweredByHeader: false,
+  compress: true,
+  productionBrowserSourceMaps: false,
+  reactStrictMode: true,
+  
+  // Cache optimization
+  onDemandEntries: {
+    maxInactiveAge: 60 * 60 * 1000,
+    pagesBufferLength: 5,
+  },
+  
   // Environment variables exposed to the client
   env: {
     GITHUB_USERNAME: process.env.GITHUB_USERNAME,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: 'dix3m5mmi',
   },
-  
-  // Build optimizations
-  poweredByHeader: false,
-  reactStrictMode: true,
   
   // Experimental features for better performance
   experimental: {

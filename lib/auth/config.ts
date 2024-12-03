@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 import { connectToDatabase } from "@/lib/db/mongodb";
 import User from "@/models/auth/User";
 import { IUser } from '@/models/auth/User';
+import { getBaseUrl } from '@/utils/url';
 
 declare module 'next-auth' {
   interface Session {
@@ -107,49 +108,13 @@ export const authOptions: NextAuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      async profile(profile) {
-        try {
-          // Check if user exists
-          let user = await getUserByEmail(profile.email);
-          
-          // If user doesn't exist, create a new one
-          if (!user) {
-            user = await User.create({
-              email: profile.email,
-              name: profile.name,
-              image: profile.picture,
-              emailVerified: new Date(),
-              isVerified: true,
-              isAdmin: false,
-              role: 'user',
-              lastSignedIn: new Date(),
-              verifiedAt: new Date(),
-            });
-          } else {
-            // Update last sign in time
-            await User.findByIdAndUpdate(user._id, {
-              lastSignedIn: new Date()
-            });
-          }
-
-          return {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email,
-            image: profile.picture,
-            emailVerified: user.emailVerified,
-            isVerified: user.isVerified,
-            isAdmin: user.isAdmin,
-            role: user.role,
-            lastSignedIn: new Date(),
-            verifiedAt: user.verifiedAt,
-            _id: user._id,
-          };
-        } catch (error) {
-          console.error('Error in Google profile callback:', error);
-          throw new Error('Failed to process Google authentication');
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
         }
-      },
+      }
     }),
     CredentialsProvider({
       id: "credentials",
@@ -196,13 +161,16 @@ export const authOptions: NextAuthOptions = {
   ],
   pages: {
     signIn: "/auth/signin",
+    signOut: "/auth/signout",
     error: "/auth/error",
     verifyRequest: "/auth/verify-request",
+    newUser: "/auth/signup"
   },
   callbacks: {
-    async signIn({ user }) {
-      if (!user?.email) {
-        return false;
+    async signIn({ user, account }) {
+      const baseUrl = getBaseUrl();
+      if (account?.provider === "google") {
+        return `${baseUrl}/auth/verify-status?email=${encodeURIComponent(user.email || '')}`;
       }
       return true;
     },
@@ -250,6 +218,11 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
+  },
+  events: {
+    async signIn({ user }) {
+      // No-op
+    }
   },
   secret: process.env.NEXTAUTH_SECRET,
 };

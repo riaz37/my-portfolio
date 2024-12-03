@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/shared/ui/core/button";
@@ -25,7 +25,14 @@ export default function SignInPage() {
   const error = searchParams?.get("error");
   const callbackUrl = searchParams?.get("callbackUrl") || "/playground";
   const { toast } = useCustomToast();
-  const { update: updateSession } = useSession();
+  const { data: session, status, update: updateSession } = useSession();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      router.push(callbackUrl);
+    }
+  }, [session, status, router, callbackUrl]);
 
   // Handle error messages
   if (error) {
@@ -55,9 +62,7 @@ export default function SignInPage() {
     });
   }
 
-  const handleCredentialsSignIn = async (
-    e: React.FormEvent<HTMLFormElement>
-  ) => {
+  const handleCredentialsSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -81,34 +86,43 @@ export default function SignInPage() {
       console.log('Sign in result:', result);
 
       if (result?.error) {
-        console.error('Sign in error:', result.error);
-        toast({
-          variant: "error",
-          title: "Sign in failed",
-          description: result.error,
-        });
-      } else if (result?.ok) {
-        console.log('Sign in successful, updating session...');
-        const session = await updateSession();
-        
-        toast({
-          variant: "success",
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
-        });
-
-        // Always redirect to playground after successful sign in
-        router.push('/playground');
+        throw new Error(result.error);
       }
-    } catch (error) {
+
+      // Update session immediately after successful sign in
+      await updateSession();
+
+      toast({
+        title: "Success",
+        description: "Signed in successfully!",
+      });
+
+      router.push(callbackUrl);
+      router.refresh();
+    } catch (error: any) {
       console.error('Login error:', error);
       toast({
-        variant: "error",
         title: "Error",
-        description:
-          error instanceof Error
-            ? error.message
-            : "An unexpected error occurred. Please try again later.",
+        description: error.message || "Failed to sign in",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      await signIn("google", {
+        callbackUrl,
+      });
+    } catch (error) {
+      console.error('Google sign in error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign in with Google",
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -121,7 +135,7 @@ export default function SignInPage() {
       subtitle="Track your progress and improve your coding skills"
     >
       <div className="flex flex-col gap-4">
-        <GoogleButton isLoading={isLoading} callbackUrl={callbackUrl} />
+        <GoogleButton isLoading={isLoading} callbackUrl={callbackUrl} onClick={handleGoogleSignIn} />
         <OrDivider />
       </div>
 

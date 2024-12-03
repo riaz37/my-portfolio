@@ -6,12 +6,18 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { TerminalProvider } from '@/providers/TerminalProvider';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { ToastProvider } from '../shared/ui/toast';
+import { Session } from 'next-auth';
 
 interface ProvidersProps {
   children: ReactNode;
 }
 
-export function RootProvider({ children }: ProvidersProps) {
+interface RootProviderProps {
+  children: React.ReactNode;
+  session: Session | null;
+}
+
+export function RootProvider({ children, session }: RootProviderProps) {
   return (
     <ThemeProvider
       attribute="class"
@@ -19,15 +25,14 @@ export function RootProvider({ children }: ProvidersProps) {
       enableSystem
       disableTransitionOnChange
     >
-      <AuthProvider>
+      <AuthProvider session={session}>
         <TerminalProvider>
           <TooltipPrimitive.Provider>
             <ToastProvider>
               {children}
-            </ToastProvider>
-          </TooltipPrimitive.Provider>
-        </TerminalProvider>
-      </AuthProvider>
-    </ThemeProvider>
+            </ToastPrimitive.Provider>
+          </TerminalProvider>
+        </AuthProvider>
+      </ThemeProvider>
   );
 }
