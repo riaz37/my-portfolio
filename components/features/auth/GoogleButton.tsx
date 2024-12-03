@@ -10,9 +10,10 @@ interface GoogleButtonProps {
   isLoading: boolean;
   callbackUrl?: string;
   className?: string;
+  onClick?: () => void | Promise<void>;
 }
 
-export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playground', className }: GoogleButtonProps) {
+export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playground', className, onClick }: GoogleButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useCustomToast();
 
@@ -57,7 +58,7 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playgro
 
   return (
     <Button
-      onClick={handleGoogleSignIn}
+      onClick={onClick || handleGoogleSignIn}
       className={`w-full bg-white text-black hover:bg-gray-50 border border-gray-300 ${className}`}
       disabled={isLoading || parentLoading}
     >
