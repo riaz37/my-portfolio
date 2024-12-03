@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { cn } from "@/utils/cn";
+import { cn } from "@/lib/utils";
+
 
 // Define a type for the props
 interface BouncyTextProps {

@@ -1,6 +1,6 @@
 export * from './animated-background';
 export * from './background-beams';
-export * from './canvas-reveal-effect';
+
 export * from './card-spotlight';
 export * from './dynamic-background';
 export * from './grid-background';

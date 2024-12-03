@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,7 +9,7 @@ interface MarkdownProps {
   className?: string;
 }
 
-export const Markdown: React.FC<MarkdownProps> = ({ content, className }) => {
+const Markdown: React.FC<MarkdownProps> = ({ content, className }) => {
   return (
     <ReactMarkdown 
       remarkPlugins={[remarkGfm]}
@@ -17,3 +19,6 @@ export const Markdown: React.FC<MarkdownProps> = ({ content, className }) => {
     </ReactMarkdown>
   );
 };
+
+export { Markdown };
+export type { MarkdownProps };
