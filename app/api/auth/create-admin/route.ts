@@ -59,6 +59,7 @@ export async function POST(request: Request) {
             password: hashedPassword,
             isAdmin: true,
             name: 'Admin',
+            role: 'admin',
             emailVerified: currentTime,
             isVerified: true,
             verifiedAt: currentTime,

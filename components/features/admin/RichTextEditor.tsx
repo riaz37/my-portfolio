@@ -6,7 +6,27 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
-import { lowlight } from 'lowlight';
+import { common, createLowlight } from 'lowlight';
+import javascript from 'highlight.js/lib/languages/javascript';
+import typescript from 'highlight.js/lib/languages/typescript';
+import python from 'highlight.js/lib/languages/python';
+import bash from 'highlight.js/lib/languages/bash';
+import css from 'highlight.js/lib/languages/css';
+import html from 'highlight.js/lib/languages/xml';
+import 'highlight.js/styles/github-dark.css';
+
+// Create a new lowlight instance with common languages
+const lowlight = createLowlight(common);
+
+// Register additional languages for syntax highlighting
+lowlight.register('js', javascript);
+lowlight.register('javascript', javascript);
+lowlight.register('typescript', typescript);
+lowlight.register('python', python);
+lowlight.register('bash', bash);
+lowlight.register('css', css);
+lowlight.register('html', html);
+
 import {
   Bold,
   Italic,

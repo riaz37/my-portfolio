@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { authOptions } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { CareerPath } from '@/models/CareerPath';
-import { LearningPath } from '@/models/LearningPath';
+import { LearningResource } from '@/models/content/LearningPath';
+
 
 const learningPathSchema = z.object({
   title: z.string().min(1, 'Title is required'),

@@ -1,4 +1,4 @@
-import { BlogPost } from '@/models/blog/BlogPost';
+import { Blog } from '@/models/Blog';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { NotFoundError } from '@/lib/exceptions/AppError';
 import { cacheService } from '@/lib/utils/cache';
@@ -19,8 +19,8 @@ interface PaginationOptions {
 interface BlogData {
   title: string;
   content: string;
-  excerpt: string;
-  coverImage: string;
+  description: string;
+  coverImage?: string;
   tags: string[];
   published?: boolean;
   authorEmail: string;
@@ -51,10 +51,10 @@ class BlogService {
   }
 
   private buildQuery(filters: BlogFilters = {}) {
-    const query: any = {};
+    const query: any = { isDeleted: false };
 
     if (typeof filters.published === 'boolean') {
-      query.published = filters.published;
+      query.isPublished = filters.published;
     }
 
     if (filters.tag) {
@@ -65,6 +65,8 @@ class BlogService {
       query.$or = [
         { title: { $regex: filters.search, $options: 'i' } },
         { content: { $regex: filters.search, $options: 'i' } },
+        { description: { $regex: filters.search, $options: 'i' } },
+        { tags: { $regex: filters.search, $options: 'i' } },
       ];
     }
 
@@ -100,75 +102,125 @@ class BlogService {
     const cacheKey = this.getCacheKey(
       'BLOGS_LIST',
       JSON.stringify(filters),
-      `${pagination.page}:${pagination.limit}`
+      pagination.page.toString(),
+      pagination.limit.toString()
     );
 
-    return cacheService.getOrSet(
-      cacheKey,
-      async () => {
-        const query = this.buildQuery(filters);
-        const sort = this.getSortOptions(filters.sort);
-        const skip = (pagination.page - 1) * pagination.limit;
+    const cachedData = await cacheService.get(cacheKey);
+    if (cachedData) {
+      return JSON.parse(cachedData);
+    }
 
-        const [blogs, total] = await Promise.all([
-          BlogPost.find(query)
-            .sort(sort)
-            .skip(skip)
-            .limit(pagination.limit)
-            .lean(),
-          BlogPost.countDocuments(query),
-        ]);
+    const query = this.buildQuery(filters);
+    const skip = (pagination.page - 1) * pagination.limit;
 
-        return {
-          blogs,
-          pagination: {
-            page: pagination.page,
-            limit: pagination.limit,
-            total,
-            hasMore: pagination.page * pagination.limit < total,
-          },
-        };
+    const [blogs, total] = await Promise.all([
+      Blog.find(query)
+        .sort(this.getSortOptions(filters.sort))
+        .skip(skip)
+        .limit(pagination.limit)
+        .populate('author', 'name email image')
+        .lean(),
+      Blog.countDocuments(query),
+    ]);
+
+    const result = {
+      blogs,
+      pagination: {
+        currentPage: pagination.page,
+        totalPages: Math.ceil(total / pagination.limit),
+        totalItems: total,
+        itemsPerPage: pagination.limit,
       },
-      this.CACHE_TTL
-    );
+    };
+
+    await cacheService.set(cacheKey, JSON.stringify(result), this.CACHE_TTL);
+    return result;
   }
 
-  public async getBlogBySlug(slug: string) {
+  public async getBlogBySlug(slug: string, enforcePublished = true) {
     await this.ensureConnection();
 
     const cacheKey = this.getCacheKey('BLOG', slug);
-    
-    return cacheService.getOrSet(
-      cacheKey,
-      async () => {
-        const blog = await BlogPost.findOne({ slug }).lean();
+    const cachedBlog = await cacheService.get(cacheKey);
+    if (cachedBlog) {
+      return JSON.parse(cachedBlog);
+    }
 
-        if (!blog) {
-          throw new NotFoundError('Blog post not found');
-        }
+    const query: any = { slug };
+    if (enforcePublished) {
+      query.isPublished = true;
+    }
 
-        return blog;
-      },
-      this.CACHE_TTL
-    );
+    const blog = await Blog.findOne(query)
+      .populate('author', 'name email image')
+      .lean();
+
+    if (!blog) {
+      throw new NotFoundError('Blog post not found');
+    }
+
+    await cacheService.set(cacheKey, JSON.stringify(blog), this.CACHE_TTL);
+    return blog;
+  }
+
+  public async getBlogBySlugFromApi(slug: string) {
+    try {
+      const response = await fetch(`/api/blogs/${slug}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch blog post');
+      }
+
+      const { data } = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error in getBlogBySlugFromApi:', error);
+      throw error;
+    }
   }
 
   public async createBlog(data: BlogData) {
     await this.ensureConnection();
 
-    const blog = new BlogPost(data);
-    await blog.save();
+    const blog = await Blog.create({
+      ...data,
+      slug: this.generateSlug(data.title),
+      views: 0,
+      likes: 0,
+    });
 
-    this.clearBlogCache(blog.slug);
-    return blog;
+    return blog.toObject();
   }
 
-  public async updateBlog(slug: string, authorEmail: string, data: Partial<BlogData>) {
+  public async updateBlog(slug: string, data: Partial<BlogData>) {
     await this.ensureConnection();
 
-    const blog = await BlogPost.findOneAndUpdate(
-      { slug, authorEmail },
-      { $set: data },
+    const blog = await Blog.findOneAndUpdate(
+      { slug },
+      { ...data },
+      { new: true }
+    ).populate('author', 'name email image');
+
+    if (!blog) {
+      throw new NotFoundError('Blog post not found');
+    }
+
+    this.clearBlogCache(slug);
+    return blog.toObject();
+  }
+
+  public async deleteBlog(slug: string) {
+    await this.ensureConnection();
+
+    const blog = await Blog.findOneAndUpdate(
+      { slug },
+      { isDeleted: true },
       { new: true }
     );
 
@@ -177,70 +229,26 @@ class BlogService {
     }
 
     this.clearBlogCache(slug);
-    return blog;
+    return true;
   }
 
-  public async deleteBlog(slug: string, authorEmail: string) {
-    await this.ensureConnection();
-
-    const blog = await BlogPost.findOneAndDelete({ slug, authorEmail });
-
-    if (!blog) {
-      throw new NotFoundError('Blog post not found');
-    }
-
-    this.clearBlogCache(slug);
-    return blog;
+  public generateSlug(title: string): string {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
   }
 
   public async incrementViews(slug: string) {
     await this.ensureConnection();
-
-    const blog = await BlogPost.findOneAndUpdate(
-      { slug },
-      { $inc: { views: 1 } },
-      { new: true }
-    );
-
-    if (!blog) {
-      throw new NotFoundError('Blog post not found');
-    }
-
-    const cacheKey = this.getCacheKey('BLOG', slug);
-    cacheService.set(cacheKey, blog, this.CACHE_TTL);
-
-    return blog;
+    await Blog.findOneAndUpdate({ slug }, { $inc: { views: 1 } });
+    this.clearBlogCache(slug);
   }
 
   public async getTags() {
     await this.ensureConnection();
-
-    return cacheService.getOrSet(
-      this.CACHE_KEYS.TAGS,
-      async () => {
-        const tags = await BlogPost.aggregate([
-          { $match: { published: true } },
-          { $unwind: '$tags' },
-          {
-            $group: {
-              _id: '$tags',
-              count: { $sum: 1 },
-            },
-          },
-          { $sort: { count: -1 } },
-          {
-            $project: {
-              _id: 0,
-              tag: '$_id',
-              count: 1,
-            },
-          },
-        ]);
-
-        return tags;
-      },
-      this.CACHE_TTL
-    );
+    const tags = await Blog.distinct('tags', { isPublished: true });
+    return tags;
   }
 }
 

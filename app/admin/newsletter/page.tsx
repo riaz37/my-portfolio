@@ -36,7 +36,10 @@ export default function NewsletterPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [sentNewsletters, setSentNewsletters] = useState([]);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [subscriberCount, setSubscriberCount] = useState(0);
+  const [subscriberStats, setSubscriberStats] = useState({
+    totalSubscribers: 0,
+    activeSubscribers: 0
+  });
   const [selectedTemplate, setSelectedTemplate] = useState('custom');
 
   const templates = [
@@ -65,18 +68,27 @@ export default function NewsletterPage() {
 
   const fetchSubscribers = async () => {
     try {
+      setIsLoading(true);
       const response = await fetch('/api/admin/subscribers');
       if (!response.ok) {
         throw new Error('Failed to fetch subscribers');
       }
       const data = await response.json();
-      setSubscribers(data.subscribers);
+      setSubscribers(data.subscribers || []);
+      setSubscriberStats({
+        totalSubscribers: data.totalSubscribers || 0,
+        activeSubscribers: data.activeSubscribers || 0
+      });
     } catch (error) {
+      console.error('Error fetching subscribers:', error);
       toast({
         title: 'Error',
         description: 'Failed to load subscribers',
         variant: 'error',
       });
+      setSubscribers([]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +101,6 @@ export default function NewsletterPage() {
       }
       const data = await response.json();
       setSentNewsletters(data.newsletters);
-      setSubscriberCount(data.subscriberCount);
     } catch (error) {
       toast({
         title: 'Error',
@@ -198,7 +209,7 @@ export default function NewsletterPage() {
                   <CardHeader>
                     <CardTitle>Compose Newsletter</CardTitle>
                     <CardDescription>
-                      Send a newsletter to {subscriberCount} subscriber{subscriberCount !== 1 ? 's' : ''}
+                      Send a newsletter to {subscriberStats.totalSubscribers} subscriber{subscriberStats.totalSubscribers !== 1 ? 's' : ''}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -319,13 +330,25 @@ export default function NewsletterPage() {
               <TabsContent value="subscribers">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Newsletter Subscribers</CardTitle>
+                    <CardTitle>Subscribers</CardTitle>
                     <CardDescription>
-                      View and manage newsletter subscribers
+                      {isLoading ? (
+                        "Loading subscriber information..."
+                      ) : (
+                        `${subscriberStats.activeSubscribers} active out of ${subscriberStats.totalSubscribers} total subscribers`
+                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
+                    {isLoading ? (
+                      <div className="flex justify-center py-8">
+                        <Loading />
+                      </div>
+                    ) : subscribers.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        No subscribers yet
+                      </div>
+                    ) : (
                       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {subscribers.map((subscriber) => (
                           <div key={subscriber._id} className="border rounded-lg p-4">
@@ -346,12 +369,7 @@ export default function NewsletterPage() {
                           </div>
                         ))}
                       </div>
-                      {subscribers.length === 0 && (
-                        <p className="text-center text-muted-foreground">
-                          No subscribers yet
-                        </p>
-                      )}
-                    </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

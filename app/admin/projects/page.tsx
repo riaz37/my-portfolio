@@ -29,6 +29,7 @@ interface Project {
   liveUrl: string;
   featured: boolean;
   order: number;
+  isDeleted: boolean;
 }
 
 export default function ProjectsPage() {
@@ -78,7 +79,7 @@ export default function ProjectsPage() {
       toast({
         title: 'Error',
         description: 'Failed to fetch projects',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setLoading(false);
@@ -87,40 +88,77 @@ export default function ProjectsPage() {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const projectData = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      technologies: formData.get('technologies')?.toString().split(',').map(t => t.trim()),
-      imageUrl: formData.get('imageUrl'),
-      githubUrl: formData.get('githubUrl'),
-      liveUrl: formData.get('liveUrl'),
-      featured: formData.get('featured') === 'true',
-      order: parseInt(formData.get('order')?.toString() || '0'),
-    };
-
+    
     try {
-      const response = await fetch('/api/admin/projects' + (editingProject ? `/${editingProject._id}` : ''), {
-        method: editingProject ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingProject ? { id: editingProject._id, ...projectData } : projectData),
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+      
+      // Validate required fields
+      const requiredFields = ['title', 'description', 'technologies', 'imageUrl', 'githubUrl'];
+      for (const field of requiredFields) {
+        const value = formData.get(field)?.toString().trim();
+        if (!value) {
+          throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+        }
+      }
+
+      const projectData = {
+        title: formData.get('title')?.toString().trim(),
+        description: formData.get('description')?.toString().trim(),
+        technologies: formData.get('technologies')?.toString().split(',').map(t => t.trim()).filter(t => t),
+        imageUrl: formData.get('imageUrl')?.toString().trim(),
+        githubUrl: formData.get('githubUrl')?.toString().trim(),
+        liveUrl: formData.get('liveUrl')?.toString().trim() || '',
+        featured: formData.get('featured') === 'true',
+        order: parseInt(formData.get('order')?.toString() || '0'),
+        isDeleted: false,
+      };
+
+      // Construct the fetch URL and method
+      const url = editingProject 
+        ? `/api/admin/projects/${editingProject._id}` 
+        : '/api/admin/projects';
+      const method = editingProject ? 'PUT' : 'POST';
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(projectData),
       });
 
-      if (!response.ok) throw new Error('Failed to save project');
+      // Parse response data
+      const data = await response.json();
 
+      // Check response status
+      if (!response.ok) {
+        // If response is not ok, throw an error with details
+        const errorMessage = data.error || data.details?.map((err: any) => err.message).join(', ') || 'Failed to save project';
+        throw new Error(errorMessage);
+      }
+
+      // Success toast
       toast({
         title: 'Success',
         description: `Project ${editingProject ? 'updated' : 'created'} successfully`,
+        variant: 'success', // Added success variant
       });
 
+      // Reset form and state
       setIsDialogOpen(false);
       setEditingProject(null);
+      
+      // Refresh projects list
       fetchProjects();
     } catch (error) {
+      console.error('Form submission error:', error);
+      
+      // Error toast with detailed message
       toast({
         title: 'Error',
-        description: 'Failed to save project',
-        variant: 'destructive',
+        description: error instanceof Error ? error.message : 'Failed to save project',
+        variant: 'error',
       });
     }
   }
@@ -145,7 +183,41 @@ export default function ProjectsPage() {
       toast({
         title: 'Error',
         description: 'Failed to delete project',
-        variant: 'destructive',
+        variant: 'error',
+      });
+    }
+  }
+
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error('Failed to upload image');
+
+      const data = await response.json();
+      const imageUrlInput = document.querySelector('input[name="imageUrl"]') as HTMLInputElement;
+      if (imageUrlInput) {
+        imageUrlInput.value = data.url;
+      }
+
+      toast({
+        title: 'Success',
+        description: 'Image uploaded successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload image',
+        variant: 'error',
       });
     }
   }
@@ -186,7 +258,7 @@ export default function ProjectsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">Title *</Label>
                   <Input
                     id="title"
                     name="title"
@@ -195,55 +267,84 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Description *</Label>
                   <Textarea
                     id="description"
                     name="description"
                     defaultValue={editingProject?.description}
                     required
-                    className="min-h-[100px]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="technologies">Technologies (comma-separated)</Label>
+                  <Label htmlFor="technologies">Technologies * (comma-separated)</Label>
                   <Input
                     id="technologies"
                     name="technologies"
-                    defaultValue={editingProject?.technologies.join(', ')}
+                    defaultValue={editingProject?.technologies?.join(', ')}
                     required
-                    placeholder="React, TypeScript, Node.js"
+                    placeholder="React, TypeScript, Next.js"
                   />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="imageUpload">Project Image *</Label>
+                <div className="flex items-center gap-4">
+                  {editingProject?.imageUrl && (
+                    <div className="relative w-24 h-24">
+                      <img
+                        src={editingProject.imageUrl}
+                        alt={editingProject.title}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      id="imageUpload"
+                      name="imageUpload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="cursor-pointer"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Or provide an image URL: *
+                    </p>
+                    <Input
+                      id="imageUrl"
+                      name="imageUrl"
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      defaultValue={editingProject?.imageUrl}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="imageUrl">Image URL</Label>
-                  <Input
-                    id="imageUrl"
-                    name="imageUrl"
-                    defaultValue={editingProject?.imageUrl}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="githubUrl">GitHub URL</Label>
+                  <Label htmlFor="githubUrl">GitHub URL *</Label>
                   <Input
                     id="githubUrl"
                     name="githubUrl"
+                    type="url"
                     defaultValue={editingProject?.githubUrl}
                     required
+                    placeholder="https://github.com/username/repo"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="liveUrl">Live URL</Label>
                   <Input
                     id="liveUrl"
                     name="liveUrl"
+                    type="url"
                     defaultValue={editingProject?.liveUrl}
+                    placeholder="https://your-project.com"
                   />
                 </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="order">Display Order</Label>
                   <Input
@@ -253,18 +354,18 @@ export default function ProjectsPage() {
                     defaultValue={editingProject?.order || 0}
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="featured">Featured Project</Label>
-                <select
-                  id="featured"
-                  name="featured"
-                  defaultValue={editingProject?.featured?.toString()}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                >
-                  <option value="true">Yes</option>
-                  <option value="false">No</option>
-                </select>
+                <div className="space-y-2">
+                  <Label htmlFor="featured">Featured Project</Label>
+                  <select
+                    id="featured"
+                    name="featured"
+                    defaultValue={editingProject?.featured?.toString()}
+                    className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                  >
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
               </div>
               <DialogFooter>
                 <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full">

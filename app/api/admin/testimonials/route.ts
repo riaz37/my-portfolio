@@ -11,10 +11,12 @@ import { validateAdminAccess } from "@/lib/auth/admin";
 const testimonialSchema = z.object({
   name: z.string().min(1, "Name is required"),
   role: z.string().min(1, "Role is required"),
-  company: z.string().optional(),
-  quote: z.string().min(1, "Quote is required"),
+  company: z.string().min(1, "Company is required"),
+  content: z.string().min(1, "Content is required"),
+  rating: z.number().min(1, "Rating is required").max(5, "Rating cannot exceed 5"),
+  avatarUrl: z.string().optional().default(''),
   featured: z.boolean().optional().default(false),
-  order: z.number().optional(),
+  order: z.number().optional().default(0),
   isDeleted: z.boolean().optional().default(false),
 });
 
@@ -57,6 +59,8 @@ export async function POST(req: Request) {
     await connectToDatabase();
     const data = await req.json();
 
+    console.log('Received Testimonial Data:', data);
+
     // Validate input using Zod
     const validatedData = testimonialSchema.parse({
       ...data,
@@ -82,6 +86,7 @@ export async function POST(req: Request) {
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
+      console.error('Zod Validation Errors:', error.errors);
       return NextResponse.json(
         {
           error: "Invalid testimonial data",

@@ -1,303 +1,433 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Card } from '@/components/shared/ui/core/card';
-import { Button } from '@/components/shared/ui/core/button';
-import { Badge } from '@/components/shared/ui/core/badge';
-import { Input } from '@/components/shared/ui/core/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
-import { Progress } from '@/components/shared/ui/feedback/progress';
-import { CareerPathCard } from '@/components/features/learning-paths/CareerPathCard';
-import { ResourceCard } from '@/components/features/learning-paths/ResourceCard';
-import { CodePractice } from '@/components/features/learning-paths/CodePractice';
-import { ContinueLearningBanner } from '@/components/features/learning-paths/ContinueLearningBanner';
-import { careerPaths } from '@/data/careerPaths';
-import { CareerPath, LearningPath, Skill, ResourceType, Resource } from '@/types/learningPath';
-import { useLearningProgress } from '@/hooks/use-learning-progress';
-import { useSession } from 'next-auth/react';
+import React, { useState } from "react";
+import { motion, Variants } from "framer-motion";
+import { careerPaths } from "./data";
+import { CareerPath, LearningPath, Skill } from "@/types/learningPath";
+import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { Loading } from "@/components/shared/loading";
+import { Button } from "@/components/shared/ui/core/button";
+import { Card } from "@/components/shared/ui/core/card";
+import { Badge } from "@/components/shared/ui/core/badge";
+import { Progress } from "@/components/shared/ui/feedback/progress";
+import Link from "next/link";
 import { 
-  ArrowLeft,
-  BookOpen,
-  Code, 
-  Globe, 
-  Server,
-  Video,
-  FileText,
-  GraduationCap,
-  Search
-} from 'lucide-react';
+  BookOpen, Code2, Brain, 
+  ChevronLeft, ChevronRight, 
+  Check, ExternalLink, Flame, 
+  ArrowRight, Star, TrendingUp 
+} from "lucide-react";
+import { useLearningProgress } from "./hooks/use-learning-progress";
 
-const LearningPathsPage = () => {
-  const { data: session } = useSession();
-  const [selectedCareerPath, setSelectedCareerPath] = useState<CareerPath | null>(null);
-  const [selectedLearningPath, setSelectedLearningPath] = useState<LearningPath | null>(null);
-  const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
-  const [selectedResource, setSelectedResource] = useState<Resource | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedResourceType, setSelectedResourceType] = useState<ResourceType | 'all'>('all');
-
-  const { progress, loading, markResourceComplete } = useLearningProgress(
-    selectedLearningPath?.id || null
-  );
-
-  const filteredCareerPaths = careerPaths.filter(path => 
-    path.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    path.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleCareerPathClick = (careerPath: CareerPath) => {
-    setSelectedCareerPath(careerPath);
-    setSelectedLearningPath(null);
-    setSelectedSkill(null);
-    setSelectedResource(null);
-    setSelectedResourceType('all');
-  };
-
-  const handleLearningPathClick = (learningPath: LearningPath) => {
-    setSelectedLearningPath(learningPath);
-    setSelectedSkill(null);
-    setSelectedResource(null);
-    setSelectedResourceType('all');
-  };
-
-  const handleSkillClick = (skill: Skill) => {
-    setSelectedSkill(skill);
-    setSelectedResource(null);
-    setSelectedResourceType('all');
-  };
-
-  const handleResourceClick = (resource: Resource) => {
-    setSelectedResource(resource);
-  };
-
-  const handleBack = () => {
-    if (selectedResource) {
-      setSelectedResource(null);
-    } else if (selectedSkill) {
-      setSelectedSkill(null);
-    } else if (selectedLearningPath) {
-      setSelectedLearningPath(null);
-    } else {
-      setSelectedCareerPath(null);
+// Enhanced Animation Variants
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      delayChildren: 0.2,
+      staggerChildren: 0.1
     }
-    setSelectedResourceType('all');
+  }
+};
+
+const itemVariants: Variants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      duration: 0.5,
+      ease: "easeOut"
+    }
+  }
+};
+
+const cardHoverVariants: Variants = {
+  rest: { 
+    scale: 1,
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+  },
+  hover: { 
+    scale: 1.03,
+    boxShadow: '0 20px 25px -5px rgba(0, 0, 255, 0.2), 0 10px 10px -5px rgba(128, 0, 255, 0.1)',
+    transition: {
+      duration: 0.3,
+      ease: 'easeInOut'
+    }
+  }
+};
+
+const Icons = {
+  BookOpen: BookOpen,
+  Code: Code2,
+  Brain: Brain,
+  ChevronLeft: ChevronLeft,
+  ChevronRight: ChevronRight,
+  Check: Check,
+  ExternalLink: ExternalLink,
+  Flame: Flame,
+  ArrowRight: ArrowRight,
+  Star: Star,
+  TrendingUp: TrendingUp
+} as const;
+
+export default function LearningPathsPage() {
+  const { data: session, status } = useSession();
+  const [selectedPath, setSelectedPath] = useState<CareerPath | null>(null);
+  const [selectedLearningPath, setSelectedLearningPath] = useState<LearningPath | null>(null);
+  const {
+    completedSkills,
+    currentStreak,
+    completeSkill,
+    calculatePathProgress,
+    calculateLearningPathProgress,
+    isSkillAvailable,
+  } = useLearningProgress();
+
+  const handlePathSelect = (path: CareerPath) => {
+    setSelectedPath(path);
+    setSelectedLearningPath(null);
   };
 
-  const filteredResources = selectedSkill?.resources.filter(resource =>
-    selectedResourceType === 'all' ? true : resource.type === selectedResourceType
-  ) || [];
+  const handleLearningPathSelect = (learningPath: LearningPath) => {
+    setSelectedLearningPath(learningPath);
+  };
 
-  const resourcesWithProgress = filteredResources.map(resource => ({
-    ...resource,
-    completed: progress?.completedResources?.some(
-      r => r.resourceId === resource.id && r.skillId === selectedSkill?.id
-    ) || false
-  }));
+  if (status === "loading") {
+    return <Loading text="Loading learning paths..." />;
+  }
+
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold mb-4">Please Sign In</h2>
+          <p className="text-white/60 mb-6">You need to be logged in to view learning paths.</p>
+          <Button asChild>
+            <Link href="/auth/signin">Sign In</Link>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container py-16 space-y-12">
-      {/* Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {(selectedCareerPath || selectedLearningPath || selectedSkill || selectedResource) && (
-            <Button variant="ghost" size="icon" onClick={handleBack}>
-              <ArrowLeft className="w-4 h-4" />
+    <div className="min-h-screen relative">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background pointer-events-none">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:32px]" />
+        <div className="absolute h-full w-full bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
+
+      {/* Decorative Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -left-4 -top-4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+        <div className="absolute -right-4 -top-4 w-64 h-64 bg-blue-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 pt-36 pb-16">
+        {/* Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: "easeOut" }}
+          className="text-center"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="inline-block"
+          >
+            <div className="inline-flex items-center px-4 py-2 rounded-full border border-primary/20 bg-primary/5 text-sm text-primary mb-8">
+              <BookOpen className="h-4 w-4 mr-2" />
+              <span>Learning Paths</span>
+            </div>
+          </motion.div>
+          
+          <motion.h1 
+            className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-8 bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent tracking-tight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            Learning Paths
+          </motion.h1>
+          
+          <motion.p
+            className="text-lg sm:text-xl text-muted-foreground mb-16 max-w-2xl mx-auto leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            Explore curated learning paths designed to help you master new skills and technologies. 
+            Follow structured roadmaps to accelerate your learning journey.
+          </motion.p>
+        </motion.div>
+
+        {/* Career Paths Grid */}
+        {!selectedPath && (
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={containerVariants}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8"
+          >
+            {careerPaths.map((path, index) => {
+              const progress = calculatePathProgress(path);
+              return (
+                <motion.div
+                  key={path.id}
+                  initial="rest"
+                  whileHover="hover"
+                  variants={cardHoverVariants}
+                  transition={{ delay: index * 0.1 }}
+                  className="h-full"
+                >
+                  <div 
+                    className="learning-path-card h-full cursor-pointer"
+                    onClick={() => handlePathSelect(path)}
+                  >
+                    <div className="learning-path-card-bg" />
+                    <div className="learning-path-card-border" />
+                    
+                    <div className="learning-path-card-content h-full flex flex-col p-6 relative z-10">
+                      <div className="flex items-center gap-4 mb-4">
+                        {path.icon && Icons[path.icon as keyof typeof Icons] && (
+                          <div className="learning-path-icon p-3 rounded-lg bg-white/10">
+                            {React.createElement(Icons[path.icon as keyof typeof Icons], { 
+                              className: "w-6 h-6 text-primary" 
+                            })}
+                          </div>
+                        )}
+                        <div>
+                          <h2 className="text-xl font-semibold text-white/90">
+                            {path.title}
+                          </h2>
+                          <p className="text-sm text-white/60">
+                            {path.overview.estimatedTimeToMastery}
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-white/70 mb-4 flex-grow">
+                        {path.description}
+                      </p>
+                      
+                      <div className="mt-auto">
+                        <div className="flex justify-between text-sm mb-2">
+                          <span className="text-white/60">
+                            Progress
+                          </span>
+                          <span className="font-medium text-white/80">
+                            {progress}%
+                          </span>
+                        </div>
+                        <div className="learning-path-progress">
+                          <Progress 
+                            value={progress} 
+                            className="h-2 bg-white/10" 
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {path.overview.requiredSkills.slice(0, 3).map((skill) => (
+                          <Badge 
+                            key={skill} 
+                            variant="secondary" 
+                            className="bg-white/10 text-white/70"
+                          >
+                            {skill}
+                          </Badge>
+                        ))}
+                        {path.overview.requiredSkills.length > 3 && (
+                          <Badge 
+                            variant="secondary" 
+                            className="bg-white/10 text-white/70"
+                          >
+                            +{path.overview.requiredSkills.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
+
+        {/* Selected Career Path View */}
+        {selectedPath && (
+          <div>
+            <Button
+              variant="ghost"
+              className="mb-6 text-white/60 hover:text-white"
+              onClick={() => setSelectedPath(null)}
+            >
+              <Icons.ChevronLeft className="w-4 h-4 mr-2" />
+              Back to Paths
             </Button>
-          )}
-          <h1 className="text-3xl font-bold">
-            {selectedResource ? selectedResource.title :
-             selectedSkill ? selectedSkill.name :
-             selectedLearningPath ? selectedLearningPath.title :
-             selectedCareerPath ? selectedCareerPath.title :
-             'Learning Paths'}
-          </h1>
-        </div>
-        {!selectedSkill && !selectedResource && (
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search paths..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Learning Paths Sidebar */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold mb-4">{selectedPath.title}</h2>
+                {selectedPath.learningPaths.map((learningPath) => {
+                  const progress = calculateLearningPathProgress(learningPath);
+                  return (
+                    <motion.div
+                      key={learningPath.id}
+                      initial="hidden"
+                      animate="visible"
+                      variants={itemVariants}
+                    >
+                      <Card
+                        className={cn(
+                          "bg-white/5 border-white/10 p-4 cursor-pointer transition-colors",
+                          selectedLearningPath?.id === learningPath.id
+                            ? "bg-primary/10 border-primary/20"
+                            : "hover:bg-white/10"
+                        )}
+                        onClick={() => handleLearningPathSelect(learningPath)}
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h3 className="font-semibold">{learningPath.title}</h3>
+                              <p className="text-sm text-white/60">
+                                {learningPath.estimatedWeeks} weeks
+                              </p>
+                            </div>
+                            <Icons.ChevronRight className="w-4 h-4" />
+                          </div>
+                          <div className="w-full bg-white/10 rounded-full h-1.5">
+                            <div
+                              className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+
+              {/* Skills and Resources */}
+              <div className="lg:col-span-2">
+                {selectedLearningPath ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2">
+                        {selectedLearningPath.title}
+                      </h3>
+                      <p className="text-white/60">
+                        {selectedLearningPath.description}
+                      </p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">Objectives</h4>
+                      <ul className="space-y-2">
+                        {selectedLearningPath.objectives.map((objective, index) => (
+                          <li key={index} className="flex items-center gap-2">
+                            <Icons.Check className="w-4 h-4 text-primary" />
+                            {objective}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold">Skills</h4>
+                      {selectedLearningPath.skills.map((skill) => {
+                        const available = isSkillAvailable(skill);
+                        const completed = completedSkills.has(skill.id);
+
+                        return (
+                          <motion.div
+                            key={skill.id}
+                            initial="hidden"
+                            animate="visible"
+                            variants={itemVariants}
+                          >
+                            <Card
+                              className={cn(
+                                "bg-white/5 border-white/10 p-4 transition-colors",
+                                !available && "opacity-50"
+                              )}
+                            >
+                              <div className="flex items-start justify-between mb-4">
+                                <div>
+                                  <h5 className="font-semibold">{skill.title}</h5>
+                                  <p className="text-sm text-white/60">
+                                    {skill.description}
+                                  </p>
+                                </div>
+                                <Button
+                                  variant={completed ? "default" : "outline"}
+                                  size="sm"
+                                  disabled={!available}
+                                  onClick={() => completeSkill(skill.id)}
+                                >
+                                  {completed ? (
+                                    <>
+                                      <Icons.Check className="w-4 h-4 mr-2" />
+                                      Completed
+                                    </>
+                                  ) : (
+                                    "Mark Complete"
+                                  )}
+                                </Button>
+                              </div>
+
+                              <div className="space-y-2">
+                                {skill.resources.map((resource) => (
+                                  <a
+                                    key={resource.id}
+                                    href={resource.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="block p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                                  >
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <h6 className="font-medium">
+                                          {resource.title}
+                                        </h6>
+                                        <p className="text-sm text-white/60">
+                                          {resource.estimatedTime} •{" "}
+                                          {resource.priority}
+                                        </p>
+                                      </div>
+                                      <Icons.ExternalLink className="w-4 h-4" />
+                                    </div>
+                                  </a>
+                                ))}
+                              </div>
+                            </Card>
+                          </motion.div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-white/60">
+                      Select a learning path to view its content
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {/* Progress Banner */}
-      {selectedLearningPath && session?.user && (
-        <div className="max-w-3xl mx-auto">
-          <ContinueLearningBanner
-            learningPath={selectedLearningPath}
-            progress={progress}
-            loading={loading}
-          />
-        </div>
-      )}
-
-      {/* Resource Type Tabs */}
-      {selectedSkill && (
-        <Tabs value={selectedResourceType} onValueChange={(value) => setSelectedResourceType(value as ResourceType | 'all')}>
-          <TabsList>
-            <TabsTrigger value="all" className="flex items-center gap-2">
-              <Globe className="w-4 h-4" />
-              All
-            </TabsTrigger>
-            <TabsTrigger value="documentation" className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4" />
-              Documentation
-            </TabsTrigger>
-            <TabsTrigger value="video" className="flex items-center gap-2">
-              <Video className="w-4 h-4" />
-              Video Tutorials
-            </TabsTrigger>
-            <TabsTrigger value="article" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Articles
-            </TabsTrigger>
-            <TabsTrigger value="course" className="flex items-center gap-2">
-              <GraduationCap className="w-4 h-4" />
-              Courses
-            </TabsTrigger>
-            <TabsTrigger value="practice" className="flex items-center gap-2">
-              <Code className="w-4 h-4" />
-              Practice
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-      )}
-
-      {/* Content */}
-      <AnimatePresence mode="wait">
-        {selectedResource ? (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-          >
-            {selectedResource.type === 'practice' ? (
-              <CodePractice resource={selectedResource} />
-            ) : (
-              <div className="max-w-3xl mx-auto">
-                <ResourceCard 
-                  resource={{
-                    ...selectedResource,
-                    completed: progress?.completedResources?.some(
-                      r => r.resourceId === selectedResource.id && r.skillId === selectedSkill?.id
-                    ) || false
-                  }}
-                  showProgress={!!session?.user}
-                  onToggleComplete={
-                    selectedSkill ? 
-                    (completed) => markResourceComplete(selectedResource.id, selectedSkill.id, completed) :
-                    undefined
-                  }
-                />
-              </div>
-            )}
-          </motion.div>
-        ) : !selectedCareerPath ? (
-          // Career Paths Grid
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {filteredCareerPaths.map((path) => (
-              <CareerPathCard
-                key={path.id}
-                careerPath={path}
-                onClick={handleCareerPathClick}
-              />
-            ))}
-          </motion.div>
-        ) : !selectedLearningPath ? (
-          // Learning Paths Grid
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr"
-          >
-            {selectedCareerPath.learningPaths.map((path) => (
-              <Card
-                key={path.id}
-                className="cursor-pointer hover:border-primary/50 transition-colors p-6"
-                onClick={() => handleLearningPathClick(path)}
-              >
-                <div className="flex flex-col min-h-[300px]">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">{path.title}</h3>
-                    <p className="text-muted-foreground mb-4">{path.description}</p>
-                  </div>
-                  <div className="mt-auto">
-                    <div className="flex items-center justify-between pt-4 border-t mb-4">
-                      <Badge variant="outline">{path.estimatedTime}</Badge>
-                      <Badge variant={
-                        path.difficulty === 'beginner' ? 'secondary' :
-                        path.difficulty === 'intermediate' ? 'default' : 'error'
-                      }>{path.difficulty}</Badge>
-                    </div>
-                    <Button className="w-full">Start Learning</Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </motion.div>
-        ) : !selectedSkill ? (
-          // Skills Grid
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-fr"
-          >
-            {selectedLearningPath.skills.map((skill) => (
-              <Card
-                key={skill.id}
-                className="cursor-pointer hover:border-primary/50 transition-colors p-6 flex flex-col h-full"
-                onClick={() => handleSkillClick(skill)}
-              >
-                <div className="flex-grow">
-                  <h3 className="text-xl font-semibold mb-2">{skill.name}</h3>
-                  <p className="text-muted-foreground mb-4">{skill.description}</p>
-                </div>
-                <div className="mt-auto pt-4 border-t">
-                  <Badge variant={
-                    skill.level === 'beginner' ? 'secondary' :
-                    skill.level === 'intermediate' ? 'default' : 'error'
-                  }>{skill.level}</Badge>
-                </div>
-              </Card>
-            ))}
-          </motion.div>
-        ) : (
-          // Resources Grid
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {resourcesWithProgress.map((resource) => (
-              <div key={resource.id} onClick={() => handleResourceClick(resource)}>
-                <ResourceCard 
-                  resource={resource}
-                  showProgress={!!session?.user}
-                  onToggleComplete={
-                    (completed) => markResourceComplete(resource.id, selectedSkill.id, completed)
-                  }
-                />
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
-};
-
-export default LearningPathsPage;
+}

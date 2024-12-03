@@ -46,7 +46,8 @@ const userSchema = new Schema<IUser>({
   },
   password: {
     type: String,
-    select: false
+    required: false,
+    select: false  // This is fine, we'll explicitly select it when needed
   },
   emailVerified: {
     type: Date,
@@ -83,12 +84,12 @@ const userSchema = new Schema<IUser>({
   }],
   isAdmin: {
     type: Boolean,
-    default: false,
-    index: true
+    default: false
   },
   role: {
     type: String,
-    default: 'user'
+    default: 'user',
+    enum: ['user', 'admin']
   }
 });
 
@@ -108,6 +109,7 @@ userSchema.pre('save', function(next) {
 // Apply timestamps plugin
 userSchema.plugin(withTimestamps);
 
+// Create and export the model
 const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
 
 export default User;

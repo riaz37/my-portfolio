@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
-import Challenge from '@/models/Challenge';
-import { connectToDatabase } from '@/lib/mongoose';
-import User from '@/models/User';
+import User from '@/models/auth/User';
+import { Challenge } from '@/lib/models/content/Challenge';
+import { connectToDatabase } from '@/lib/db/mongodb';
+
 
 // Validation schema for challenge update
 const challengeUpdateSchema = z.object({

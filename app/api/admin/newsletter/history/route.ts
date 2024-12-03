@@ -4,7 +4,8 @@ import { authOptions } from '@/lib/auth';
 import { Newsletter } from '@/models/content/Newsletter';
 import { connectToDatabase } from '@/lib/db/mongodb';
 import { Subscriber } from '@/models/Subscriber';
-import { User } from '@/models/User'; // Import the User model
+import User from '@/models/auth/User';
+
 
 export async function GET() {
   try {

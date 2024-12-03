@@ -15,13 +15,13 @@ export const sectionTitles = {
     badge: "Portfolio",
     highlight: "Projects",
     subtitle: "A showcase of my best work, personal projects, and contributions to open source.",
-    children: "Featured Projects"
+    children: "Projects"
   },
   certifications: {
-    badge: "Certifications",
-    highlight: "Achievements",
+    badge: "Achievements",
+    highlight: "Certifications",
     subtitle: "Professional certifications and credentials that validate my expertise.",
-    children: "My Certifications"
+    children: "Certifications"
   },
   github: {
     badge: "Open Source",

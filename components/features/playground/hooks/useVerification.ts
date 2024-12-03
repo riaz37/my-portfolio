@@ -37,7 +37,7 @@ export function useVerification(session: Session | null) {
       toast({
         title: 'Error',
         description: 'Failed to resend verification email. Please try again later.',
-        variant: 'destructive',
+        variant: 'error',
       });
     } finally {
       setIsResending(false);

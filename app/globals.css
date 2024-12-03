@@ -194,6 +194,114 @@
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
   }
+
+  .background-animate {
+    background-size: 400%;
+    animation: gradient-x 15s ease infinite;
+  }
+
+  @keyframes gradient-x {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+
+  .animate-gradient-x {
+    background-size: 200% auto;
+    background-position: 0 center;
+    animation: gradient-x 5s ease infinite;
+  }
+
+  .learning-path-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .learning-path-glow::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+      circle at center, 
+      rgba(99, 102, 241, 0.2) 0%, 
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .learning-path-glow:hover::before {
+    opacity: 1;
+  }
+
+  .learning-path-card {
+    position: relative;
+    overflow: hidden;
+    transition: all 500ms ease-in-out;
+    border: 1px solid transparent;
+    border-radius: 1rem;
+  }
+
+  .learning-path-card-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom right, rgba(255,255,255,0.05), rgba(255,255,255,0.1));
+    opacity: 1;
+    transition: all 500ms ease-in-out;
+    z-index: 0;
+  }
+
+  .learning-path-card:hover .learning-path-card-bg {
+    opacity: 0.9;
+    transform: scale(1.05);
+  }
+
+  .learning-path-card-border {
+    position: absolute;
+    inset: 0;
+    border: 2px solid transparent;
+    border-radius: 1rem;
+    opacity: 0;
+    transition: all 500ms ease-in-out;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.2);
+  }
+
+  .learning-path-card:hover .learning-path-card-border {
+    border-color: rgba(99, 102, 241, 0.3);
+    opacity: 1;
+  }
+
+  .learning-path-card-content {
+    position: relative;
+    z-index: 10;
+    transition: transform 500ms ease-in-out;
+  }
+
+  .learning-path-card:hover .learning-path-card-content {
+    transform: translateY(-0.25rem);
+  }
+
+  .learning-path-icon {
+    transition: all 500ms ease-in-out;
+  }
+
+  .learning-path-card:hover .learning-path-icon {
+    transform: scale(1.1) rotate(6deg);
+  }
+
+  .learning-path-progress {
+    transition: all 500ms ease-in-out;
+  }
+
+  .learning-path-card:hover .learning-path-progress {
+    transform: scale(1.05);
+  }
 }
 
 @keyframes gradient {

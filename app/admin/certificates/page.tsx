@@ -3,18 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { 
-  PlusIcon, 
-  Pencil, 
-  Trash2, 
-  Award,
-  Calendar,
-  Link as LinkIcon
-} from 'lucide-react';
-
+import { PlusIcon } from 'lucide-react';
+import { DataTable } from '@/components/features/admin/DataTable';
 import { Button } from '@/components/shared/ui/core/button';
-import { Input } from '@/components/shared/ui/core/input';
 import { 
   Dialog, 
   DialogContent, 
@@ -32,17 +23,9 @@ import {
   FormLabel, 
   FormMessage 
 } from '@/components/shared/ui/core/form';
+import { Input } from '@/components/shared/ui/core/input';
 import { Textarea } from '@/components/shared/ui/core/textarea';
-import { Badge } from '@/components/shared/ui/core/badge';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/shared/ui/core/card';
-import { useShowToast } from '@/components/shared/ui/toast/toast-wrapper';
-
+import { useCustomToast } from '@/components/shared/ui/toast/toast-wrapper';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -51,14 +34,28 @@ import * as z from 'zod';
 const certificateSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   issuer: z.string().min(1, 'Issuer is required'),
-  issueDate: z.string().min(1, 'Issue date is required'),
-  expiryDate: z.string().optional(),
+  issueDate: z.string().refine(
+    (date) => !isNaN(Date.parse(date)),
+    { message: 'Invalid issue date' }
+  ),
+  expiryDate: z.string().optional().refine(
+    (date) => !date || !isNaN(Date.parse(date)),
+    { message: 'Invalid expiry date' }
+  ).refine(
+    (date, ctx) => {
+      if (!date) return true;
+      const issueDate = ctx.parent.issueDate;
+      if (!issueDate) return true;
+      return new Date(date) > new Date(issueDate);
+    },
+    { message: 'Expiry date must be after issue date' }
+  ),
   credentialId: z.string().optional(),
-  credentialUrl: z.string().url().optional().or(z.literal('')),
-  imageUrl: z.string().url().min(1, 'Image URL is required'),
+  credentialUrl: z.string().url('Invalid credential URL').optional().or(z.literal('')),
+  imageUrl: z.string().url('Invalid image URL').min(1, 'Image URL is required'),
   category: z.string().min(1, 'Category is required'),
   description: z.string().optional(),
-  skills: z.array(z.string()),
+  skills: z.array(z.string()).default([]).transform(skills => skills.filter(skill => skill.trim())),
   featured: z.boolean().default(false),
 });
 
@@ -75,7 +72,44 @@ export default function CertificatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const showToast = useShowToast();
+  const {toast} = useCustomToast();
+
+  const columns = [
+    { 
+      key: 'title', 
+      label: 'Title', 
+      sortable: true,
+      className: 'min-w-[200px]'
+    },
+    { 
+      key: 'issuer', 
+      label: 'Issuer',
+      className: 'min-w-[150px]'
+    },
+    { 
+      key: 'category', 
+      label: 'Category',
+      className: 'hidden md:table-cell'
+    },
+    { 
+      key: 'issueDate', 
+      label: 'Issue Date',
+      render: (date: string) => new Date(date).toLocaleDateString(),
+      className: 'hidden md:table-cell'
+    },
+    { 
+      key: 'skills', 
+      label: 'Skills',
+      render: (skills: string[]) => skills?.join(', ') || '',
+      className: 'hidden lg:table-cell'
+    },
+    { 
+      key: 'featured', 
+      label: 'Featured',
+      render: (featured: boolean) => featured ? 'Yes' : 'No',
+      className: 'w-[100px] text-center'
+    }
+  ];
 
   const form = useForm<CertificateFormValues>({
     resolver: zodResolver(certificateSchema),
@@ -108,7 +142,11 @@ export default function CertificatesPage() {
         const data = await response.json();
         setCertificates(data);
       } catch (error) {
-        showToast('error', 'Error', 'Failed to fetch certificates');
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch certificates',
+          variant: 'error'
+        });
       } finally {
         setIsLoading(false);
       }
@@ -119,25 +157,78 @@ export default function CertificatesPage() {
 
   const onSubmit = async (data: CertificateFormValues) => {
     try {
+      // Validate required fields
+      const requiredFields = ['title', 'issuer', 'issueDate', 'imageUrl', 'category'];
+      for (const field of requiredFields) {
+        if (!data[field as keyof CertificateFormValues]) {
+          throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} is required`);
+        }
+      }
+
+      // Validate dates
+      const issueDate = new Date(data.issueDate);
+      if (isNaN(issueDate.getTime())) {
+        throw new Error('Invalid issue date');
+      }
+
+      if (data.expiryDate) {
+        const expiryDate = new Date(data.expiryDate);
+        if (isNaN(expiryDate.getTime())) {
+          throw new Error('Invalid expiry date');
+        }
+        if (expiryDate < issueDate) {
+          throw new Error('Expiry date must be after issue date');
+        }
+      }
+
+      // Validate URLs
+      const urlFields = ['credentialUrl', 'imageUrl'] as const;
+      for (const field of urlFields) {
+        if (data[field]) {
+          try {
+            new URL(data[field] as string);
+          } catch {
+            throw new Error(`Invalid ${field.replace('Url', ' URL')}`);
+          }
+        }
+      }
+
+      // Clean up skills array
+      data.skills = data.skills.filter(skill => skill.trim());
+
+      // IMPORTANT: Explicitly log the featured status
+      console.log('Certificate submission data:', {
+        ...data,
+        featured: data.featured ?? false
+      });
+
       const url = selectedCertificate 
-        ? '/api/admin/certificates'
+        ? `/api/admin/certificates/${selectedCertificate._id}`
         : '/api/admin/certificates';
       
       const method = selectedCertificate ? 'PUT' : 'POST';
-      const body = selectedCertificate 
-        ? { ...data, _id: selectedCertificate._id }
-        : data;
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          ...data,
+          featured: data.featured ?? false  // Ensure featured is always a boolean
+        }),
       });
 
-      if (!response.ok) throw new Error('Failed to save certificate');
-
       const result = await response.json();
+
+      // Check response status
+      if (!response.ok) {
+        // If response is not ok, throw an error with details
+        const errorMessage = result.error || result.details?.map((err: any) => err.message).join(', ') || 'Failed to save certificate';
+        throw new Error(errorMessage);
+      }
       
+      // Log the returned certificate to verify featured status
+      console.log('Saved certificate:', result);
+
       setCertificates(prev => 
         selectedCertificate
           ? prev.map(cert => cert._id === result._id ? result : cert)
@@ -148,27 +239,45 @@ export default function CertificatesPage() {
       setSelectedCertificate(null);
       form.reset();
 
-      showToast('success', 'Success', `Certificate ${selectedCertificate ? 'updated' : 'created'} successfully`);
+      toast({
+        title: 'Success',
+        description: `Certificate ${selectedCertificate ? 'updated' : 'created'} successfully`,
+        variant: 'success'
+      });
     } catch (error) {
-      showToast('error', 'Error', 'Failed to save certificate');
+      console.error('Certificate submission error:', error);
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to save certificate',
+        variant: 'error'
+      });
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (certificate: Certificate) => {
     if (!confirm('Are you sure you want to delete this certificate?')) return;
 
     try {
-      const response = await fetch(`/api/admin/certificates?id=${id}`, {
+      const response = await fetch(`/api/admin/certificates/${certificate._id}`, {
         method: 'DELETE',
       });
 
       if (!response.ok) throw new Error('Failed to delete certificate');
 
-      setCertificates(prev => prev.filter(cert => cert._id !== id));
+      const result = await response.json();
+      setCertificates(prev => prev.filter(cert => cert._id !== certificate._id));
       
-      showToast('success', 'Success', 'Certificate deleted successfully');
+      toast({
+        title: 'Success',
+        description: 'Certificate deleted successfully',
+        variant: 'success'
+      });
     } catch (error) {
-      showToast('error', 'Error', 'Failed to delete certificate');
+      toast({
+        title: 'Error',
+        description: 'Failed to delete certificate',
+        variant: 'error'
+      });
     }
   };
 
@@ -347,6 +456,26 @@ export default function CertificatesPage() {
                   )}
                 />
 
+                <FormField
+                  control={form.control}
+                  name="featured"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        />
+                      </FormControl>
+                      <FormLabel className="text-sm font-medium leading-none">
+                        Featured (show in portfolio)
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+
                 <div className="flex justify-end gap-4">
                   <Button
                     type="button"
@@ -369,78 +498,12 @@ export default function CertificatesPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {certificates.map((certificate) => (
-          <motion.div
-            key={certificate._id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <CardTitle className="text-lg font-semibold">
-                      {certificate.title}
-                    </CardTitle>
-                    <CardDescription>
-                      {certificate.issuer}
-                    </CardDescription>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEdit(certificate)}
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(certificate._id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>
-                      {new Date(certificate.issueDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {certificate.credentialUrl && (
-                    <div className="flex items-center text-sm">
-                      <LinkIcon className="w-4 h-4 mr-2" />
-                      <a
-                        href={certificate.credentialUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline"
-                      >
-                        View Credential
-                      </a>
-                    </div>
-                  )}
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {certificate.skills?.map((skill, index) => (
-                      <Badge key={index} variant="secondary">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+      <DataTable 
+        data={certificates}
+        columns={columns}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }

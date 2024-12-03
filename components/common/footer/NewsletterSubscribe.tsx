@@ -15,7 +15,10 @@ export function NewsletterSubscribe() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email) {
+      toast("error", "Error", "Please enter your email");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -28,21 +31,13 @@ export function NewsletterSubscribe() {
       const data = await response.json();
 
       if (response.ok) {
-        toast({
-          title: "Success",
-          description: "Successfully subscribed to the newsletter!",
-          variant: "default",
-        });
+        toast("success", "Success", data.message || "Successfully subscribed to the newsletter!");
         setEmail('');
       } else {
-        throw new Error(data.message || 'Something went wrong');
+        throw new Error(data.error || 'Something went wrong');
       }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast("error", "Error", error.message || "Failed to subscribe to newsletter");
     } finally {
       setLoading(false);
     }
@@ -90,61 +85,47 @@ export function NewsletterSubscribe() {
 
         <motion.form 
           onSubmit={handleSubmit} 
-          className="flex gap-x-2"
+          className="flex flex-col gap-4"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.4 }}
         >
-          <div className="relative flex-grow">
+          <div className="relative">
             <Input
               type="email"
-              required
-              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email"
+              className="w-full pl-10 bg-background/80 backdrop-blur-sm"
               onFocus={() => setFocused(true)}
               onBlur={() => setFocused(false)}
-              className="pr-8 transition-shadow duration-300"
-              style={{
-                boxShadow: focused ? '0 0 0 2px var(--primary)' : 'none',
-              }}
               disabled={loading}
+              required
             />
-            <motion.div
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground/30"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              @
-            </motion.div>
+            <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
           </div>
 
-          <Button 
-            type="submit" 
-            size="default"
-            disabled={loading}
-            className="relative overflow-hidden transition-all duration-300 hover:scale-105 text-black"
+          <motion.div
+            initial={false}
+            animate={{
+              scale: focused ? 1.05 : 1,
+              transition: { duration: 0.2 }
+            }}
           >
-            <motion.div
-              animate={loading ? { opacity: 0 } : { opacity: 1 }}
-              transition={{ duration: 0.2 }}
-              className="flex items-center gap-2"
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-primary hover:bg-primary/90"
             >
-              <FaPaperPlane className="h-4 w-4" />
-              <span className="hidden sm:inline">Subscribe</span>
-            </motion.div>
-            {loading && (
-              <motion.div 
-                className="absolute inset-0 flex items-center justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <div className="w-4 h-4 border-2 border-t-transparent border-primary rounded-full animate-spin" />
-              </motion.div>
-            )}
-          </Button>
+              {loading ? (
+                'Subscribing...'
+              ) : (
+                <>
+                  Subscribe <FaPaperPlane className="ml-2" />
+                </>
+              )}
+            </Button>
+          </motion.div>
         </motion.form>
 
         <motion.p 

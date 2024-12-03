@@ -2,41 +2,77 @@ import { NextResponse } from 'next/server';
 import { Blog } from '@/models/Blog';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import connectToDatabase from '@/lib/db/mongodb';
+import { connectToDatabase } from '@/lib/db/mongodb';
 
 // GET all blogs or search blogs
-export async function GET(req: Request) {
+export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
     await connectToDatabase();
-    const { searchParams } = new URL(req.url);
-    const query = searchParams.get('query');
+    
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const search = searchParams.get('search');
     const tag = searchParams.get('tag');
-    const published = searchParams.get('published');
+    const sort = searchParams.get('sort') || 'newest';
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
-    let filter: any = {};
+    // Build query
+    const query: any = { isDeleted: false };
+
+    // Add published filter for non-admin users
+    if (!isAdmin) {
+      query.isPublished = true;
+    }
 
     // Search by query
-    if (query) {
-      filter.$text = { $search: query };
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+        { tags: { $regex: search, $options: 'i' } },
+      ];
     }
 
     // Filter by tag
     if (tag) {
-      filter.tags = tag;
+      query.tags = tag;
     }
 
-    // Filter by published status
-    if (published !== null) {
-      filter.published = published === 'true';
-    }
+    // Calculate pagination
+    const skip = (page - 1) * limit;
 
-    const blogs = await Blog.find(filter)
-      .sort({ createdAt: -1 })
-      .select('-content')
-      .lean()
-      .exec();
+    // Determine sort order
+    const sortOptions = {
+      newest: { createdAt: -1 },
+      oldest: { createdAt: 1 },
+      popular: { views: -1 },
+    }[sort] || { createdAt: -1 };
 
-    return NextResponse.json(blogs);
+    // Execute query
+    const [blogs, total] = await Promise.all([
+      Blog.find(query)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Blog.countDocuments(query),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        blogs,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(total / limit),
+          totalItems: total,
+          itemsPerPage: limit,
+        }
+      }
+    });
   } catch (error) {
     console.error('Error fetching blogs:', error);
     return NextResponse.json(
@@ -47,10 +83,10 @@ export async function GET(req: Request) {
 }
 
 // POST new blog
-export async function POST(req: Request) {
+export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -58,16 +94,21 @@ export async function POST(req: Request) {
     }
 
     await connectToDatabase();
-    const data = await req.json();
-    
-    // Create URL-friendly slug from title
-    const slug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)+/g, '');
-    
-    const blog = await Blog.create({ ...data, slug });
-    return NextResponse.json(blog, { status: 201 });
+    const data = await request.json();
+
+    const blog = await Blog.create({
+      ...data,
+      author: {
+        name: session.user.name,
+        email: session.user.email,
+        image: session.user.image,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      data: blog
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating blog:', error);
     return NextResponse.json(
@@ -78,10 +119,10 @@ export async function POST(req: Request) {
 }
 
 // PUT update blog
-export async function PUT(req: Request) {
+export async function PUT(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -89,29 +130,14 @@ export async function PUT(req: Request) {
     }
 
     await connectToDatabase();
-    const data = await req.json();
+    const data = await request.json();
     const { id, ...updateData } = data;
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Blog ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Update slug if title is changed
-    if (updateData.title) {
-      updateData.slug = updateData.title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/(^-|-$)+/g, '');
-    }
 
     const blog = await Blog.findByIdAndUpdate(
       id,
-      { ...updateData, updatedAt: Date.now() },
-      { new: true, runValidators: true }
-    ).exec();
+      { ...updateData },
+      { new: true }
+    );
 
     if (!blog) {
       return NextResponse.json(
@@ -120,7 +146,10 @@ export async function PUT(req: Request) {
       );
     }
 
-    return NextResponse.json(blog);
+    return NextResponse.json({
+      success: true,
+      data: blog
+    });
   } catch (error) {
     console.error('Error updating blog:', error);
     return NextResponse.json(
@@ -131,10 +160,10 @@ export async function PUT(req: Request) {
 }
 
 // DELETE blog
-export async function DELETE(req: Request) {
+export async function DELETE(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session) {
+    if (!session || session.user?.email !== process.env.ADMIN_EMAIL) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -142,7 +171,7 @@ export async function DELETE(req: Request) {
     }
 
     await connectToDatabase();
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
@@ -152,7 +181,11 @@ export async function DELETE(req: Request) {
       );
     }
 
-    const blog = await Blog.findByIdAndDelete(id).exec();
+    const blog = await Blog.findByIdAndUpdate(
+      id,
+      { isDeleted: true },
+      { new: true }
+    );
 
     if (!blog) {
       return NextResponse.json(
@@ -161,7 +194,10 @@ export async function DELETE(req: Request) {
       );
     }
 
-    return NextResponse.json({ message: 'Blog deleted successfully' });
+    return NextResponse.json({
+      success: true,
+      data: { message: 'Blog deleted successfully' }
+    });
   } catch (error) {
     console.error('Error deleting blog:', error);
     return NextResponse.json(

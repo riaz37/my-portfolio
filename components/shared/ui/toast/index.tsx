@@ -66,7 +66,16 @@ const useToast = (duration = 5000) => {
   const [toasts, setToasts] = React.useState<ToastProps[]>([]);
 
   const toast = React.useCallback(
-    ({ title, description, variant = 'default', duration: toastDuration = duration, ...props }: Omit<ToastProps, 'id'>) => {
+    (toastOptions: Omit<ToastProps, 'id'>) => {
+      const { title, description, variant = 'default', duration: toastDuration = duration, ...props } = toastOptions;
+      
+      // Prevent duplicate toasts
+      const isDuplicate = toasts.some(
+        t => t.title === title && t.description === description
+      );
+
+      if (isDuplicate) return null;
+
       const id = Math.random().toString(36).substring(2, 9);
       const newToast: ToastProps = {
         id,
@@ -77,7 +86,15 @@ const useToast = (duration = 5000) => {
         ...props,
       };
 
-      setToasts((currentToasts) => [...currentToasts, newToast]);
+      // Limit total number of toasts
+      const updatedToasts = toasts.length >= 5 
+        ? toasts.slice(1) 
+        : toasts;
+
+      // Use a microtask to prevent maximum update depth
+      queueMicrotask(() => {
+        setToasts([...updatedToasts, newToast]);
+      });
 
       if (toastDuration !== Infinity) {
         setTimeout(() => {
@@ -87,16 +104,24 @@ const useToast = (duration = 5000) => {
 
       return id;
     },
-    [duration]
+    [duration, toasts]
   );
 
   const dismiss = React.useCallback((toastId: string) => {
-    setToasts((currentToasts) =>
-      currentToasts.filter((toast) => toast.id !== toastId)
-    );
+    queueMicrotask(() => {
+      setToasts(currentToasts => 
+        currentToasts.filter(toast => toast.id !== toastId)
+      );
+    });
   }, []);
 
-  return { toast, dismiss, toasts };
+  const dismissAll = React.useCallback(() => {
+    queueMicrotask(() => {
+      setToasts([]);
+    });
+  }, []);
+
+  return { toast, dismiss, dismissAll, toasts };
 };
 
 function ToastProvider({ children }: { children: React.ReactNode }) {

@@ -20,10 +20,17 @@ export async function GET() {
     await connectToDatabase();
 
     const subscribers = await Subscriber.find()
-      .sort({ createdAt: -1 })
-      .select('-__v');
+      .sort({ subscribedAt: -1 })
+      .select('-__v')
+      .lean();
 
-    return NextResponse.json(subscribers);
+    const activeSubscribers = subscribers.filter(sub => sub.isSubscribed);
+
+    return NextResponse.json({
+      subscribers,
+      totalSubscribers: subscribers.length,
+      activeSubscribers: activeSubscribers.length
+    });
   } catch (error) {
     console.error('Error fetching subscribers:', error);
     return NextResponse.json(

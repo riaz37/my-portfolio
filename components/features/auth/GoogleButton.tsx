@@ -27,7 +27,7 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playgro
       if (result?.error) {
         console.error('Google Sign In Error:', result.error);
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Google Sign In Failed",
           description: result.error === 'OAuthAccountNotLinked'
             ? 'An account with this email already exists. Please sign in with your existing provider.'
@@ -46,7 +46,7 @@ export function GoogleButton({ isLoading: parentLoading, callbackUrl = '/playgro
     } catch (error) {
       console.error('Unexpected Google Sign In Error:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Authentication Error",
         description: "An unexpected error occurred. Please try again later.",
       });

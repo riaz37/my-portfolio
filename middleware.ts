@@ -2,6 +2,27 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
+// Public paths that don't require authentication
+const publicPaths = [
+  '/auth/signin',
+  '/auth/signup',
+  '/auth/verify-status',
+  '/api/auth',
+  '/api/verify/email',
+  '/api/auth/verify-email',
+  '/api/auth/register',
+  '/',
+  '/about',
+  '/contact',
+  '/_next',
+  '/images',
+  '/fonts',
+  '/favicon.ico',
+];
+
+// Paths that require email verification
+const verificationRequiredPaths = ['/playground', '/dashboard', '/profile'];
+
 // Define route configurations with roles and permissions
 const routeConfig = {
   public: [
@@ -14,10 +35,8 @@ const routeConfig = {
     '/',
     '/about',
     '/contact',
-    '/playground',
-    '/playground/challenges-list',
-    '/playground/learning-paths',
-    '/api/auth/signout'
+    '/api/auth/signout',
+    '/playground'  // Allow public access to playground root
   ],
   protected: {
     user: [
@@ -25,6 +44,8 @@ const routeConfig = {
       '/playground/practice',
       '/playground/community',
       '/playground/hints',
+      '/playground/challenges-list',
+      '/playground/learning-paths',
       '/settings'
     ],
     admin: [
@@ -55,57 +76,47 @@ function isExcludedPath(path: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
-  const path = request.nextUrl.pathname;
-  
-  // Skip middleware for excluded paths
-  if (isExcludedPath(path)) {
+  const { pathname } = request.nextUrl;
+
+  // Skip middleware for public paths and static files
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
-  // Allow public paths
-  if (matchesPath(path, routeConfig.public)) {
-    return NextResponse.next();
+  const token = await getToken({ req: request });
+
+  // If not authenticated, redirect to signin
+  if (!token) {
+    const signInUrl = new URL('/auth/signin', request.url);
+    signInUrl.searchParams.set('callbackUrl', request.url);
+    return NextResponse.redirect(signInUrl);
   }
 
-  // Check for protected paths
-  const needsAuth = matchesPath(path, [...routeConfig.protected.user, ...routeConfig.protected.admin]);
-  const needsAdmin = matchesPath(path, routeConfig.protected.admin);
-
-  if (needsAuth || needsAdmin) {
-    try {
-      const token = await getToken({ 
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET 
-      });
-
-      if (!token) {
-        const signInUrl = new URL('/auth/signin', request.url);
-        signInUrl.searchParams.set('callbackUrl', request.nextUrl.pathname);
-        return NextResponse.redirect(signInUrl);
+  // Handle email verification
+  if (verificationRequiredPaths.some((path) => pathname.startsWith(path))) {
+    if (!token.emailVerified) {
+      // Redirect to verify-email page with email parameter
+      const verifyEmailUrl = new URL('/auth/verify-email', request.url);
+      if (token.email) {
+        verifyEmailUrl.searchParams.set('email', token.email);
       }
-
-      // Check admin access
-      if (needsAdmin && !token.isAdmin) {
-        return NextResponse.redirect(
-          new URL('/', request.url)
-        );
-      }
-
-      // Add user info to headers for downstream use
-      const response = NextResponse.next();
-      response.headers.set('x-user-id', token.sub || '');
-      response.headers.set('x-user-admin', token.isAdmin ? 'true' : 'false');
-      return response;
-
-    } catch (error) {
-      console.error('Middleware auth error:', error);
-      const signInUrl = new URL('/auth/signin', request.url);
-      signInUrl.searchParams.set('error', 'AuthError');
-      return NextResponse.redirect(signInUrl);
+      return NextResponse.redirect(verifyEmailUrl);
     }
   }
 
-  // Allow access to all other routes
+  // If on verify-email page and already verified, redirect to playground
+  if (pathname.startsWith('/auth/verify-email') && token.emailVerified) {
+    return NextResponse.redirect(new URL('/playground', request.url));
+  }
+
+  // If on signin/signup and already authenticated, redirect to playground
+  if (
+    (pathname.startsWith('/auth/signin') || pathname.startsWith('/auth/signup')) &&
+    token
+  ) {
+    return NextResponse.redirect(new URL('/playground', request.url));
+  }
+
   return NextResponse.next();
 }
 

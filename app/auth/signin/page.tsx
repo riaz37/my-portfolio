@@ -70,51 +70,38 @@ export default function SignInPage() {
         throw new Error("Please fill in all fields");
       }
 
+      console.log('Attempting to sign in with:', { email });
+
       const result = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
 
-      if (result?.error) {
-        if (result.error === "Please verify your email before signing in") {
-          toast({
-            variant: "error",
-            title: "Email Not Verified",
-            description: "Please check your email for the verification link.",
-          });
-          router.replace("/auth/verify-request");
-          return;
-        }
+      console.log('Sign in result:', result);
 
+      if (result?.error) {
+        console.error('Sign in error:', result.error);
         toast({
           variant: "error",
           title: "Sign in failed",
-          description:
-            result.error === "Invalid credentials"
-              ? "Invalid email or password. Please try again."
-              : result.error,
+          description: result.error,
         });
       } else if (result?.ok) {
-        // Update session to get latest user data
+        console.log('Sign in successful, updating session...');
         const session = await updateSession();
         
-        // Redirect based on user role and verification status
-        if (session?.user?.isAdmin) {
-          router.push('/admin');
-        } else if (!session?.user?.isVerified) {
-          router.push('/auth/verify-request');
-        } else {
-          router.push(callbackUrl);
-        }
-
         toast({
           variant: "success",
-          title: "Success",
-          description: "Successfully signed in to your account.",
+          title: "Welcome back!",
+          description: "You have successfully signed in.",
         });
+
+        // Always redirect to playground after successful sign in
+        router.push('/playground');
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         variant: "error",
         title: "Error",

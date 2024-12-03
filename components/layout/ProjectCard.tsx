@@ -1,9 +1,11 @@
 // components/ProjectCard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Code2, ExternalLink, Github, ArrowUpRight } from 'lucide-react';
+import { Badge } from '@/components/shared/ui/core/badge';
+import { cn } from '@/lib/utils';
 
 interface ProjectCardProps {
   id: string;
@@ -17,7 +19,7 @@ interface ProjectCardProps {
   liveUrl?: string;
 }
 
-const ProjectCard: React.FC<ProjectCardProps> = ({ 
+const ProjectCard = React.memo(({ 
   title, 
   description, 
   technologies, 
@@ -26,114 +28,103 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   image, 
   isHovered, 
   liveUrl 
-}) => {
-  const [isClicked, setIsClicked] = useState(false);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (isClicked) {
-        setIsClicked(false);
-      }
-    };
-
-    document.addEventListener('click', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [isClicked]);
-
-  const handleCardClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsClicked(true);
-  };
+}: ProjectCardProps) => {
+  const [isHovering, setIsHovering] = useState(false);
 
   return (
     <motion.div
-      className="relative p-4 sm:p-6 rounded-xl bg-card text-card-foreground transition-all duration-300 cursor-pointer h-[400px] sm:h-[450px] flex flex-col border border-transparent hover:border-primary/20 hover:shadow-lg group"
+      className="group relative overflow-hidden rounded-xl bg-card"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      whileHover={{ 
-        scale: 1.025,
-        boxShadow: "0 10px 25px -10px rgba(var(--primary-rgb), 0.1)"
-      }}
-      whileTap={{ scale: 0.98 }}
-      onHoverStart={() => setIsClicked(false)}
-      onClick={handleCardClick}
+      whileHover={{ y: -5 }}
+      onHoverStart={() => setIsHovering(true)}
+      onHoverEnd={() => setIsHovering(false)}
     >
-      {/* Background Hover Effect */}
-      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl -z-10" />
-
       {/* Project Image */}
-      <div className="relative w-full h-36 sm:h-48 mb-4 rounded-lg overflow-hidden">
+      <div className="relative aspect-video w-full overflow-hidden">
         {image ? (
           <Image 
             src={image} 
-            alt={title} 
+            alt={title}
             fill 
-            className="object-cover object-top transition-transform duration-300 group-hover:scale-105" 
+            className={cn(
+              "object-cover transition-all duration-300",
+              isHovering && "scale-110 blur-sm brightness-50"
+            )}
           />
         ) : (
-          <div className="w-full h-full bg-secondary/20 flex items-center justify-center">
-            <Code2 className="w-12 h-12 text-muted-foreground" />
+          <div className="flex h-full w-full items-center justify-center bg-secondary/20">
+            <Code2 className="h-12 w-12 text-muted-foreground" />
           </div>
         )}
-      </div>
 
-      {/* Project Details */}
-      <div className="flex-grow">
-        <h3 className="text-lg sm:text-xl font-bold mb-2 transition-colors group-hover:text-primary duration-300">
-          {title}
-        </h3>
-        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 mb-4 transition-colors group-hover:text-foreground duration-300">
-          {description}
-        </p>
-
-        {/* Technologies */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {technologies.map((tech, index) => (
-            <span 
-              key={index} 
-              className="px-2 py-1 text-xs bg-secondary/20 rounded-full transition-colors group-hover:bg-primary/10 group-hover:text-primary duration-300"
+        {/* Hover Overlay */}
+        <div className={cn(
+          "absolute inset-0 flex items-center justify-center gap-4 opacity-0 transition-opacity duration-300",
+          isHovering && "opacity-100"
+        )}>
+          {github && (
+            <Link
+              href={github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-background/90 p-3 text-foreground shadow-lg backdrop-blur-sm transition-transform hover:scale-110 hover:bg-background"
             >
-              {tech}
-            </span>
-          ))}
+              <Github className="h-5 w-5" />
+            </Link>
+          )}
+          {liveUrl && (
+            <Link
+              href={liveUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-full bg-background/90 p-3 text-foreground shadow-lg backdrop-blur-sm transition-transform hover:scale-110 hover:bg-background"
+            >
+              <ExternalLink className="h-5 w-5" />
+            </Link>
+          )}
         </div>
       </div>
 
-      {/* Project Links */}
-      <div className="flex justify-between items-center">
-        {demo && (
-          <Link 
-            href={demo} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-primary/70 group-hover:text-primary transition-colors group"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="w-4 h-4 transition-transform group-hover:rotate-12" />
-            <span>Live Demo</span>
-            <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-          </Link>
-        )}
-        {github && (
-          <Link 
-            href={github} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm text-muted-foreground group-hover:text-primary transition-colors group"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Github className="w-4 h-4 transition-transform group-hover:rotate-12" />
-            <span>Source</span>
-            <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
-          </Link>
-        )}
+      {/* Content */}
+      <div className="space-y-4 p-6">
+        <div className="space-y-2">
+          <h3 className="text-xl font-bold tracking-tight">{title}</h3>
+          <p className="text-sm text-muted-foreground line-clamp-2">{description}</p>
+        </div>
+
+        {/* Technologies */}
+        <div className="flex flex-wrap gap-2">
+          {technologies.map((tech, index) => (
+            <Badge
+              key={index}
+              variant="secondary"
+              className="px-2 py-0.5 text-xs font-medium"
+            >
+              {tech}
+            </Badge>
+          ))}
+        </div>
+
+        {/* View Project Link */}
+        <Link
+          href={liveUrl || github || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cn(
+            "inline-flex items-center text-sm font-medium text-foreground/60 transition-colors hover:text-primary",
+            !liveUrl && !github && "pointer-events-none opacity-50"
+          )}
+        >
+          View Project
+          <ArrowUpRight className="ml-1 h-4 w-4" />
+        </Link>
       </div>
     </motion.div>
   );
-};
+});
+
+ProjectCard.displayName = 'ProjectCard';
 
 export default ProjectCard;

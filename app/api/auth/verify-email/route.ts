@@ -1,96 +1,75 @@
-import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db/mongodb';
-import User from '@/models/auth/User';
-import { VerificationToken } from '@/models/auth/VerificationToken';
+import { verifyToken } from '@/lib/auth/token';
+import { NextRequest, NextResponse } from "next/server";
+import { connectToDatabase } from "@/lib/db/mongodb";
+import User from "@/models/auth/User";
 
-export async function GET(request: Request) {
+
+export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    const searchParams = request.nextUrl.searchParams;
     const token = searchParams.get('token');
 
     if (!token) {
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=No token provided', request.url)
+      return NextResponse.json(
+        { error: "Verification token is required" },
+        { status: 400 }
       );
     }
 
     await connectToDatabase();
 
-    // Find and validate the token
-    const verificationToken = await VerificationToken.findOne({
-      token,
-      type: 'email-verification'
-    });
-
-    if (!verificationToken) {
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=Invalid token', request.url)
+    // Verify the token
+    const decoded = await verifyToken(token);
+    if (!decoded || !decoded.email) {
+      return NextResponse.json(
+        { error: "Invalid or expired verification token" },
+        { status: 400 }
       );
     }
-
-    // Check if token is expired
-    if (verificationToken.isExpired()) {
-      await VerificationToken.deleteOne({ _id: verificationToken._id });
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=Token has expired', request.url)
-      );
-    }
-
-    const now = new Date();
 
     // Find and update user
-    const user = await User.findOneAndUpdate(
-      { _id: verificationToken.userId },
-      { 
-        emailVerified: now,
-        isVerified: true,
-        verifiedAt: now
-      },
-      { new: true }
-    );
-
+    const user = await User.findOne({ email: decoded.email });
     if (!user) {
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=User not found', request.url)
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if already verified
+    if (user.emailVerified) {
+      return NextResponse.json(
+        { 
+          message: "Email already verified", 
+          email: decoded.email,
+          emailVerified: true,
+          isVerified: true
+        },
+        { status: 200 }
       );
     }
 
-    // Delete the used token
-    await VerificationToken.deleteOne({ _id: verificationToken._id });
+    // Update user verification status
+    user.emailVerified = new Date();
+    user.isVerified = true;
+    await user.save();
 
-    // Clean up any other expired tokens
-    await VerificationToken.cleanupExpiredTokens();
-
-    return NextResponse.redirect(
-      new URL('/auth/verify-success', request.url)
+    return NextResponse.json(
+      { 
+        message: "Email verified successfully", 
+        email: decoded.email,
+        emailVerified: true,
+        isVerified: true
+      },
+      { status: 200 }
     );
   } catch (error) {
     console.error('Email verification error:', error);
-    return NextResponse.redirect(
-      new URL('/auth/verify-error?error=Verification failed', request.url)
+    return NextResponse.json(
+      { error: "Failed to verify email" },
+      { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
-  try {
-    const { token } = await request.json();
-    
-    if (!token) {
-      return NextResponse.redirect(
-        new URL('/auth/verify-error?error=Verification token is required', request.url)
-      );
-    }
-
-    const newRequest = new Request(
-      `${request.url}?token=${encodeURIComponent(token)}`,
-      request
-    );
-    return GET(newRequest);
-  } catch (error) {
-    console.error('Error parsing request body:', error);
-    return NextResponse.redirect(
-      new URL('/auth/verify-error?error=Invalid request', request.url)
-    );
-  }
+// Keep POST method for backward compatibility
+export async function POST(request: NextRequest) {
+  return GET(request);
 }

@@ -16,9 +16,9 @@ export const getBlogSchema = z.object({
 });
 
 export const getBlogsSchema = z.object({
-  page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(10),
-  tag: z.string().optional(),
-  search: z.string().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(10),
+  tag: z.string().nullish(),
+  search: z.string().nullish(),
   sort: z.enum(['newest', 'oldest', 'popular']).default('newest'),
 });

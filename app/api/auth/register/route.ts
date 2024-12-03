@@ -81,7 +81,8 @@ export async function POST(request: NextRequest) {
         { 
           error: 'Account created but failed to send verification email. Please use the resend verification option.',
           code: 'verification_email_failed',
-          userId: user._id.toString()
+          userId: user._id.toString(),
+          redirect: '/auth/verify-status'
         },
         { status: 201 }  // Created, but with warning
       );
@@ -89,7 +90,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ 
       message: 'Registration successful. Please check your email to verify your account.',
-      userId: user._id.toString() 
+      userId: user._id.toString(),
+      redirect: '/auth/verify-status'
     });
 
   } catch (error) {

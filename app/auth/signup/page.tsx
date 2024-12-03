@@ -67,7 +67,8 @@ export default function SignUpPage() {
         description: "Please verify your email to continue.",
       });
 
-      router.push("/auth/verify-request");
+      // Redirect to verification page with email
+      router.push(`/auth/verify-status?email=${encodeURIComponent(email)}`);
     } catch (error) {
       toast({
         variant: "error",

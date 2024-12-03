@@ -43,6 +43,10 @@ interface Blog {
     metaDescription: string;
     ogImage: string;
   };
+  author: {
+    name: string;
+    email: string;
+  };
 }
 
 export default function BlogsPage() {
@@ -51,8 +55,113 @@ export default function BlogsPage() {
   const [editingBlog, setEditingBlog] = useState<Blog | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [content, setContent] = useState('');
+  const [activeTab, setActiveTab] = useState('content');
   const { toast } = useCustomToast();
+
+  // Form state
+  const [formData, setFormData] = useState({
+    title: '',
+    slug: '',
+    excerpt: '',
+    content: '',
+    coverImage: '',
+    tags: '',
+    categories: '',
+    isPublished: false,
+    featured: false,
+    scheduledPublishDate: '',
+    authorName: '',
+    authorEmail: '',
+    seo: {
+      metaTitle: '',
+      metaDescription: '',
+      ogImage: '',
+    }
+  });
+
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setFormData({
+        title: '',
+        slug: '',
+        excerpt: '',
+        content: '',
+        coverImage: '',
+        tags: '',
+        categories: '',
+        isPublished: false,
+        featured: false,
+        scheduledPublishDate: '',
+        authorName: '',
+        authorEmail: '',
+        seo: {
+          metaTitle: '',
+          metaDescription: '',
+          ogImage: '',
+        }
+      });
+      setEditingBlog(null);
+      setActiveTab('content');
+    }
+  }, [isDialogOpen]);
+
+  // Update form data when editing blog changes
+  useEffect(() => {
+    if (editingBlog) {
+      setFormData({
+        title: editingBlog.title || '',
+        slug: editingBlog.slug || '',
+        excerpt: editingBlog.description || '',
+        content: editingBlog.content || '',
+        coverImage: editingBlog.coverImage || '',
+        tags: editingBlog.tags?.join(', ') || '',
+        categories: editingBlog.categories?.join(', ') || '',
+        isPublished: editingBlog.isPublished || false,
+        featured: editingBlog.featured || false,
+        scheduledPublishDate: editingBlog.scheduledPublishDate || '',
+        authorName: editingBlog.author?.name || '',
+        authorEmail: editingBlog.author?.email || '',
+        seo: {
+          metaTitle: editingBlog.seo?.metaTitle || '',
+          metaDescription: editingBlog.seo?.metaDescription || '',
+          ogImage: editingBlog.seo?.ogImage || '',
+        }
+      });
+    }
+  }, [editingBlog]);
+
+  // Handle form field changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    if (name.startsWith('seo.')) {
+      const seoField = name.split('.')[1];
+      setFormData(prev => ({
+        ...prev,
+        seo: {
+          ...prev.seo,
+          [seoField]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
+  };
+
+  // Handle content change from rich text editor
+  const handleContentChange = (newContent: string) => {
+    setFormData(prev => ({
+      ...prev,
+      content: newContent
+    }));
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, []);
 
   const columns = [
     { key: 'title', label: 'Title', sortable: true },
@@ -68,10 +177,6 @@ export default function BlogsPage() {
     },
   ];
 
-  useEffect(() => {
-    fetchBlogs();
-  }, []);
-
   async function fetchBlogs() {
     try {
       const response = await fetch('/api/admin/blogs');
@@ -80,9 +185,9 @@ export default function BlogsPage() {
       setBlogs(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to fetch blogs',
         variant: 'destructive',
+        title: 'Error fetching blogs',
+        description: error instanceof Error ? error.message : 'Something went wrong'
       });
     } finally {
       setLoading(false);
@@ -92,35 +197,41 @@ export default function BlogsPage() {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsLoading(true);
-    const formData = new FormData(e.currentTarget);
     
     try {
-      const blogData = {
-        title: formData.get('title')?.toString().trim() || '',
-        content: formData.get('content')?.toString().trim() || '',
-        excerpt: formData.get('excerpt')?.toString().trim() || '',
-        coverImage: formData.get('coverImage')?.toString().trim() || '',
-        tags: formData.get('tags')?.toString().split(',').map(t => t.trim()).filter(Boolean) || [],
-        categories: formData.get('categories')?.toString().split(',').map(t => t.trim()).filter(Boolean) || [],
-        published: formData.get('published') === 'true',
-        featured: formData.get('featured') === 'true',
-        scheduledPublishDate: formData.get('scheduledPublishDate')?.toString().trim() || '',
-        seo: {
-          metaTitle: formData.get('metaTitle')?.toString().trim() || '',
-          metaDescription: formData.get('metaDescription')?.toString().trim() || '',
-          ogImage: formData.get('ogImage')?.toString().trim() || '',
-        },
-      };
-
-      if (!blogData.title || !blogData.content || !blogData.excerpt) {
+      // Validate required fields
+      if (!formData.title || !formData.content || !formData.excerpt || !formData.authorName || !formData.authorEmail) {
         toast({
-          title: 'Error',
-          description: 'Please fill in all required fields',
           variant: 'destructive',
+          title: 'Missing required fields',
+          description: 'Please fill in all required fields before submitting.'
         });
         setIsLoading(false);
         return;
       }
+
+      const slug = formData.slug || 
+                  formData.title.toLowerCase()
+                      .replace(/[^a-z0-9]+/g, '-')
+                      .replace(/(^-|-$)/g, '');
+
+      const blogData = {
+        title: formData.title,
+        slug,
+        description: formData.excerpt,
+        content: formData.content,
+        coverImage: formData.coverImage,
+        tags: formData.tags.split(',').map(t => t.trim()).filter(Boolean),
+        categories: formData.categories.split(',').map(t => t.trim()).filter(Boolean),
+        isPublished: formData.isPublished,
+        featured: formData.featured,
+        scheduledPublishDate: formData.scheduledPublishDate || undefined,
+        author: {
+          name: formData.authorName,
+          email: formData.authorEmail,
+        },
+        seo: formData.seo,
+      };
 
       const response = await fetch(
         editingBlog ? `/api/admin/blogs/${editingBlog._id}` : '/api/admin/blogs',
@@ -131,26 +242,24 @@ export default function BlogsPage() {
         }
       );
 
-      const data = await response.json();
-
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to save blog');
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to save blog');
       }
 
+      await fetchBlogs();
+      setIsDialogOpen(false);
       toast({
+        variant: 'default',
         title: 'Success',
-        description: `Blog ${editingBlog ? 'updated' : 'created'} successfully`,
+        description: `Blog post ${editingBlog ? 'updated' : 'created'} successfully!`,
       });
 
-      setIsDialogOpen(false);
-      setEditingBlog(null);
-      await fetchBlogs();
     } catch (error) {
-      console.error('Error saving blog:', error);
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to save blog',
         variant: 'destructive',
+        title: 'Error saving blog',
+        description: error instanceof Error ? error.message : 'Something went wrong'
       });
     } finally {
       setIsLoading(false);
@@ -167,20 +276,21 @@ export default function BlogsPage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete blog');
+        throw new Error(error.message || 'Failed to delete blog');
       }
 
+      await fetchBlogs();
       toast({
+        variant: 'default',
         title: 'Success',
-        description: 'Blog deleted successfully',
+        description: 'Blog post deleted successfully!'
       });
 
-      await fetchBlogs();
     } catch (error) {
       toast({
-        title: 'Error',
-        description: error instanceof Error ? error.message : 'Failed to delete blog',
         variant: 'destructive',
+        title: 'Error deleting blog',
+        description: error instanceof Error ? error.message : 'Something went wrong'
       });
     }
   }
@@ -211,181 +321,206 @@ export default function BlogsPage() {
               Add Blog Post
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>
-                {editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
-              </DialogTitle>
+              <DialogTitle>{editingBlog ? 'Edit' : 'Create'} Blog Post</DialogTitle>
             </DialogHeader>
-            <Tabs defaultValue="content" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 lg:w-[400px] mb-4">
-                <TabsTrigger value="content">Content</TabsTrigger>
-                <TabsTrigger value="seo">SEO</TabsTrigger>
-              </TabsList>
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 py-4">
+                <Tabs defaultValue="content" className="w-full" onValueChange={setActiveTab} value={activeTab}>
+                  <TabsList className="grid w-full grid-cols-2 lg:w-[400px] mb-4">
+                    <TabsTrigger value="content">Content</TabsTrigger>
+                    <TabsTrigger value="seo">SEO</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="content" className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      name="title"
-                      defaultValue={editingBlog?.title}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="slug">Slug</Label>
-                    <Input
-                      id="slug"
-                      name="slug"
-                      defaultValue={editingBlog?.slug}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="excerpt">Excerpt</Label>
-                  <Textarea
-                    id="excerpt"
-                    name="excerpt"
-                    defaultValue={editingBlog?.excerpt}
-                    required
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Content</Label>
-                  <RichTextEditor
-                    content={content}
-                    onChange={setContent}
-                    className="min-h-[300px]"
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="coverImage">Cover Image URL</Label>
-                    <Input
-                      id="coverImage"
-                      name="coverImage"
-                      defaultValue={editingBlog?.coverImage}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="scheduledPublishDate">Scheduled Publish Date</Label>
-                    <Input
-                      id="scheduledPublishDate"
-                      name="scheduledPublishDate"
-                      type="datetime-local"
-                      defaultValue={editingBlog?.scheduledPublishDate}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tags">Tags (comma-separated)</Label>
-                    <Input
-                      id="tags"
-                      name="tags"
-                      defaultValue={editingBlog?.tags.join(', ')}
-                      placeholder="tech, programming, web development"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="categories">Categories (comma-separated)</Label>
-                    <Input
-                      id="categories"
-                      name="categories"
-                      defaultValue={editingBlog?.categories.join(', ')}
-                      placeholder="Tutorial, Guide, Opinion"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="published">Status</Label>
-                    <select
-                      id="published"
-                      name="published"
-                      defaultValue={editingBlog?.published?.toString()}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                    >
-                      <option value="true">Published</option>
-                      <option value="false">Draft</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="featured">Featured</Label>
-                    <select
-                      id="featured"
-                      name="featured"
-                      defaultValue={editingBlog?.featured?.toString()}
-                      className="w-full h-10 px-3 rounded-md border border-input bg-background"
-                    >
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="authorEmail">Author Email</Label>
-                    <Input
-                      id="authorEmail"
-                      name="authorEmail"
-                      type="email"
-                      defaultValue={editingBlog?.authorEmail}
-                      required
-                    />
-                  </div>
-                </div>
-              </TabsContent>
+                  <TabsContent value="content" className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="title">Title</Label>
+                        <Input
+                          id="title"
+                          name="title"
+                          value={formData.title}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="slug">Slug</Label>
+                        <Input
+                          id="slug"
+                          name="slug"
+                          value={formData.slug}
+                          onChange={handleInputChange}
+                          placeholder="Leave empty to generate from title"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="excerpt">Excerpt</Label>
+                      <Textarea
+                        id="excerpt"
+                        name="excerpt"
+                        value={formData.excerpt}
+                        onChange={handleInputChange}
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Content</Label>
+                      <RichTextEditor
+                        content={formData.content}
+                        onChange={handleContentChange}
+                        className="min-h-[300px]"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="coverImage">Cover Image URL</Label>
+                        <Input
+                          id="coverImage"
+                          name="coverImage"
+                          value={formData.coverImage}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="scheduledPublishDate">Scheduled Publish Date</Label>
+                        <Input
+                          id="scheduledPublishDate"
+                          name="scheduledPublishDate"
+                          type="datetime-local"
+                          value={formData.scheduledPublishDate}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="tags">Tags (comma-separated)</Label>
+                        <Input
+                          id="tags"
+                          name="tags"
+                          value={formData.tags}
+                          onChange={handleInputChange}
+                          placeholder="tech, programming, web development"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="categories">Categories (comma-separated)</Label>
+                        <Input
+                          id="categories"
+                          name="categories"
+                          value={formData.categories}
+                          onChange={handleInputChange}
+                          placeholder="Tutorial, Guide, Opinion"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="published">Status</Label>
+                        <select
+                          id="published"
+                          name="isPublished"
+                          value={formData.isPublished.toString()}
+                          onChange={handleInputChange}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                        >
+                          <option value="true">Published</option>
+                          <option value="false">Draft</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="featured">Featured</Label>
+                        <select
+                          id="featured"
+                          name="featured"
+                          value={formData.featured.toString()}
+                          onChange={handleInputChange}
+                          className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                        >
+                          <option value="true">Yes</option>
+                          <option value="false">No</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="authorName">Author Name</Label>
+                        <Input
+                          id="authorName"
+                          name="authorName"
+                          type="text"
+                          value={formData.authorName}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="authorEmail">Author Email</Label>
+                        <Input
+                          id="authorEmail"
+                          name="authorEmail"
+                          type="email"
+                          value={formData.authorEmail}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
 
-              <TabsContent value="seo" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="metaTitle">Meta Title</Label>
-                  <Input
-                    id="metaTitle"
-                    name="metaTitle"
-                    defaultValue={editingBlog?.seo?.metaTitle}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="metaDescription">Meta Description</Label>
-                  <Textarea
-                    id="metaDescription"
-                    name="metaDescription"
-                    defaultValue={editingBlog?.seo?.metaDescription}
-                    className="min-h-[100px]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="ogImage">OG Image URL</Label>
-                  <Input
-                    id="ogImage"
-                    name="ogImage"
-                    defaultValue={editingBlog?.seo?.ogImage}
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
-
-            <DialogFooter className="mt-6">
-              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={isLoading}>
-                  {isLoading ? (
-                    <Loading className="mr-2" />
-                  ) : null}
-                  {editingBlog ? 'Update' : 'Create'} Blog Post
-                </Button>
+                  <TabsContent value="seo" className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="metaTitle">Meta Title</Label>
+                      <Input
+                        id="metaTitle"
+                        name="seo.metaTitle"
+                        value={formData.seo.metaTitle}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="metaDescription">Meta Description</Label>
+                      <Textarea
+                        id="metaDescription"
+                        name="seo.metaDescription"
+                        value={formData.seo.metaDescription}
+                        onChange={handleInputChange}
+                        className="min-h-[100px]"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="ogImage">OG Image URL</Label>
+                      <Input
+                        id="ogImage"
+                        name="seo.ogImage"
+                        value={formData.seo.ogImage}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  </TabsContent>
+                </Tabs>
               </div>
-            </DialogFooter>
+              <DialogFooter className="mt-6">
+                <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 w-full">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? (
+                      <Loading className="mr-2" />
+                    ) : null}
+                    {editingBlog ? 'Update' : 'Create'} Blog Post
+                  </Button>
+                </div>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>

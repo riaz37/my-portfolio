@@ -15,8 +15,8 @@ interface User extends NextAuthUser {
   password?: string;
   image?: string;
   isAdmin: boolean;
-  isVerified: boolean;
   emailVerified: Date | null;
+  isVerified: boolean;
   role: string;
 }
 
@@ -28,27 +28,20 @@ declare module "next-auth" {
       name: string;
       image?: string;
       isAdmin: boolean;
-      isVerified: boolean;
       emailVerified: Date | null;
+      isVerified: boolean;
       role: string;
     };
-    id: string;
-    email: string;
-    name: string;
-    image?: string;
-    isAdmin: boolean;
-    isVerified: boolean;
-    emailVerified: Date | null;
-    role: string;
   }
   interface User {
     id: string;
     email: string;
     name: string;
+    password?: string;
     image?: string;
     isAdmin: boolean;
-    isVerified: boolean;
     emailVerified: Date | null;
+    isVerified: boolean;
     role: string;
   }
 }
@@ -57,8 +50,8 @@ declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     isAdmin: boolean;
-    isVerified: boolean;
     emailVerified: Date | null;
+    isVerified: boolean;
     role: string;
   }
 }
@@ -73,9 +66,10 @@ const createUserFromProvider = async (
     name,
     image,
     emailVerified: new Date(),
-    isVerified: true,
+    isVerified: true, // Provider accounts are pre-verified
     role: "user",
     isAdmin: false,
+    verifiedAt: new Date(),
   });
 };
 
@@ -91,7 +85,8 @@ const updateUserFromProvider = async (
         name,
         image,
         emailVerified: new Date(),
-        isVerified: true,
+        isVerified: true, // Provider accounts are pre-verified
+        verifiedAt: new Date(),
       }
     },
     { new: true }
@@ -102,11 +97,12 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: "/auth/signin",
+    signOut: "/auth/signout",
     error: "/auth/error",
+    verifyRequest: "/auth/verify-status",
   },
   secret: process.env.NEXTAUTH_SECRET,
   providers: [
@@ -124,24 +120,38 @@ export const authOptions: NextAuthOptions = {
 
           await connectToDatabase();
           
-          const user = await User.findOne({ email: credentials.email }).select("+password");
+          const user = await User.findOne({ email: credentials.email }).select('+password');
+          console.log('Found user:', user ? 'Yes' : 'No');
           
           if (!user) {
             throw new Error("No user found with this email");
           }
 
           if (!user.password) {
+            console.log('No password set for user');
             throw new Error("Please login with your social provider");
           }
 
           const isPasswordMatch = await bcrypt.compare(credentials.password, user.password);
+          console.log('Password match:', isPasswordMatch);
 
           if (!isPasswordMatch) {
             throw new Error("Incorrect password");
           }
 
-          return user as User;
+          // Return user without password
+          return {
+            id: user._id.toString(),
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            isAdmin: user.isAdmin || false,
+            emailVerified: user.emailVerified,
+            isVerified: user.isVerified || false,
+            role: user.role || 'user'
+          };
         } catch (error) {
+          console.error('Auth error:', error);
           throw error instanceof Error ? error : new Error("Authentication failed");
         }
       }
@@ -150,95 +160,46 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       allowDangerousEmailAccountLinking: true,
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name,
-          email: profile.email,
-          image: profile.picture,
-          emailVerified: new Date(),
-          isVerified: true,
-          role: "user",
-          isAdmin: false,
-          verifiedAt: new Date(),
-          lastSignedIn: new Date(),
-          $assertPopulated: () => {},
-          $clearModifiedPaths: () => {}
-        };
-      }
     }),
-    GitHubProvider({
-      clientId: process.env.GITHUB_ID as string,
-      clientSecret: process.env.GITHUB_SECRET as string,
-      allowDangerousEmailAccountLinking: true,
-      profile(profile) {
-        return {
-          id: profile.id.toString(),
-          name: profile.name || profile.login,
-          email: profile.email,
-          image: profile.avatar_url,
-          emailVerified: new Date(),
-          isVerified: true,
-          role: "user",
-          isAdmin: false,
-          verifiedAt: new Date(),
-          lastSignedIn: new Date(),
-          $assertPopulated: () => {},
-          $clearModifiedPaths: () => {}
-        };
-      }
-    })
   ],
   callbacks: {
-    async signIn({ user, account }) {
-      if (account?.provider === "credentials") {
-        return true;
-      }
-
-      try {
-        await connectToDatabase();
-
-        const existingUser = await User.findOne({ email: user.email });
-
-        if (existingUser) {
-          const updatedUser = await updateUserFromProvider(
-            user.email,
-            user.name,
-            user.image
-          );
-          return !!updatedUser;
-        }
-
-        const newUser = await createUserFromProvider(
-          user.email,
-          user.name,
-          user.image
-        );
-        return !!newUser;
-      } catch (error) {
-        console.error("Error in signIn callback:", error);
-        return false;
-      }
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.isAdmin = user.isAdmin ?? false;
-        token.isVerified = user.isVerified ?? false;
-        token.emailVerified = user.emailVerified ?? null;
+        token.email = user.email;
+        token.name = user.name;
+        token.image = user.image;
+        token.isAdmin = user.isAdmin;
+        token.emailVerified = user.emailVerified;
+        token.isVerified = user.isVerified;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
-        session.user.id = token.id || '';
-        session.user.isAdmin = token.isAdmin ?? false;
-        session.user.isVerified = token.isVerified ?? false;
-        session.user.emailVerified = token.emailVerified ?? null;
-        session.user.role = token.role || '';
+        session.user.id = token.id;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+        session.user.image = token.image as string;
+        session.user.isAdmin = token.isAdmin;
+        session.user.emailVerified = token.emailVerified;
+        session.user.isVerified = token.isVerified;
+        session.user.role = token.role;
       }
       return session;
-    }
-  }
+    },
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+      // Allow same-origin URLs
+      else if (new URL(url).origin === baseUrl) {
+        return url;
+      }
+      return baseUrl;
+    },
+  },
+  debug: true,
 };

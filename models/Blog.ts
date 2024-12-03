@@ -16,6 +16,7 @@ export interface IBlog extends Document {
   views: number;
   likes: number;
   isPublished: boolean;
+  isDeleted?: boolean;
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -76,15 +77,11 @@ const blogSchema = new Schema<IBlog>({
     type: Boolean,
     default: false,
   },
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
   publishedAt: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
 }, {
   timestamps: true,
 });
@@ -99,14 +96,19 @@ blogSchema.index({
 
 // Ensure slug is unique before saving
 blogSchema.pre('save', async function(next) {
-  if (this.isModified('slug')) {
-    const count = await mongoose.models.Blog.countDocuments({ 
-      slug: this.slug,
+  if (this.isModified('title')) {
+    const slug = this.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    
+    // Check if slug exists
+    const count = await mongoose.models.Blog.countDocuments({
+      slug: new RegExp(`^${slug}(-\\d+)?$`),
       _id: { $ne: this._id }
     });
-    if (count > 0) {
-      throw new Error('Slug must be unique');
-    }
+    
+    this.slug = count ? `${slug}-${count + 1}` : slug;
   }
   next();
 });

@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { createApiHandler } from '@/lib/api/base-handler';
 import { createBlogSchema, updateBlogSchema, getBlogSchema, getBlogsSchema } from './schema';
 import { createSuccessResponse } from '@/lib/api/response';
@@ -12,12 +13,13 @@ export const GET = createApiHandler(
       interval: 60 * 1000,
     },
   },
-  async ({ searchParams }) => {
+  async ({ searchParams, session }) => {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    const tag = searchParams.get('tag');
-    const search = searchParams.get('search');
+    const tag = searchParams.get('tag') || undefined;
+    const search = searchParams.get('search') || undefined;
     const sort = searchParams.get('sort') || 'newest';
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
 
     const validatedParams = getBlogsSchema.parse({
       page,
@@ -32,7 +34,7 @@ export const GET = createApiHandler(
         tag: validatedParams.tag,
         search: validatedParams.search,
         sort: validatedParams.sort,
-        published: true,
+        published: !isAdmin ? true : undefined, // Show all posts for admin
       },
       {
         page: validatedParams.page,
@@ -53,26 +55,16 @@ export const GET_BY_SLUG = createApiHandler(
       interval: 60 * 1000,
     },
   },
-  async ({ params }) => {
+  async ({ params, session }) => {
     const { slug } = getBlogSchema.parse(params);
-    const blog = await blogService.getBlogBySlug(slug);
-    await blogService.incrementViews(slug);
+    const isAdmin = session?.user?.email === process.env.ADMIN_EMAIL;
+    const blog = await blogService.getBlogBySlug(slug, !isAdmin);
+    
+    if (!isAdmin) {
+      await blogService.incrementViews(slug);
+    }
+    
     return createSuccessResponse(blog);
-  }
-);
-
-// GET /api/v1/blog/tags
-export const GET_TAGS = createApiHandler(
-  {
-    method: 'GET',
-    rateLimit: {
-      maxRequests: 100,
-      interval: 60 * 1000,
-    },
-  },
-  async () => {
-    const tags = await blogService.getTags();
-    return createSuccessResponse(tags);
   }
 );
 
@@ -88,9 +80,13 @@ export const POST = createApiHandler(
     },
   },
   async ({ req }) => {
+    if (req.session?.user?.email !== process.env.ADMIN_EMAIL) {
+      throw new Error('Unauthorized: Only admin can create blog posts');
+    }
+
     const blog = await blogService.createBlog({
       ...req.validatedBody,
-      authorEmail: req.session?.user?.email,
+      authorEmail: req.session.user.email,
     });
 
     return createSuccessResponse(blog, undefined, 201);
@@ -109,12 +105,12 @@ export const PUT = createApiHandler(
     },
   },
   async ({ req, params }) => {
-    const blog = await blogService.updateBlog(
-      params.slug,
-      req.session?.user?.email,
-      req.validatedBody
-    );
+    if (req.session?.user?.email !== process.env.ADMIN_EMAIL) {
+      throw new Error('Unauthorized: Only admin can update blog posts');
+    }
 
+    const { slug } = getBlogSchema.parse(params);
+    const blog = await blogService.updateBlog(slug, req.validatedBody);
     return createSuccessResponse(blog);
   }
 );
@@ -130,7 +126,27 @@ export const DELETE = createApiHandler(
     },
   },
   async ({ req, params }) => {
-    await blogService.deleteBlog(params.slug, req.session?.user?.email);
-    return createSuccessResponse({ message: 'Blog post deleted successfully' });
+    if (req.session?.user?.email !== process.env.ADMIN_EMAIL) {
+      throw new Error('Unauthorized: Only admin can delete blog posts');
+    }
+
+    const { slug } = getBlogSchema.parse(params);
+    await blogService.deleteBlog(slug);
+    return createSuccessResponse({ deleted: true });
+  }
+);
+
+// GET /api/v1/blog/tags
+export const GET_TAGS = createApiHandler(
+  {
+    method: 'GET',
+    rateLimit: {
+      maxRequests: 100,
+      interval: 60 * 1000,
+    },
+  },
+  async () => {
+    const tags = await blogService.getTags();
+    return createSuccessResponse(tags);
   }
 );

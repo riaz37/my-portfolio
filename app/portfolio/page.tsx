@@ -1,18 +1,23 @@
-"use client";
+'use client';
 
+import { Metadata } from "next";
 import { AnimatePresence, motion } from "framer-motion";
 import { Work } from "@/components/layout/sections/Work";
 import { TestimonialsSection } from "@/components/features/testimonials/TestimonialsSection";
 import { GitHubStats } from "@/components/layout/sections/GitHubStats";
+import { Skills } from "@/components/layout/sections/Skills";
 import { Projects } from "@/components/layout/sections/Projects";
 import { Certifications } from "@/components/layout/sections/Certifications";
-import { Skills } from "@/components/layout/sections/Skills";
-import Services from "@/components/layout/sections/Services";
-import { Button } from "@/components/shared/ui/core/button";
+
 import Link from "next/link";
-import { ArrowRight, Sparkles, Code2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { MouseScroll } from "@/components/shared/ui/mouse-scroll";
 import QuickNavigation from "@/components/layout/QuickNavigation";
+import { Button } from "@/components/shared/ui/core/button";
+import Services from "@/components/layout/sections/Services";
+
+
+
 
 export default function PortfolioPage() {
   return (

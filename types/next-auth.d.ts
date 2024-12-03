@@ -7,7 +7,14 @@ declare module 'next-auth' {
       id: string;
       email: string;
       name: string;
+      image?: string;
       isAdmin: boolean;
+      isVerified: boolean;
+      emailVerified: Date | null;
+      role: string;
+      lastSignedIn: Date | null;
+      verifiedAt: Date | null;
+      _id: string;
     } & DefaultSession['user'];
   }
 
@@ -15,7 +22,14 @@ declare module 'next-auth' {
     id: string;
     email: string;
     name: string;
+    image?: string;
     isAdmin: boolean;
+    isVerified: boolean;
+    emailVerified: Date | null;
+    role: string;
+    lastSignedIn: Date | null;
+    verifiedAt: Date | null;
+    _id: string;
   }
 
   interface JWT {
@@ -31,6 +45,13 @@ declare module 'next-auth/jwt' {
     id: string;
     email: string;
     name: string;
+    image?: string;
     isAdmin: boolean;
+    isVerified: boolean;
+    emailVerified: Date | null;
+    role: string;
+    lastSignedIn: Date | null;
+    verifiedAt: Date | null;
+    _id: string;
   }
 }

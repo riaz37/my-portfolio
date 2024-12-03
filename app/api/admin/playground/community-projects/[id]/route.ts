@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { z } from 'zod';
-import CommunityProject from '@/models/CommunityProject';
-import { connectToDatabase } from '@/lib/mongoose';
-import User from '@/models/User';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import User from '@/models/auth/User';
+import { CommunityProject } from '@/lib/models/content/CommunityProject';
+
 
 // Validation schema for project update
 const projectUpdateSchema = z.object({

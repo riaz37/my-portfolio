@@ -1,259 +1,162 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Medal, Trophy, Award, Crown, Sparkles, ChevronUp, Star, Construction } from 'lucide-react';
-import { Card } from '@/components/shared/ui/core/card';
-import { Badge } from '@/components/shared/ui/core/badge';
-import { Progress } from '@/components/shared/ui/feedback/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/shared/ui/data-display/avatar';
-import { AvatarSelector } from '@/components/shared/ui/data-display/avatar-selector';
+import { Clock, Trophy, Medal, Star, Crown, Target, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/shared/ui/core/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/shared/ui/navigation/tabs';
 
-// Mock data for demonstration
-const topUsers = [
+const features = [
   {
-    id: 1,
-    name: "Sarah Chen",
-    avatar: "/avatars/avatar-1.png",
-    points: 12580,
-    rank: 1,
-    badge: "Diamond",
-    progress: 92,
-    streak: 45,
-    solved: 342,
-    contributions: 89
+    icon: Trophy,
+    title: 'Global Rankings',
+    description: 'Compete with developers worldwide and track your position'
   },
   {
-    id: 2,
-    name: "Alex Kumar",
-    avatar: "/avatars/avatar-2.png",
-    points: 11975,
-    rank: 2,
-    badge: "Diamond",
-    progress: 88,
-    streak: 38,
-    solved: 315,
-    contributions: 76
+    icon: Medal,
+    title: 'Achievement System',
+    description: 'Earn badges and medals for your coding accomplishments'
   },
   {
-    id: 3,
-    name: "Maria Garcia",
-    avatar: "/avatars/avatar-3.png",
-    points: 11840,
-    rank: 3,
-    badge: "Platinum",
-    progress: 85,
-    streak: 41,
-    solved: 298,
-    contributions: 82
-  },
-  // More top users...
+    icon: Target,
+    title: 'Skill Metrics',
+    description: 'Track your progress across different programming domains'
+  }
 ];
 
-// Current user data (not in top ranks)
-const currentUser = {
-  id: 42,
-  name: "David Wilson",
-  avatar: "/avatars/avatar-4.png",
-  points: 5240,
-  rank: 156,
-  badge: "Gold",
-  progress: 45,
-  streak: 12,
-  solved: 124,
-  contributions: 28,
-  nextRank: {
-    points: 6000,
-    name: "Platinum",
-    user: "Emma Thompson"
-  }
-};
-
-const badgeColors = {
-  Diamond: "text-blue-500",
-  Platinum: "text-purple-500",
-  Gold: "text-yellow-500",
-  Silver: "text-gray-400",
-  Bronze: "text-orange-500"
-};
-
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
-
-export default function LeaderboardPage() {
+export default function Leaderboard() {
   return (
-    <div className="container mx-auto px-4 py-12">
-      {/* Hero Section */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-16"
-      >
-        <h1 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-yellow-500 to-orange-500 text-transparent bg-clip-text">
-          Developer Leaderboard
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Compete with fellow developers, earn badges, and climb the ranks by contributing and solving challenges.
-        </p>
-      </motion.div>
+    <div className="min-h-screen relative bg-dot-pattern">
+      {/* Background Elements */}
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-background/95 to-background pointer-events-none">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:32px]" />
+        <div className="absolute h-full w-full bg-background [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+      </div>
 
-      <Tabs defaultValue="global" className="mb-12">
-        <TabsList className="grid w-full max-w-md mx-auto grid-cols-3">
-          <TabsTrigger value="global">Global</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly</TabsTrigger>
-        </TabsList>
-        <TabsContent value="global" className="mt-6">
-          {/* Top 3 Winners Podium */}
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-3 gap-4 mb-12 max-w-4xl mx-auto"
-          >
-            {/* Second Place */}
-            <motion.div variants={itemVariants} className="pt-12">
-              <Card className="p-6 text-center relative">
-                <Medal className="w-8 h-8 text-gray-400 absolute -top-4 left-1/2 -translate-x-1/2" />
-                <Avatar className="w-16 h-16 mx-auto mb-4">
-                  <AvatarImage src={topUsers[1].avatar} alt={topUsers[1].name} />
-                  <AvatarFallback>{topUsers[1].name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <h3 className="font-semibold">{topUsers[1].name}</h3>
-                <p className="text-muted-foreground text-sm mb-2">{topUsers[1].points.toLocaleString()} pts</p>
-                <Badge variant="secondary" className={badgeColors[topUsers[1].badge]}>
-                  {topUsers[1].badge}
-                </Badge>
-              </Card>
-            </motion.div>
-
-            {/* First Place */}
-            <motion.div variants={itemVariants}>
-              <Card className="p-6 text-center relative border-yellow-500/50 bg-gradient-to-b from-yellow-500/10 to-transparent">
-                <Crown className="w-10 h-10 text-yellow-500 absolute -top-5 left-1/2 -translate-x-1/2" />
-                <Avatar className="w-20 h-20 mx-auto mb-4 ring-4 ring-yellow-500/50">
-                  <AvatarImage src={topUsers[0].avatar} alt={topUsers[0].name} />
-                  <AvatarFallback>{topUsers[0].name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <h3 className="font-semibold text-lg">{topUsers[0].name}</h3>
-                <p className="text-muted-foreground mb-2">{topUsers[0].points.toLocaleString()} pts</p>
-                <Badge variant="secondary" className={badgeColors[topUsers[0].badge]}>
-                  {topUsers[0].badge}
-                </Badge>
-              </Card>
-            </motion.div>
-
-            {/* Third Place */}
-            <motion.div variants={itemVariants} className="pt-16">
-              <Card className="p-6 text-center relative">
-                <Award className="w-8 h-8 text-orange-500 absolute -top-4 left-1/2 -translate-x-1/2" />
-                <Avatar className="w-16 h-16 mx-auto mb-4">
-                  <AvatarImage src={topUsers[2].avatar} alt={topUsers[2].name} />
-                  <AvatarFallback>{topUsers[2].name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <h3 className="font-semibold">{topUsers[2].name}</h3>
-                <p className="text-muted-foreground text-sm mb-2">{topUsers[2].points.toLocaleString()} pts</p>
-                <Badge variant="secondary" className={badgeColors[topUsers[2].badge]}>
-                  {topUsers[2].badge}
-                </Badge>
-              </Card>
-            </motion.div>
-          </motion.div>
-
-          {/* Current User Stats */}
+      <div className="relative">
+        {/* Header Section */}
+        <div className="container mx-auto px-4 pt-20 pb-16 sm:pt-24 sm:pb-20 lg:pt-28">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="max-w-4xl mx-auto mb-12"
+            className="max-w-3xl mx-auto text-center"
           >
-            <Card className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-lg">{currentUser.name}</h3>
-                    <p className="text-muted-foreground">Rank #{currentUser.rank}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge variant="secondary" className={badgeColors[currentUser.badge]}>
-                    {currentUser.badge}
-                  </Badge>
-                  <p className="text-2xl font-bold mt-2">{currentUser.points.toLocaleString()} pts</p>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-muted-foreground">Progress to {currentUser.nextRank.name}</span>
-                    <span className="font-medium">{currentUser.progress}%</span>
-                  </div>
-                  <Progress value={currentUser.progress} className="h-2" />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <Card className="p-4 text-center">
-                    <Star className="w-5 h-5 text-yellow-500 mx-auto mb-2" />
-                    <p className="text-lg font-semibold">{currentUser.streak}</p>
-                    <p className="text-sm text-muted-foreground">Day Streak</p>
-                  </Card>
-                  <Card className="p-4 text-center">
-                    <Trophy className="w-5 h-5 text-green-500 mx-auto mb-2" />
-                    <p className="text-lg font-semibold">{currentUser.solved}</p>
-                    <p className="text-sm text-muted-foreground">Challenges Solved</p>
-                  </Card>
-                  <Card className="p-4 text-center">
-                    <Sparkles className="w-5 h-5 text-purple-500 mx-auto mb-2" />
-                    <p className="text-lg font-semibold">{currentUser.contributions}</p>
-                    <p className="text-sm text-muted-foreground">Contributions</p>
-                  </Card>
-                </div>
-
-                <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                  <div>
-                    <p className="text-sm text-muted-foreground">Next Rank</p>
-                    <p className="font-medium">{currentUser.nextRank.user}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground">Points Needed</p>
-                    <p className="font-medium">{(currentUser.nextRank.points - currentUser.points).toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5 text-sm text-primary mb-8">
+              <Clock className="h-4 w-4" />
+              <span>Coming Soon</span>
+            </div>
+            
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-8 bg-gradient-to-r from-primary via-purple-500 to-blue-500 bg-clip-text text-transparent tracking-tight">
+              Leaderboard
+            </h1>
+            
+            <p className="text-lg sm:text-xl text-muted-foreground mb-16 max-w-2xl mx-auto leading-relaxed">
+              Compete with developers worldwide, track your progress, and showcase your coding achievements.
+              Rise through the ranks and become a top performer!
+            </p>
           </motion.div>
-        </TabsContent>
 
-        <TabsContent value="monthly">
-          <div className="text-center text-muted-foreground">
-            Monthly rankings will be available at the end of the month.
-          </div>
-        </TabsContent>
+          {/* Leaderboard Preview */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="max-w-5xl mx-auto mb-16"
+          >
+            <div className="relative rounded-xl overflow-hidden border border-border/50 bg-card/50 backdrop-blur-sm shadow-lg shadow-black/5">
+              {/* Leaderboard Header */}
+              <div className="flex items-center justify-between p-4 border-b border-border/50 bg-background/50">
+                <div className="flex items-center gap-3">
+                  <Crown className="w-5 h-5 text-yellow-500/80" />
+                  <div className="text-sm font-medium">Global Rankings</div>
+                </div>
+                <div className="flex gap-4">
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    Weekly
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    <Star className="w-4 h-4" />
+                    All Time
+                  </Button>
+                </div>
+              </div>
 
-        <TabsContent value="weekly">
-          <div className="text-center text-muted-foreground">
-            Weekly rankings will be available at the end of the week.
+              {/* Leaderboard Content */}
+              <div className="relative min-h-[400px] bg-background/50 p-4">
+                <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[2px]">
+                  <div className="text-center p-8">
+                    <motion.div
+                      animate={{ scale: [1, 1.1, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-primary/10 flex items-center justify-center"
+                    >
+                      <Trophy className="w-8 h-8 text-primary" />
+                    </motion.div>
+                    <h3 className="text-2xl font-bold mb-4">Coming Soon</h3>
+                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                      We're building an exciting competitive platform for developers. Stay tuned for the launch!
+                    </p>
+                    <Button variant="outline" className="gap-2">
+                      <Star className="w-4 h-4" />
+                      Get Notified
+                    </Button>
+                  </div>
+                </div>
+                <div className="opacity-20">
+                  {[1, 2, 3, 4, 5].map((rank) => (
+                    <div
+                      key={rank}
+                      className="flex items-center justify-between p-4 border-b border-border/10"
+                    >
+                      <div className="flex items-center gap-4">
+                        <span className="text-lg font-semibold w-8">{rank}</span>
+                        <div className="w-8 h-8 rounded-full bg-primary/10" />
+                        <span className="font-medium">Developer {rank}</span>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <span>{1000 - rank * 50} points</span>
+                        <div className="flex -space-x-1">
+                          {[...Array(3)].map((_, i) => (
+                            <div
+                              key={i}
+                              className="w-5 h-5 rounded-full bg-primary/10 border border-background"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Features Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {features.map((feature, index) => (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1 }}
+                className={cn(
+                  "p-6 rounded-xl border border-border/50",
+                  "bg-card/50 backdrop-blur-sm",
+                  "hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5",
+                  "transition-all duration-300"
+                )}
+              >
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <feature.icon className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
           </div>
-        </TabsContent>
-      </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

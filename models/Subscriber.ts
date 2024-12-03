@@ -1,5 +1,10 @@
 import mongoose, { Schema } from 'mongoose';
 
+// Delete the model if it exists to ensure fresh schema
+if (mongoose.models.Subscriber) {
+  delete mongoose.models.Subscriber;
+}
+
 export interface ISubscriber {
   email: string;
   isSubscribed: boolean;
@@ -25,7 +30,20 @@ const subscriberSchema = new Schema<ISubscriber>({
   },
   unsubscribedAt: {
     type: Date,
+    required: false,
   },
+}, {
+  strict: true,
+  strictQuery: true,
+  collection: 'subscribers', // Explicitly set collection name
 });
 
-export const Subscriber = mongoose.models.Subscriber || mongoose.model<ISubscriber>('Subscriber', subscriberSchema);
+// Clear any existing indexes
+subscriberSchema.clearIndexes();
+
+// Create new indexes
+subscriberSchema.index({ email: 1 }, { unique: true });
+
+const Subscriber = mongoose.models.Subscriber || mongoose.model<ISubscriber>('Subscriber', subscriberSchema);
+
+export { Subscriber };

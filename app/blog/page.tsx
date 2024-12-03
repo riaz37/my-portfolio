@@ -1,8 +1,10 @@
 'use client';
 
+import * as React from "react";
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSession } from 'next-auth/react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { 
@@ -12,20 +14,22 @@ import {
   TagIcon, 
   BookOpenIcon,
   LayoutGridIcon,
-  ListIcon
+  ListIcon,
+  Check,
+  ChevronDown,
+  PlusCircle
 } from 'lucide-react';
 
 import { Badge } from '@/components/shared/ui/core/badge';
 import { Button } from '@/components/shared/ui/core/button';
-import { Input } from '@/components/shared/ui/core/input';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/shared/ui/core/select';
+import { Input } from '@/components/shared/ui/form/input';
+import * as Select from '@/components/shared/ui/core/select';
 import { Skeleton } from '@/components/shared/ui/feedback/skeleton';
+import { 
+  Avatar, 
+  AvatarImage, 
+  AvatarFallback 
+} from '@/components/shared/ui/data-display/avatar';
 import { cn } from '@/lib/utils';
 
 // Blog Post Type Definition
@@ -46,234 +50,276 @@ interface BlogPost {
   views: number;
   likes: number;
   isPublished: boolean;
-  publishedAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  publishedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BlogResponse {
+  data: {
+    blogs: BlogPost[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+    };
+  };
+  success: boolean;
 }
 
 type ViewMode = 'grid' | 'list';
 
-export default function BlogPage() {
-  const { data: session } = useSession();
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [filteredPosts, setFilteredPosts] = useState<BlogPost[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTag, setSelectedTag] = useState('all');
-  const [sortBy, setSortBy] = useState<'newest' | 'oldest'>('newest');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+const BlogCard = ({ blog, viewMode }: { blog: BlogPost; viewMode: ViewMode }) => {
+  const router = useRouter();
 
-  // Fetch posts
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('/api/blogs', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+  const handleClick = () => {
+    router.push(`/blog/${blog.slug}`);
+  };
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch blog posts');
-        }
-
-        const data = await response.json();
-        setPosts(data);
-        setFilteredPosts(data);
-      } catch (error) {
-        console.error('Error fetching blog posts:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
-  // Filter and sort posts
-  useEffect(() => {
-    let result = [...posts];
-
-    // Search
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      result = result.filter(post => 
-        post.title.toLowerCase().includes(searchLower) ||
-        post.tags.some(tag => tag.toLowerCase().includes(searchLower))
-      );
-    }
-
-    // Filter by tag
-    if (selectedTag !== 'all') {
-      result = result.filter(post => 
-        post.tags.includes(selectedTag)
-      );
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      const dateA = new Date(a.publishedAt || a.createdAt).getTime();
-      const dateB = new Date(b.publishedAt || b.createdAt).getTime();
-      return sortBy === 'newest' ? dateB - dateA : dateA - dateB;
-    });
-
-    setFilteredPosts(result);
-  }, [searchTerm, selectedTag, sortBy, posts]);
-
-  // Get unique tags
-  const allTags = Array.from(new Set(posts.flatMap(post => post.tags)));
-
-  const BlogPostCard = ({ post }: { post: BlogPost }) => (
+  return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
       className={cn(
-        "group bg-card border border-border overflow-hidden hover:border-primary/50 transition-colors",
-        viewMode === 'grid' ? 'rounded-lg' : 'rounded-md'
+        'group cursor-pointer rounded-lg border bg-card p-4 transition-all hover:shadow-md',
+        viewMode === 'grid' ? 'flex flex-col gap-4' : 'flex gap-6'
       )}
+      onClick={handleClick}
     >
-      <div className={cn(
-        "flex",
-        viewMode === 'grid' ? 'flex-col' : 'flex-row items-center'
-      )}>
-        {/* Cover Image */}
-        {post.coverImage && (
-          <div className={cn(
-            "relative overflow-hidden",
-            viewMode === 'grid' ? 'h-40 sm:h-48 w-full' : 'h-32 w-32 flex-shrink-0'
-          )}>
-            <Image
-              src={post.coverImage}
-              alt={post.title}
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          </div>
-        )}
-
+      {blog.coverImage && (
         <div className={cn(
-          "flex flex-col",
-          viewMode === 'grid' ? 'p-4 sm:p-6' : 'p-4 flex-grow'
+          'relative overflow-hidden rounded-md',
+          viewMode === 'grid' ? 'aspect-[16/9] w-full' : 'aspect-[16/9] w-1/3'
         )}>
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-3">
-            {post.tags.map((tag, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
+          <Image
+            src={blog.coverImage}
+            alt={blog.title}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        </div>
+      )}
+      <div className="flex flex-1 flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            {blog.tags?.map((tag) => (
+              <Badge key={tag} variant="secondary" className="text-xs">
                 {tag}
               </Badge>
             ))}
           </div>
-
-          {/* Title */}
-          <h2 className={cn(
-            "font-semibold group-hover:text-primary transition-colors line-clamp-2",
-            viewMode === 'grid' ? 'text-lg sm:text-xl mb-2' : 'text-base sm:text-lg mb-1.5'
-          )}>
-            {post.title}
-          </h2>
-
-          {/* Description */}
-          <p className={cn(
-            "text-muted-foreground line-clamp-2 mb-4",
-            viewMode === 'grid' ? 'text-sm sm:text-base' : 'text-sm'
-          )}>
-            {post.description}
+          <h3 className="line-clamp-2 text-xl font-semibold tracking-tight">
+            {blog.title}
+          </h3>
+          <p className="line-clamp-2 text-sm text-muted-foreground">
+            {blog.description}
           </p>
-
-          {/* Metadata */}
-          <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-muted-foreground mt-auto">
-            <div className="flex items-center">
-              <CalendarIcon className="h-3 w-3 mr-1" />
-              <span>
-                {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            <div className="flex items-center">
-              <BookOpenIcon className="h-3 w-3 mr-1" />
-              <span>{post.readingTime || '5'} min read</span>
-            </div>
-            <div className="flex items-center">
-              <TagIcon className="h-3 w-3 mr-1" />
-              <span>{post.tags.length} tags</span>
-            </div>
+        </div>
+        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex items-center gap-1">
+            <CalendarIcon className="h-4 w-4" />
+            <span>{new Date(blog.createdAt).toLocaleDateString()}</span>
           </div>
+          {blog.readingTime && (
+            <div className="flex items-center gap-1">
+              <BookOpenIcon className="h-4 w-4" />
+              <span>{blog.readingTime} min read</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
   );
+};
+
+export default function BlogPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.email === process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    total: 0,
+    hasNextPage: false
+  });
+
+  const createQueryString = (params: Record<string, string>) => {
+    const current = new URLSearchParams(Array.from(searchParams.entries()));
+    
+    for (const [key, value] of Object.entries(params)) {
+      if (value === null) {
+        current.delete(key);
+      } else {
+        current.set(key, value);
+      }
+    }
+
+    return current.toString();
+  };
+
+  const fetchBlogs = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch(`/api/blogs?${searchParams.toString()}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to fetch blog posts');
+      }
+
+      const { data } = await response.json();
+      
+      if (!data || !data.blogs) {
+        throw new Error('Invalid response format');
+      }
+
+      setBlogs(data.blogs);
+      setPagination({
+        page: data.pagination.currentPage,
+        limit: data.pagination.itemsPerPage,
+        total: data.pagination.totalItems,
+        hasNextPage: data.pagination.currentPage < data.pagination.totalPages
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      console.error('Error fetching blogs:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBlogs();
+  }, [searchParams]);
+
+  const handleSearch = (value: string) => {
+    router.push(
+      `/blog?${createQueryString({
+        search: value || null,
+        page: '1',
+      })}`,
+      { scroll: false }
+    );
+  };
+
+  const handleSort = (value: string) => {
+    router.push(
+      `/blog?${createQueryString({
+        sort: value,
+        page: '1',
+      })}`,
+      { scroll: false }
+    );
+  };
+
+  const handlePageChange = (page: number) => {
+    router.push(
+      `/blog?${createQueryString({
+        page: page.toString(),
+      })}`,
+      { scroll: false }
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <Skeleton className="h-8 w-64 mb-4" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-[400px] rounded-xl" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 text-center">
+        <p className="text-red-500 mb-4">{error}</p>
+        <Button onClick={() => fetchBlogs()}>Try Again</Button>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-5xl">
+    <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="text-center mb-8 md:mb-12"
-      >
-        <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4 text-foreground">
-          Tech Insights & Coding Chronicles
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground max-w-xl mx-auto px-4">
-          Dive deep into technology, programming insights, and innovative solutions.
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold mb-4">Blog</h1>
+        <p className="text-muted-foreground">
+          Explore my thoughts on software development, technology, and more.
         </p>
-      </motion.div>
+      </div>
 
-      {/* Filters, Search, and View Toggle */}
-      <div className="mb-6 md:mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Input 
-              type="text" 
-              placeholder="Search blogs by title or tag" 
-              className="pl-10 w-full"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+      {/* Admin Actions */}
+      {isAdmin && (
+        <div className="mb-8 flex gap-4">
+          <Link href="/admin/blogs">
+            <Button>
+              <PlusCircle className="h-4 w-4 mr-2" />
+              New Post
+            </Button>
+          </Link>
+          <Link href="/admin/blogs">
+            <Button variant="outline">
+              Manage Posts
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {/* Filters */}
+      <div className="flex flex-col md:flex-row gap-4 mb-8">
+        <div className="flex-1">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search posts..."
+              className="pl-10"
+              onChange={(e) => handleSearch(e.target.value)}
+              defaultValue={searchParams.get('search') || ''}
             />
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Select value={selectedTag} onValueChange={setSelectedTag}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by Tag">
-                  {selectedTag === 'all' ? 'All Tags' : selectedTag}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Tags</SelectItem>
-                {allTags.map(tag => (
-                  <SelectItem key={tag} value={tag}>{tag}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={sortBy} onValueChange={(val: 'newest' | 'oldest') => setSortBy(val)}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Sort By">
-                  {sortBy === 'newest' ? 'Newest First' : 'Oldest First'}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="oldest">Oldest First</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </div>
-
-        {/* View Toggle */}
-        <div className="flex justify-end">
-          <div className="bg-card border border-border rounded-lg p-1 flex gap-1">
+        <div className="flex gap-4">
+          <Select.Select
+            defaultValue={searchParams.get('sort') || 'newest'}
+            onValueChange={handleSort}
+          >
+            <Select.SelectTrigger className="w-[180px]">
+              <Select.SelectValue placeholder="Sort by" />
+            </Select.SelectTrigger>
+            <Select.SelectContent>
+              <Select.SelectItem value="newest">Newest First</Select.SelectItem>
+              <Select.SelectItem value="oldest">Oldest First</Select.SelectItem>
+              <Select.SelectItem value="popular">Most Popular</Select.SelectItem>
+            </Select.SelectContent>
+          </Select.Select>
+          <div className="flex rounded-md border">
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               className={cn(
-                "px-2 py-1",
-                viewMode === 'grid' && "bg-primary/10 text-primary"
+                'rounded-none',
+                viewMode === 'grid' && 'bg-secondary'
               )}
               onClick={() => setViewMode('grid')}
             >
@@ -281,10 +327,10 @@ export default function BlogPage() {
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               className={cn(
-                "px-2 py-1",
-                viewMode === 'list' && "bg-primary/10 text-primary"
+                'rounded-none',
+                viewMode === 'list' && 'bg-secondary'
               )}
               onClick={() => setViewMode('list')}
             >
@@ -295,47 +341,40 @@ export default function BlogPage() {
       </div>
 
       {/* Blog Posts */}
-      <div className={cn(
-        viewMode === 'grid' 
-          ? 'grid gap-6 grid-cols-1 md:grid-cols-2' 
-          : 'flex flex-col gap-4'
-      )}>
-        {isLoading ? (
-          // Skeleton Loader
-          <div className={cn(
-            viewMode === 'grid' 
-              ? 'grid gap-6 grid-cols-1 md:grid-cols-2' 
-              : 'flex flex-col gap-4'
-          )}>
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton 
-                key={index} 
-                className={cn(
-                  viewMode === 'grid' 
-                    ? 'h-[400px]' 
-                    : 'h-[200px]'
-                )} 
-              />
-            ))}
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center text-muted-foreground py-12 col-span-full"
-          >
-            No blog posts found
-          </motion.div>
-        ) : (
+      {blogs.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">No blog posts found.</p>
+        </div>
+      ) : (
+        <div className={cn(
+          'grid gap-6',
+          viewMode === 'grid' ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'
+        )}>
           <AnimatePresence>
-            {filteredPosts.map((post) => (
-              <Link href={`/blog/${post.slug}`} key={post._id} className="block">
-                <BlogPostCard post={post} />
-              </Link>
+            {blogs.map((post) => (
+              <BlogCard key={post._id} blog={post} viewMode={viewMode} />
             ))}
           </AnimatePresence>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination.total > pagination.limit && (
+        <div className="mt-8 flex justify-center">
+          <div className="flex gap-2">
+            {Array.from({ length: Math.ceil(pagination.total / pagination.limit) }).map((_, i) => (
+              <Button
+                key={i}
+                variant={pagination.page === i + 1 ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => handlePageChange(i + 1)}
+              >
+                {i + 1}
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

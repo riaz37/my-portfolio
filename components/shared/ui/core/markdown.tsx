@@ -3,17 +3,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 interface MarkdownProps {
-  children: string;
+  content: string;
   className?: string;
 }
 
-export const Markdown: React.FC<MarkdownProps> = ({ children, className }) => {
+export const Markdown: React.FC<MarkdownProps> = ({ content, className }) => {
   return (
     <ReactMarkdown 
       remarkPlugins={[remarkGfm]}
       className={className}
     >
-      {children}
+      {content}
     </ReactMarkdown>
   );
 };

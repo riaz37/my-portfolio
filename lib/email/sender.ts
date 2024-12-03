@@ -68,7 +68,7 @@ export async function sendVerificationEmail({ email, token, name }: SendVerifica
   }
 
   const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '');
-  const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${token}`;
+  const verificationUrl = `${baseUrl}/api/verify/email?token=${token}`;
 
   try {
     console.log('Sending verification email...');

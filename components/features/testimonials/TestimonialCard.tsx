@@ -42,7 +42,7 @@ export function TestimonialCard({
           <div className="flex items-center gap-4">
             <Avatar>
               <AvatarImage src={image} alt={name} />
-              <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+              <AvatarFallback>{name ? name.charAt(0) : 'N/A'}</AvatarFallback>
             </Avatar>
             <div>
               <h3 className="font-semibold">{name}</h3>

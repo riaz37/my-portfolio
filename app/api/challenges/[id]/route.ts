@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/db/mongodb';
-import Challenge from '@/models/Challenge';
+
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import { Challenge } from '@/lib/models/content/Challenge';
 
 interface Params {
   params: {
@@ -13,7 +14,7 @@ interface Params {
 // GET /api/challenges/[id] - Get a specific challenge
 export async function GET(req: Request, { params }: Params) {
   try {
-    await connectDB();
+    await connectToDatabase();
     const challenge = await Challenge.findById(params.id);
     
     if (!challenge) {
@@ -46,7 +47,7 @@ export async function PUT(req: Request, { params }: Params) {
     }
 
     const body = await req.json();
-    await connectDB();
+    await connectToDatabase();
     
     const challenge = await Challenge.findByIdAndUpdate(
       params.id,
@@ -83,7 +84,7 @@ export async function DELETE(req: Request, { params }: Params) {
       );
     }
 
-    await connectDB();
+    await connectToDatabase();
     const challenge = await Challenge.findByIdAndDelete(params.id);
     
     if (!challenge) {

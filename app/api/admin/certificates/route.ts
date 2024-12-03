@@ -13,9 +13,17 @@ const certificateSchema = z.object({
     (date) => !isNaN(Date.parse(date)),
     { message: 'Invalid issue date' }
   ),
+  expiryDate: z.string().optional().refine(
+    (date) => !date || !isNaN(Date.parse(date)),
+    { message: 'Invalid expiry date' }
+  ),
+  credentialId: z.string().optional(),
+  credentialUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: z.string().url().min(1, 'Image URL is required'),
+  category: z.string().min(1, 'Category is required'),
   description: z.string().optional(),
-  url: z.string().url().optional(),
-  skills: z.array(z.string()).optional(),
+  skills: z.array(z.string()).default([]),
+  featured: z.boolean().default(false),
 });
 
 export async function GET() {
@@ -25,10 +33,10 @@ export async function GET() {
 
     await connectToDatabase();
     
-    const user = await Certificate.find({ isDeleted: false })
+    const certificates = await Certificate.find({ isDeleted: false })
       .sort({ createdAt: -1 });
 
-    return NextResponse.json(user);
+    return NextResponse.json(certificates);
   } catch (error) {
     console.error('Error fetching certificates:', error);
     if (error instanceof Error) {
@@ -52,17 +60,24 @@ export async function POST(request: NextRequest) {
     await connectToDatabase();
     
     const data = await request.json();
+    console.log('Received certificate data:', data); // Debug log
+
     const validatedData = certificateSchema.parse(data);
+    console.log('Validated certificate data:', validatedData); // Debug log
 
     const certificate = await Certificate.create({
       ...validatedData,
-      createdBy: session.user.id
+      createdBy: session.user.id,
+      isDeleted: false
     });
+
+    console.log('Created certificate:', certificate); // Debug log
 
     return NextResponse.json(certificate);
   } catch (error) {
     console.error('Error creating certificate:', error);
     if (error instanceof z.ZodError) {
+      console.error('Zod validation errors:', error.errors); // Additional debug log
       return NextResponse.json(
         { 
           error: 'Invalid request data', 
@@ -71,111 +86,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.message.includes('Unauthorized') ? 401 : 500 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    await validateAdminAccess(session);
-
-    await connectToDatabase();
-    
-    const data = await request.json();
-    const { _id, ...updateData } = data;
-    
-    const validatedData = certificateSchema.partial().parse(updateData);
-
-    const certificate = await Certificate.findByIdAndUpdate(
-      _id,
-      { 
-        ...validatedData, 
-        updatedBy: session.user.id,
-        updatedAt: new Date()
-      },
-      { new: true }
-    );
-
-    if (!certificate) {
-      return NextResponse.json(
-        { error: 'Certificate not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(certificate);
-  } catch (error) {
-    console.error('Error updating certificate:', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { 
-          error: 'Invalid request data', 
-          details: error.errors 
-        },
-        { status: 400 }
-      );
-    }
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: error.message.includes('Unauthorized') ? 401 : 500 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'An unexpected error occurred' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions);
-    await validateAdminAccess(session);
-
-    await connectToDatabase();
-    
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json(
-        { error: 'Certificate ID is required' },
-        { status: 400 }
-      );
-    }
-
-    const certificate = await Certificate.findByIdAndUpdate(
-      id,
-      { 
-        isDeleted: true,
-      },
-      { new: true }
-    );
-
-    if (!certificate) {
-      return NextResponse.json(
-        { error: 'Certificate not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ 
-      message: 'Certificate deleted successfully',
-      data: certificate 
-    });
-  } catch (error) {
-    console.error('Error deleting certificate:', error);
     if (error instanceof Error) {
       return NextResponse.json(
         { error: error.message },

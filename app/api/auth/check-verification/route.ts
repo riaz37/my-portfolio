@@ -1,26 +1,24 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/db/mongodb';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { User } from '@/models/User';
+import { connectToDatabase } from '@/lib/db/mongodb';
+import User from '@/models/auth/User';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    
+    if (!session?.user?.email) {
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
     await connectToDatabase();
     
-    // Find user and check verification status
-    const user = await User.findById(session.user.id)
-      .select('emailVerified isVerified verifiedAt')
-      .lean();
-
+    const user = await User.findOne({ email: session.user.email });
+    
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
@@ -29,15 +27,14 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      isVerified: Boolean(user.emailVerified || user.isVerified),
-      emailVerified: user.emailVerified,
-      verifiedAt: user.verifiedAt
+      isVerified: !!user.emailVerified,
+      emailVerified: user.emailVerified
     });
 
   } catch (error) {
     console.error('Error checking verification status:', error);
     return NextResponse.json(
-      { error: 'Failed to check verification status' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
