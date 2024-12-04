@@ -18,10 +18,11 @@ const publicPaths = [
   '/images',
   '/fonts',
   '/favicon.ico',
+  '/playground'
 ];
 
 // Paths that require email verification
-const verificationRequiredPaths = ['/playground', '/dashboard', '/profile'];
+const verificationRequiredPaths = ['/dashboard', '/profile'];
 
 // Define route configurations with roles and permissions
 const routeConfig = {
@@ -36,7 +37,7 @@ const routeConfig = {
     '/about',
     '/contact',
     '/api/auth/signout',
-    '/playground'  // Allow public access to playground root
+    '/playground'
   ],
   protected: {
     user: [
@@ -85,8 +86,8 @@ export async function middleware(request: NextRequest) {
 
   const token = await getToken({ req: request });
 
-  // If not authenticated, redirect to signin
-  if (!token) {
+  // If not authenticated and trying to access a protected route
+  if (!token && !pathname.startsWith('/playground')) {
     const signInUrl = new URL('/auth/signin', request.url);
     signInUrl.searchParams.set('callbackUrl', request.url);
     return NextResponse.redirect(signInUrl);

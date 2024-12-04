@@ -59,9 +59,35 @@ export default function PlaygroundLayout({
     );
   }
 
-  // Redirect to sign in if not authenticated and trying to access restricted path
+  // For restricted paths, show a message instead of redirecting
   if (status === 'unauthenticated' && isRestrictedPath) {
-    redirect('/auth/signin?callbackUrl=/playground');
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto text-center">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold">Authentication Required</h2>
+              <p className="text-muted-foreground">
+                Please sign in to access this feature. Create an account to unlock all playground features and track your progress.
+              </p>
+              <a
+                href={`/auth/signin?callbackUrl=${encodeURIComponent(pathname || '/playground')}`}
+                className={cn(
+                  "inline-flex items-center gap-2 text-sm font-medium",
+                  "px-6 py-2.5 rounded-md",
+                  "bg-primary text-primary-foreground",
+                  "hover:bg-primary/90 transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                )}
+              >
+                Sign In to Continue
+                <ArrowRight className="w-4 h-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   // Allow access to root playground page and non-restricted paths
@@ -121,37 +147,6 @@ export default function PlaygroundLayout({
           </div>
         </div>
       </Suspense>
-    );
-  }
-
-  // For restricted paths, show authentication required message
-  if (!session && isRestrictedPath) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col items-center justify-center min-h-[60vh] max-w-md mx-auto text-center">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Authentication Required</h2>
-              <p className="text-muted-foreground">
-                Please sign in to access this feature. Create an account to unlock all playground features and track your progress.
-              </p>
-              <a
-                href={`/auth/signin?callbackUrl=${encodeURIComponent(pathname || '/playground')}`}
-                className={cn(
-                  "inline-flex items-center gap-2 text-sm font-medium",
-                  "px-6 py-2.5 rounded-md",
-                  "bg-primary text-primary-foreground",
-                  "hover:bg-primary/90 transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
-                )}
-              >
-                Sign In to Continue
-                <ArrowRight className="w-4 h-4" />
-              </a>
-            </div>
-          </div>
-        </div>
-      </div>
     );
   }
 
